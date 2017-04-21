@@ -3,10 +3,11 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import socket
 import time
+
 import six
 from celery import states
 from collections import OrderedDict
-from kombu import Connection, Exchange, Queue, binding
+from kombu import Exchange, Queue, binding
 
 from clearly.task_info import TaskInfo
 from clearly.utils.colors import colors
@@ -36,7 +37,7 @@ class Clearly(object):
         self.exchange_name = exchange_name
 
         # initialize variables
-        self.tasks_reset()
+        self.reset()
 
     def capture(self, routing_keys,
                 show_params=False, show_success=False, show_error=True):
@@ -117,10 +118,11 @@ class Clearly(object):
                     task = task._replace(state=current_state)
                     self._waiting_tasks[task.id] = task
                 self._display_task(task, False, False,
-                                   self._should_show_result(task.state,
-                                                  show_success, show_error))
+                                   self._is_to_show_result(task.state,
+                                                           show_success,
+                                                           show_error))
 
-    def tasks_fetch(self, show_success=False, show_error=True):
+    def fetch(self, show_success=False, show_error=True):
         """Fetches results of pending captured tasks, blocking if necessary.
     
         Args:
@@ -135,7 +137,7 @@ class Clearly(object):
             except KeyboardInterrupt:
                 break
 
-    def tasks_pending(self, show_params=False):
+    def pending(self, show_params=False):
         """Prints pending captured tasks.
     
         Args:
@@ -145,7 +147,6 @@ class Clearly(object):
         for task in self._waiting_tasks.values():
             self._display_task(task, False, show_params, False)
 
-    def tasks_results(self, show_success=False, show_error=True):
     def results(self, show_success=False, show_error=True):
         """Prints captured tasks which have terminal status, specifically 
          success, failure or revoked status.
@@ -156,14 +157,14 @@ class Clearly(object):
 
         """
         for task in self._finished_tasks:
-            show = self._should_show_result(task.state, show_success, show_error)
+            show = self._is_to_show_result(task.state, show_success, show_error)
             self._display_task(task, False, show, show)
 
-    def _should_show_result(self, state, show_success, show_error):
+    def _is_to_show_result(self, state, show_success, show_error):
         return (state == states.FAILURE and show_error) \
                or (state == states.SUCCESS and show_success)
 
-    def tasks_reset(self):
+    def reset(self):
         """Resets all captured data.
         
         """
