@@ -96,7 +96,7 @@ class Clearly(object):
             self._waiting_tasks[task_id] = task
             message.ack()
 
-        with self.app.pool.connection() as conn:
+        with self.app.pool.acquire() as conn:
             with conn.Consumer(monitor_queue, callbacks=[process_message],
                                accept=['pickle']):
                 while True:
