@@ -24,17 +24,20 @@ class Clearly(object):
         Simple and real-time monitor for celery.
     """
 
-    def __init__(self, app, exchange_name):
+    def __init__(self, app, exchange):
         """Constructs a monitor instance.
         
         Args:
             app (celery.app): the configured celery app instance
-            exchange_name (str): the exchange name the celery publishes 
-                messages to
+            exchange (Union[str, Exchange]): the exchange instance or name 
+                the celery publishes messages to
 
         """
         self.app = app
-        self.exchange_name = exchange_name
+        if isinstance(exchange, Exchange):
+            self.exchange = exchange
+        else:
+            self.exchange = Exchange(exchange, type='topic')
 
         # initialize variables
         self.reset()
@@ -56,11 +59,10 @@ class Clearly(object):
             show_error (bool): if True shows failed tasks' results
     
         """
-        exchange = Exchange(self.exchange_name, type='topic')
         monitor_queue = Queue(exclusive=True,
                               durable=False,
                               bindings=[
-                                  binding(exchange=exchange, routing_key=x)
+                                  binding(exchange=self.exchange, routing_key=x)
                                   for x in routing_keys.split()])
 
         def process_message(body, message):
