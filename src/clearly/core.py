@@ -62,7 +62,8 @@ class Clearly(object):
         monitor_queue = Queue(exclusive=True,
                               durable=False,
                               bindings=[
-                                  binding(exchange=self._exchange, routing_key=x)
+                                  binding(exchange=self._exchange,
+                                          routing_key=x)
                                   for x in routing_keys.split()])
 
         def process_message(body, message):
