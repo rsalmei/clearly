@@ -202,9 +202,9 @@ class Clearly(object):
         if p is None:
             return colors.CYAN('None')
         if isinstance(p, (str, unicode)):
-            return colors.YELLOW("'{}'".format(smart_text(p)))
+            return colors.YELLOW("'{}'".format(six.text_type(p)))
         if isinstance(p, (int, long, float)):
-            return colors.MAGENTA(smart_text(p))
+            return colors.MAGENTA(six.text_type(p))
         if isinstance(p, (list, tuple, set)):
             f = '[{}]' if isinstance(p, list) \
                 else '({})' if isinstance(p, tuple) else '{{{}}}'
@@ -216,4 +216,4 @@ class Clearly(object):
                                                self._typed_text(v))
                                for k, v in p.items()))
 
-        return smart_text(repr(p))
+        return six.text_type(repr(p))
