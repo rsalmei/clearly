@@ -33,11 +33,11 @@ class Clearly(object):
                 the celery publishes messages to
 
         """
-        self.app = app
+        self._app = app
         if isinstance(exchange, Exchange):
-            self.exchange = exchange
+            self._exchange = exchange
         else:
-            self.exchange = Exchange(exchange, type='topic')
+            self._exchange = Exchange(exchange, type='topic')
 
         # initialize variables
         self.reset()
@@ -62,7 +62,7 @@ class Clearly(object):
         monitor_queue = Queue(exclusive=True,
                               durable=False,
                               bindings=[
-                                  binding(exchange=self.exchange, routing_key=x)
+                                  binding(exchange=self._exchange, routing_key=x)
                                   for x in routing_keys.split()])
 
         def process_message(body, message):
@@ -72,7 +72,7 @@ class Clearly(object):
             if task_id in self._waiting_tasks:
                 async_result = self._waiting_tasks[task_id].async
             else:
-                async_result = self.app.AsyncResult(task_id)
+                async_result = self._app.AsyncResult(task_id)
 
             # There's a race condition in task async results, which can be in
             # the process of update in the backend yet. Sometimes I would
@@ -96,7 +96,7 @@ class Clearly(object):
             self._waiting_tasks[task_id] = task
             message.ack()
 
-        with self.app.pool.acquire() as conn:
+        with self._app.pool.acquire() as conn:
             with conn.Consumer(monitor_queue, callbacks=[process_message],
                                accept=['pickle']):
                 while True:
