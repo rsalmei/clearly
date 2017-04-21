@@ -19,7 +19,19 @@ EMPTY = colors.DIM(':)')
 
 
 class Clearly(object):
+    """
+        Simple and real-time monitor for celery.
+    """
+
     def __init__(self, app, exchange_name):
+        """Constructs a monitor instance.
+        
+        Args:
+            app (celery.app): the configured celery app instance
+            exchange_name (str): the exchange name the celery publishes 
+                messages to
+
+        """
         self.app = app
         self.exchange_name = exchange_name
 
@@ -28,19 +40,19 @@ class Clearly(object):
 
     def capture(self, routing_keys,
                 show_params=False, show_success=False, show_error=True):
-        """Gathers all tasks being sent to celery that routing keys accept.
+        """Gathers all tasks being sent to celery that matches routing keys.
+        You can press CTRL+C at any time to stop capturing, without losing
+         anything already captured.
         
         Args:
             routing_keys (str): a string to be split into routing keys.
                 use * as exactly one part or # as zero or more.
-                ex.: 'dispatch.# email.#' to filter any messages from these queues
-                      or 'dispatch.#.123456.#' to filter that exact id in dispatch
+                ex.: 'dispatch.# email.#' to filter messages starting with
+                      or 'dispatch.#.123456.#' to filter that exact id and pos
                       or even '#.123456.#' to filter that exact id anywhere.
-            show_params: 
-            show_success: 
-            show_error: 
-    
-        Returns:
+            show_params (bool): if True shows params of all tasks
+            show_success (bool): if True shows successful tasks' results
+            show_error (bool): if True shows failed tasks' results
     
         """
         exchange = Exchange(self.exchange_name, type='topic')
@@ -59,12 +71,12 @@ class Clearly(object):
             else:
                 async_result = self.app.AsyncResult(task_id)
 
-            # there's a race condition in task async result, which isn't updated
-            #  in the backend yet. sometimes I would receive a PENDING with a 1
-            #  retry count or a RETRY with a 0 retry count... but the current retry
-            #  count seems to be reliable.
+            # There's a race condition in task async results, which can be in
+            # the process of update in the backend yet. Sometimes I would
+            # receive a PENDING with a 1 retry count or a RETRY with a 0 retry
+            # count... But the current retry count seems to be reliable.
             current_retry = body['retries']
-            # wow, even a SUCCESS has appeared here.
+            # Wow, even a SUCCESS has appeared here.
             current_state = states.RETRY if current_retry else None
 
             task = TaskInfo(id=task_id, name=body['task'],
@@ -109,6 +121,13 @@ class Clearly(object):
                                                   show_success, show_error))
 
     def tasks_fetch(self, show_success=False, show_error=True):
+        """Fetches results of pending captured tasks, blocking if necessary.
+    
+        Args:
+            show_success (bool): if True shows successful tasks' results
+            show_error (bool): if True shows failed tasks' results
+    
+        """
         while self._waiting_tasks:
             try:
                 self._internal_fetch(show_success, show_error)
@@ -117,10 +136,25 @@ class Clearly(object):
                 break
 
     def tasks_pending(self, show_params=False):
+        """Prints pending captured tasks.
+    
+        Args:
+            show_params (bool): if True shows params of all tasks
+    
+        """
         for task in self._waiting_tasks.values():
             self._display_task(task, False, show_params, False)
 
     def tasks_results(self, show_success=False, show_error=True):
+    def results(self, show_success=False, show_error=True):
+        """Prints captured tasks which have terminal status, specifically 
+         success, failure or revoked status.
+        
+        Args:
+            show_success (bool): if True shows successful tasks' results
+            show_error (bool): if True shows failed tasks' results
+
+        """
         for task in self._finished_tasks:
             show = self._should_show_result(task.state, show_success, show_error)
             self._display_task(task, False, show, show)
@@ -130,6 +164,9 @@ class Clearly(object):
                or (state == states.SUCCESS and show_success)
 
     def tasks_reset(self):
+        """Resets all captured data.
+        
+        """
         self._waiting_tasks = OrderedDict()
         self._finished_tasks = []
 
