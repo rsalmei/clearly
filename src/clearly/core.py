@@ -220,6 +220,7 @@ class Clearly(object):
 
         return force_text(repr(p))
 
+
 def force_text(s, encoding='utf-8', errors='strict'):
     """Based on the django.text.encoding.force_text.
     
