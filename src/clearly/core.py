@@ -112,10 +112,10 @@ class Clearly(object):
             current_state = task.async.state
             if current_state not in (task.state, states.RETRY):
                 if current_state in states.READY_STATES:
-                    del self._waiting_tasks[task.id]
                     task = task._replace(state=current_state,
                                          result=task.async.result)
                     self._finished_tasks.append(task)
+                    del self._waiting_tasks[task.id]
                 else:
                     task = task._replace(state=current_state)
                     self._waiting_tasks[task.id] = task
@@ -204,9 +204,9 @@ class Clearly(object):
         if p is None:
             return colors.CYAN('None')
         if isinstance(p, (str, unicode)):
-            return colors.YELLOW("'{}'".format(six.text_type(p)))
+            return colors.YELLOW("'{}'".format(force_text(p)))
         if isinstance(p, (int, long, float)):
-            return colors.MAGENTA(six.text_type(p))
+            return colors.MAGENTA(force_text(p))
         if isinstance(p, (list, tuple, set)):
             f = '[{}]' if isinstance(p, list) \
                 else '({})' if isinstance(p, tuple) else '{{{}}}'
@@ -218,4 +218,19 @@ class Clearly(object):
                                                self._typed_text(v))
                                for k, v in p.items()))
 
-        return six.text_type(repr(p))
+        return force_text(repr(p))
+
+def force_text(s, encoding='utf-8', errors='strict'):
+    """Based on the django.text.encoding.force_text.
+    
+    """
+    if isinstance(s, six.text_type):
+        return s
+    if not isinstance(s, six.string_types):
+        if hasattr(s, '__unicode__'):
+            s = s.__unicode__()
+        else:
+            s = six.text_type(bytes(s), encoding, errors)
+    else:
+        s = six.text_type(s, encoding, errors)
+    return s
