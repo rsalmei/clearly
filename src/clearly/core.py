@@ -190,7 +190,7 @@ class Clearly(object):
             print(colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)),
                   self._typed_text(task.result))
 
-    def _state_color(state, retries):
+    def _state_color(self, state, retries):
         result = '{:>{}} {}'.format(state, HEADER_SIZE, retries)
         if state == states.SUCCESS:  # final state in BOLD
             return colors.BOLD(colors.GREEN(result))
