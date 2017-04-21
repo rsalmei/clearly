@@ -178,12 +178,13 @@ class Clearly(object):
 
         if show_params:
             print(colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
-                  SEPARATOR.join(self._typed_text(x) for x in task.args) or EMPTY)
+                  SEPARATOR.join(self._typed_text(x)
+                                 for x in task.args) or EMPTY)
             print(colors.DIM('{:>{}}'.format('kwargs:', HEADER_SIZE)),
-              SEPARATOR.join('{}{}{}'.format(colors.ORANGE(k),
-                                             KWARGS_SEPARATOR,
-                                             self._typed_text(v))
-                             for k, v in task.kwargs.items()) or EMPTY)
+                  SEPARATOR.join('{}{}{}'.format(colors.ORANGE(k),
+                                                 KWARGS_SEPARATOR,
+                                                 self._typed_text(v))
+                                 for k, v in task.kwargs.items()) or EMPTY)
 
         if show_result:
             print(colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)),
@@ -209,9 +210,10 @@ class Clearly(object):
                 else '({})' if isinstance(p, tuple) else '{{{}}}'
             return f.format(SEPARATOR.join(self._typed_text(x) for x in p))
         if isinstance(p, dict):
-            return '{{{}}}'.format(SEPARATOR.join('{}{}{}'.format(self._typed_text(k),
-                                                                  DICT_SEPARATOR,
-                                                                  self._typed_text(v))
-                                                  for k, v in p.items()))
+            return '{{{}}}'.format(
+                SEPARATOR.join('{}{}{}'.format(self._typed_text(k),
+                                               DICT_SEPARATOR,
+                                               self._typed_text(v))
+                               for k, v in p.items()))
 
         return smart_text(repr(p))
