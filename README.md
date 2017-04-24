@@ -9,7 +9,7 @@ And _that_ other project needs page refreshes, filter only one task at a time an
 But wait, `clearly` does not have a server nor persists any data nor listens for celery events, so it does not aim to substitute flower whatsoever. But it is a flower alternative nevertheless, and I do think `clearly` complements it nicely.
 It's great to actually _see_ what's going on in your celery tasks, and in real-time, so it's great for debugging.
 See what `clearly` can do:
-<fig>
+![image](clearly_cool.png)
 
 
 ## Requirements
