@@ -81,9 +81,13 @@ clearly.capture('#', show_params=True)
 ![very amazed](clearly_amazed_params.png)
 
 
+### note
+Any way you capture them, `clearly` is always storing the same data about the tasks. The `show_params` is only informative, if you'd like to see them right in the capture mode. You can see them later too.
+
+
 ### stop capturing and analyze
 ![useful results](clearly_results.png)
-
+(The default is to `show_error`, as it is much more likely to get your interest)
 
 ### get the big picture
 ![useful overview](clearly_brief.png)
