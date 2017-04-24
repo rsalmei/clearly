@@ -3,12 +3,13 @@
 
 I like [flower](https://github.com/mher/flower).
 But in the last couple of weeks, it's not been _that_ useful to me.
-What do I need? _Actual_ real-time monitoring, filter multiple tasks simultaneously and whole thorough full utter complete results!
-And _that_ other project needs page refreshes, filter only one task at a time and truncates results...
+Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once and complete, whole, thorough, comprehensive results!
+And that other project needs page refreshes, filter only one task type at a time and truncates results... 😞
 
-But wait, `clearly` does not have a server nor persists any data nor listens for celery events, so it does not aim to substitute flower whatsoever. But it is a flower alternative nevertheless, and I do think `clearly` complements it nicely.
+Ok, `clearly` does provide all that!
+But they're very different, `clearly` does not have a server nor persists any data nor listens for celery events, so it does not aim to substitute flower whatsoever. But it is a flower alternative nevertheless, and I do think `clearly` complements it nicely.
 It's great to actually _see_ what's going on in your celery tasks, and in real-time, so it's great for debugging.
-See what `clearly` can do:
+See what `clearly` looks like:
 ![image](clearly_cool.png)
 
 
@@ -24,6 +25,7 @@ You can use `clearly` if your asynchronous system with celery:
 
 This tool creates a non durable exclusive queue in the broker, and connects itself to it, dynamically binding any routing keys you wish.
 Now it begins collecting all async tasks being triggered with matching criteria, and starts fetching the outcome of those tasks as soon as they finish. It's really like flower on the shell!
+Please do understand that `clearly` only "sees" in real-time the messages that are being _requested_ (or published) at this very moment, not any ones that have already been published and are awaiting in a queue, as it connects to the same exchange the application does connect to. With this approach, it is guaranteed to not mess with your application logic, as `clearly` gets only a copy of the messages your application is publishing, not modifying or interfering with the process at all.
 
 
 ## Features
