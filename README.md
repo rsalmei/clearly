@@ -159,6 +159,7 @@ Now you have a tool always ready to be used, easily pluggable even in production
 - implement a weak reference in tasks data, to be able to keep `clearly` running live 24/7, without jeopardizing the host's memory;
 - include a plugin system, to be able to print representations of custom objects;
 - filter captured results even more with a regexp;
+- include a script mode, to call right from the shell (make work even a "| grep");
 - any other ideas welcome!
 
 ## License
