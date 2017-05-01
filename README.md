@@ -11,7 +11,7 @@ But they're very different, `clearly` does not have a server nor persists any da
 It's great to actually _see_ what's going on in your celery tasks, and in real-time, so it's great for debugging.
 
 See what `clearly` looks like:
-![very cool](img/clearly_cool.png)
+![very cool](img/clearly_amazed_params.png)
 
 
 ## Requirements
@@ -78,7 +78,7 @@ clearly.capture('#', show_params=True)
 
 
 ### and also be amazed
-![very amazed](img/clearly_amazed_params.png)
+![very amazed](img/clearly_cool.png)
 
 
 ### note
