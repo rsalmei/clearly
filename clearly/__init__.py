@@ -7,4 +7,4 @@ __version__ = '{}.{}.{}'.format(*VERSION)
 
 from .core import Clearly
 
-__all__ = ('Clearly',)
+__all__ = ('__author__', '__version__', 'Clearly',)
