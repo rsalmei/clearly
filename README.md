@@ -149,8 +149,9 @@ def reset(self):
 That way, you'll be able to filter tasks based on any of those constraints.
 - if you're using [django](https://www.djangoproject.com/) and [django-extensions](https://github.com/django-extensions/django-extensions), put in your settings a `SHELL_PLUS_POST_IMPORT` to auto import this!
 Now you just have to create an instance of it and you're good to go.
-- put together a python module in your project to already initialize an instance of `clearly` and configure it.
+    - put together a python module in your project to already initialize an instance of `clearly` and configure it.
 Now you have a tool always ready to be used, easily pluggable even in production, to actually see what's going on in your tasks, and figure out that pesky bug.
+- the more you filter, the less you'll have to analyse, so find the best combination for you debugging needs. A busy system can have a thousand or more messages in only a minute.
 
 
 ## To do
