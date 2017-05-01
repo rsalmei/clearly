@@ -11,7 +11,7 @@ But they're very different, `clearly` does not have a server nor persists any da
 It's great to actually _see_ what's going on in your celery tasks, and in real-time, so it's great for debugging.
 
 See what `clearly` looks like:
-![very cool](img/clearly_amazed_params.png)
+![very cool](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_amazed_params.png)
 
 
 ## Requirements
@@ -67,7 +67,7 @@ clearly.capture('#')
 
 
 ### be amazed
-![very amazed](img/clearly_amazed.png)
+![very amazed](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_amazed.png)
 
 
 ### you can also grab like
@@ -78,7 +78,7 @@ clearly.capture('#', show_params=True)
 
 
 ### and also be amazed
-![very amazed](img/clearly_cool.png)
+![very amazed](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_cool.png)
 
 
 ### note
@@ -86,11 +86,11 @@ Any way you capture them, `clearly` is always storing the same data about the ta
 
 
 ### stop capturing and analyze
-![useful results](img/clearly_results.png)
+![useful results](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_results.png)
 (The default is to `show_error`, as it is much more likely to get your interest)
 
 ### get the big picture
-![useful overview](img/clearly_brief.png)
+![useful overview](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_brief.png)
 
 
 ## Documentation
