@@ -81,7 +81,7 @@ class Clearly(object):
             # count... But the current retry count seems to be reliable.
             current_retry = body['retries']
             # Wow, even a SUCCESS has appeared here.
-            current_state = states.RETRY if current_retry else None
+            current_state = states.RETRY if current_retry else states.PENDING
 
             task = TaskInfo(id=task_id, name=body['task'],
                             args=body['args'], kwargs=body['kwargs'],
