@@ -2,7 +2,7 @@
 
 __author__ = 'Rogério Sampaio de Almeida'
 
-VERSION = (0, 1, 3)  # 'major', 'minor', 'release'
+VERSION = (0, 1, 4)  # 'major', 'minor', 'release'
 __version__ = '.'.join(map(str, VERSION))
 
 from .core import Clearly
