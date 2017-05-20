@@ -1,9 +1,10 @@
 # coding=utf-8
+from __future__ import unicode_literals
+
 from functools import partial
 
-
 class colors:
-    _col = lambda color, text: color + text + '\033[0m'
+    _col = lambda color, text: color + unicode(text) + '\033[0m'
     BLUE = partial(_col, '\033[94m')
     GREEN = partial(_col, '\033[92m')
     YELLOW = partial(_col, '\033[93m')
