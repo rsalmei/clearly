@@ -158,6 +158,17 @@ class ClearlyClient(object):
         for worker in self._clearly_server.workers(pattern):  # type:WorkerInfo
             self._display_worker(worker, show_params)
 
+    def task(self, task_uuid):
+        """Shows one specific task.
+
+        Args:
+            task_uuid (str): the task id
+
+        """
+        task = self._clearly_server.task(task_uuid)
+        if task:
+            self._display_task(task, True, True)
+
     def seen_tasks(self):
         print('\n'.join(self._clearly_server.seen_tasks()))
 

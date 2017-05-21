@@ -201,6 +201,17 @@ class ClearlyServer(object):
         for worker in found_workers:  # type:Worker
             yield serialize_worker(worker)
 
+    def task(self, task_uuid):
+        """Finds one specific task.
+
+        Args:
+            task_uuid (str): any part of the task name or routing key
+
+        """
+        task = self._memory.tasks.get(task_uuid)
+        if task:
+            return serialize_task(task, task.state, False)
+
     def seen_tasks(self):
         return self._memory.task_types()
 
