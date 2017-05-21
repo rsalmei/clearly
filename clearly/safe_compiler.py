@@ -62,7 +62,10 @@ def safe_compile_text(txt):
                 return node.id
             return repr(node)
 
-    txt = parse(txt, mode='eval')
+    try:
+        txt = parse(txt, mode='eval')
+    except SyntaxError:
+        return txt
     if isinstance(txt, Expression):
         txt = txt.body
     return _convert(txt)
