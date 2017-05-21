@@ -79,7 +79,7 @@ class ExpectedPath(object):
         raise UserWarning('unknown name {} in {}'.format(name, self.name))
 
 
-def _setup_task_states():
+def setup_task_states():
     expected_path = ExpectedPath(states.PENDING, True)
     return_path = expected_path.to(states.RECEIVED)
     # noinspection PyTypeChecker
@@ -94,7 +94,7 @@ def _setup_task_states():
     return ExpectedStateHandler('state', expected_path)
 
 
-def _setup_worker_states():
+def setup_worker_states():
     expected_path = ExpectedPath(False, False)
     # noinspection PyTypeChecker
     expected_path.to(True).to(expected_path)
