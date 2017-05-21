@@ -126,7 +126,7 @@ class ClearlyServer(object):
                     # no problem.
                     pass
 
-        def client_accepts(self, *values):
+        def client_accepts(*values):
             return any(v and self._client_regex.search(v) for v in values)
 
         def process_event(event):
