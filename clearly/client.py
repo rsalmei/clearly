@@ -200,7 +200,7 @@ class ClearlyClient(object):
 
         if show_result:
             if task.result:
-                output = typed_text(safe_compile_text(task.result))
+                output = typed_text(task.result)
             else:
                 output = self._tb_highlighter(task.traceback) \
                     .replace('\n', '\n' + HEADER_PADDING).strip()

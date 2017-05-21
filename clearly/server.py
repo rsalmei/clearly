@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from itertools import chain, islice
 
 import re
-from celery import Celery
+from celery import Celery, states
 from celery.events import EventReceiver
 from celery.events.state import State, Task, Worker
 
@@ -148,6 +148,10 @@ class ClearlyServer(object):
             task, created = self._memory.get_or_create_task(event['uuid'])
             with self._task_states.track_changes(task):
                 (_, _), subject = self._memory.event(event)
+            if task.state == states.SUCCESS:
+                ar_result = self._app.AsyncResult(task.uuid).result
+                if ar_result:
+                    task.result = ar_result
             for state in chain(range(created),
                                self._task_states.states_through()):
                 yield task, state, created
