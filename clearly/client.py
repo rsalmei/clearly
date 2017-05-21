@@ -128,13 +128,21 @@ class ClearlyClient(object):
                 ex.: '^dispatch|^email' to filter names starting with those
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
-            show_success (bool): if True (default) shows successful tasks' results
+            show_params (Optional[bool]): if True shows params of all tasks,
+                if False doesn't, if None use the show_success or show_error,
+                depending on the final state
+                default is None
+            show_success (bool): if True shows successful tasks' results
+                default is False
             show_error (bool): if True shows failed tasks' tracebacks
+                default is False, to get an overview.
 
         """
         for task in self._clearly_server.tasks(pattern):  # type:TaskInfo
             show = _is_to_show_result(task.state, show_success, show_error)
-            self._display_task(task, show, show)
+            self._display_task(task,
+                               show_params if show_params is not None else show,
+                               show)
 
     def workers(self, pattern='.', show_params=True):
         """Filters known workers and prints their current status.
