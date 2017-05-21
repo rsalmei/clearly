@@ -108,6 +108,15 @@ class ClearlyClient(object):
         self._clearly_server.stop()
 
     def stats(self):
+        """Lists some metrics of your actual and capturing system.
+        Those are:
+            Tasks processed: the total number of reentrant tasks processed,
+                which includes retry attempts.
+            Events processed: number of events captured and processed.
+            Tasks stored: actual number of unique tasks processed.
+            Workers stored: number of unique workers already seen.
+
+        """
         task_count, event_count, tasks, workers = self._clearly_server.stats()
         print(colors.DIM('Processed:'),
               '\ttasks', colors.RED(task_count),
@@ -144,7 +153,7 @@ class ClearlyClient(object):
                                show_params if show_params is not None else show,
                                show)
 
-    def workers(self, pattern='.', show_params=True):
+    def workers(self, pattern=None, show_params=True):
         """Filters known workers and prints their current status.
         
         Args:
@@ -170,6 +179,9 @@ class ClearlyClient(object):
             self._display_task(task, True, True)
 
     def seen_tasks(self):
+        """Shows a list of task types seen.
+
+        """
         print('\n'.join(self._clearly_server.seen_tasks()))
 
     def reset(self):
