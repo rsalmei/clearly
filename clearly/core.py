@@ -13,9 +13,6 @@ from clearly.task_info import TaskInfo
 from clearly.utils.colors import colors
 
 HEADER_SIZE = 8
-SEPARATOR = colors.RED(', ')
-KWARGS_SEPARATOR = colors.RED('=')
-DICT_SEPARATOR = colors.RED(': ')
 EMPTY = colors.DIM(':)')
 
 
@@ -201,38 +198,5 @@ class Clearly(object):
             return colors.BOLD(colors.RED(result))
         return colors.YELLOW(result)  # transient state
 
-    def _typed_text(self, p):
-        if p is None:
-            return colors.CYAN('None')
-        if isinstance(p, (str, unicode)):
-            return colors.YELLOW("'{}'".format(force_text(p)))
-        if isinstance(p, (int, long, float)):
-            return colors.MAGENTA(force_text(p))
-        if isinstance(p, (list, tuple, set)):
-            f = '[{}]' if isinstance(p, list) \
-                else '({})' if isinstance(p, tuple) else '{{{}}}'
-            return f.format(SEPARATOR.join(self._typed_text(x) for x in p))
-        if isinstance(p, dict):
-            return '{{{}}}'.format(
-                SEPARATOR.join('{}{}{}'.format(self._typed_text(k),
-                                               DICT_SEPARATOR,
-                                               self._typed_text(v))
-                               for k, v in p.items()))
+        return colors.YELLOW(result)  # transient states
 
-        return force_text(repr(p))
-
-
-def force_text(s, encoding='utf-8', errors='strict'):
-    """Based on the django.text.encoding.force_text.
-    
-    """
-    if isinstance(s, six.text_type):
-        return s
-    if not isinstance(s, six.string_types):
-        if hasattr(s, '__unicode__'):
-            s = s.__unicode__()
-        else:
-            s = six.text_type(bytes(s), encoding, errors)
-    else:
-        s = six.text_type(s, encoding, errors)
-    return s
