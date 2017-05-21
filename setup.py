@@ -1,4 +1,6 @@
 # coding=utf-8
+from __future__ import unicode_literals
+
 from distutils.core import setup
 
 from setuptools import find_packages
