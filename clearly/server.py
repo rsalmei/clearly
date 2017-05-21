@@ -180,7 +180,7 @@ class ClearlyServer(object):
         """Filters captured tasks.
         
         Args:
-            pattern (str): any part of the task name or routing key
+            pattern (Optional[str]): any part of the task name or routing key
 
         """
         regex = re.compile(pattern or '.')
@@ -195,7 +195,7 @@ class ClearlyServer(object):
         """Filters known workers and prints their current status.
         
         Args:
-            pattern (str): any part of the task name or routing key
+            pattern (Optional[str]): any part of the task name or routing key
 
         """
         regex = re.compile(pattern or '.')
