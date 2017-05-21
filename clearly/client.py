@@ -75,9 +75,12 @@ class ClearlyClient(object):
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
             show_params (bool): if True shows params of all tasks
+                default is False
             show_success (bool): if True shows successful tasks' results
+                default is False
             show_error (bool): if True shows failed tasks' results
-    
+                default is True, as you monitoring to find errors, right?
+
         """
         self.start()
         with self._clearly_server.client_connect(pattern) as q:  # type: Queue
@@ -113,8 +116,12 @@ class ClearlyClient(object):
               '\ttasks', colors.RED(tasks),
               '\tworkers', colors.RED(workers))
 
-    def tasks(self, pattern='.', show_success=False, show_error=True):
+    def tasks(self, pattern=None,
+              show_params=None, show_success=False, show_error=False):
         """Filters captured tasks and prints their current status.
+        There are a few params with different defaults from the equivalent
+        capture method. This is because here we have more info about the tasks,
+        and so it can use new tricks.
         
         Args:
             pattern (Optional[str]): a pattern to filter tasks
