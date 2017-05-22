@@ -55,7 +55,7 @@ setup(
         # 'Programming Language :: Python :: 3.3',
         # 'Programming Language :: Python :: 3.4',
     ],
-    keywords='celery task-queue monitoring rabbitmq rabbitmq-consumer asynchronous',
+    keywords='celery task-queue monitoring rabbitmq rabbitmq-consumer asynchronous'.split(),
     packages=find_packages(exclude=['img']),
     install_requires=[
         'six',
