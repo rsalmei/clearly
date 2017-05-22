@@ -154,7 +154,7 @@ def stats(self):
     
     """
 
-def tasks(self, pattern=None,
+def tasks(self, pattern=None, state=None,
           show_params=None, show_success=False, show_error=False):
     """Filters captured tasks and prints their current status.
     There are a few params with different defaults from the equivalent
@@ -166,6 +166,7 @@ def tasks(self, pattern=None,
             ex.: '^dispatch|^email' to filter names starting with those
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
+        state (Optional[str]): a state to filter tasks
         show_params (Optional[bool]): if True shows params of all tasks,
             if False doesn't, if None use the show_success or show_error,
             depending on the final state
