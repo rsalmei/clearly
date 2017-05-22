@@ -176,17 +176,25 @@ class ClearlyServer(object):
         print('Server stopped', threading.current_thread())
         sys.stdout.flush()
 
-    def tasks(self, pattern=None):
+    def tasks(self, pattern=None, state=None):
         """Filters captured tasks.
         
         Args:
             pattern (Optional[str]): any part of the task name or routing key
+            state (Optional[str]): a state to filter tasks
 
         """
-        regex = re.compile(pattern or '.')
+        pcondition = scondition = lambda task: True
+        if pattern:
+            regex = re.compile(pattern)
+            pcondition = lambda task: \
+                regex.search(task.name) or regex.search(task.routing_key)
+        if state:
+            scondition = lambda task: task.state == state
+
         found_tasks = islice(
-            (task for _, task in self._memory.tasks_by_time()
-             if regex.search(task.name) or regex.search(task.routing_key)
+            (task for _, task in self._memory.itertasks()
+             if pcondition(task) and scondition(task)
              ), 0, None)
         for task in found_tasks:  # type:Task
             yield serialize_task(task, task.state, False)
