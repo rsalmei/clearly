@@ -1,7 +1,10 @@
 # coding=utf-8
+from __future__ import unicode_literals
+
 from distutils.core import setup
 
 from setuptools import find_packages
+
 import clearly
 
 try:
@@ -57,5 +60,6 @@ setup(
     install_requires=[
         'six',
         'celery>=3.1,<4',
+        'pygments'
     ]
 )
