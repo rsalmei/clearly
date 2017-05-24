@@ -1,10 +1,9 @@
 # coding=utf-8
+from collections import namedtuple
 from itertools import chain
 
-from collections import namedtuple
-
 TASK_OWN_FIELDS = ('name', 'routing_key', 'uuid', 'retries', 'args', 'kwargs',
-                   'result', 'traceback')
+                   'result', 'traceback', 'timestamp')
 TASK_DYNAMIC_FIELDS = ('state', 'created')
 TASK_FIELDS = TASK_OWN_FIELDS + TASK_DYNAMIC_FIELDS
 

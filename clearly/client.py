@@ -192,6 +192,8 @@ class ClearlyClient(object):
         self._clearly_server.reset()
 
     def _display_task(self, task, show_params, show_result):
+        ts = datetime.fromtimestamp(task.timestamp)
+        print(colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
             print(colors.BLUE(task.name),
                   colors.MAGENTA(task.routing_key[len(task.name):] or '-'
