@@ -201,7 +201,7 @@ class ClearlyClient(object):
                   colors.DIM(task.uuid))
         else:
             print(self._task_state(task.state),
-                  colors.DIM(colors.YELLOW(task.retries)),
+                  colors.DIM(colors.BLUE(task.retries)),
                   end=' ')
             print(colors.BLUE(task.name), colors.DIM(task.uuid))
 
