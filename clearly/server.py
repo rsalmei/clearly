@@ -60,6 +60,7 @@ class ClearlyServer(object):
         # connected client
         self._client_queue = None  # type:Queue
         self._client_regex = None
+        self._client_negate = None
 
     def start(self):
         """Starts the real-time engine that captures tasks.
@@ -92,7 +93,7 @@ class ClearlyServer(object):
             self._background_receiver = None
 
     @contextmanager
-    def client_connect(self, pattern=None):
+    def client_connect(self, pattern=None, negate=False):
         """Connects a client to this server, filtering the tasks that are sent
         to it.
 
@@ -101,10 +102,12 @@ class ClearlyServer(object):
                 ex.: '^dispatch|^email' to filter names starting with that
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
+            negate (bool): if True, finds tasks that do not match criteria
 
         """
 
         self._client_regex = re.compile(pattern or '.')
+        self._client_negate = negate
 
         with self._background_lock:
             self._client_queue = Queue()
@@ -127,7 +130,8 @@ class ClearlyServer(object):
                     pass
 
         def client_accepts(*values):
-            return any(v and self._client_regex.search(v) for v in values)
+            return any(v and self._client_regex.search(v)
+                       for v in values) ^ self._client_negate
 
         def process_event(event):
             event_type = event['type']
