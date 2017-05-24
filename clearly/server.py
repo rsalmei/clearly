@@ -215,7 +215,8 @@ class ClearlyServer(object):
         """
         regex = re.compile(pattern or '.')
         found_workers = islice(
-            (worker for worker in self._memory.workers.values()
+            (worker for worker in map(lambda w: self._memory.workers[w],
+                                      sorted(self._memory.workers))
              if bool(regex.search(worker.hostname)) ^ negate
              ), 0, None)
         for worker in found_workers:  # type:Worker
