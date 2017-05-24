@@ -222,7 +222,7 @@ class ClearlyClient(object):
             print(colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
     def _display_worker(self, worker, show_params):
-        print(self._worker_state(worker),
+        print(self._worker_state(worker.alive),
               colors.DIM(colors.CYAN(worker.hostname)),
               colors.DIM(colors.YELLOW(str(worker.pid))))
 
