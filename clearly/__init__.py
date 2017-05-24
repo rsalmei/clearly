@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 __author__ = 'Rogério Sampaio de Almeida'
 
-VERSION = (0, 2, 2)  # 'major', 'minor', 'release'
+VERSION = (0, 2, 3)  # 'major', 'minor', 'release'
 __version__ = '.'.join(map(str, VERSION))
 
 from .client import ClearlyClient
