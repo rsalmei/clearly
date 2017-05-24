@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 from Queue import Queue
 
 from celery import states
+from datetime import datetime
 from pygments import highlight
 from pygments.formatters import Terminal256Formatter
 from pygments.lexers import Python3TracebackLexer
@@ -60,7 +61,7 @@ class ClearlyClient(object):
         self._clearly_server.start()
 
     def capture(self, pattern=None,
-                show_params=False, show_success=False, show_error=True):
+                params=False, success=False, error=True):
         """Starts the real-time engine that captures tasks. It will capture
         all tasks being sent to celery and all workers known to it.
 
@@ -74,11 +75,11 @@ class ClearlyClient(object):
                 ex.: '^dispatch|^email' to filter names starting with that
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
-            show_params (bool): if True shows params of all tasks
+            params (bool): if True shows params of all tasks
                 default is False
-            show_success (bool): if True shows successful tasks' results
+            success (bool): if True shows successful tasks' results
                 default is False
-            show_error (bool): if True shows failed tasks' results
+            error (bool): if True shows failed tasks' results
                 default is True, as you monitoring to find errors, right?
 
         """
@@ -89,12 +90,12 @@ class ClearlyClient(object):
                     obj = q.get(timeout=99999)
                     if isinstance(obj, TaskInfo):
                         self._display_task(obj,
-                                           show_params and obj.created,
-                                           _is_to_show_result(obj.state,
-                                                              show_success,
-                                                              show_error))
+                                           params and obj.created,
+                                           _is_to_result(obj.state,
+                                                         success,
+                                                         error))
                     elif isinstance(obj, WorkerInfo):
-                        self._display_worker(obj, show_params)
+                        self._display_worker(obj, True)
                     else:
                         print('unknown event:', obj)
             except KeyboardInterrupt:
@@ -126,7 +127,7 @@ class ClearlyClient(object):
               '\tworkers', colors.RED(workers))
 
     def tasks(self, pattern=None, state=None,
-              show_params=None, show_success=False, show_error=False):
+              params=None, success=False, error=False):
         """Filters captured tasks and prints their current status.
         There are a few params with different defaults from the equivalent
         capture method. This is because here we have more info about the tasks,
@@ -138,23 +139,23 @@ class ClearlyClient(object):
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
             state (Optional[str]): a state to filter tasks
-            show_params (Optional[bool]): if True shows params of all tasks,
-                if False doesn't, if None use the show_success or show_error,
+            params (Optional[bool]): if True shows params of all tasks,
+                if False doesn't, if None use the success or error,
                 depending on the final state
                 default is None
-            show_success (bool): if True shows successful tasks' results
+            success (bool): if True shows successful tasks' results
                 default is False
-            show_error (bool): if True shows failed tasks' tracebacks
+            error (bool): if True shows failed tasks' tracebacks
                 default is False, to get an overview.
 
         """
         for task in self._clearly_server.tasks(pattern, state):  # type:TaskInfo
-            show = _is_to_show_result(task.state, show_success, show_error)
+            show = _is_to_result(task.state, success, error)
             self._display_task(task,
-                               show_params if show_params is not None else show,
+                               params if params is not None else show,
                                show)
 
-    def workers(self, pattern=None, show_params=True):
+    def workers(self, pattern=None, stats=True):
         """Filters known workers and prints their current status.
         
         Args:
@@ -162,11 +163,11 @@ class ClearlyClient(object):
                 ex.: '^dispatch|^email' to filter names starting with those
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
-            show_params (bool): if True shows worker stats
+            stats (bool): if True shows worker stats
 
         """
         for worker in self._clearly_server.workers(pattern):  # type:WorkerInfo
-            self._display_worker(worker, show_params)
+            self._display_worker(worker, stats)
 
     def task(self, task_uuid):
         """Shows one specific task.
@@ -191,7 +192,7 @@ class ClearlyClient(object):
         """
         self._clearly_server.reset()
 
-    def _display_task(self, task, show_params, show_result):
+    def _display_task(self, task, params, result):
         ts = datetime.fromtimestamp(task.timestamp)
         print(colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
@@ -205,7 +206,7 @@ class ClearlyClient(object):
                   end=' ')
             print(colors.BLUE(task.name), colors.DIM(task.uuid))
 
-        if show_params:
+        if params:
             print(colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_text(safe_compile_text(task.args),
                              wrap=False) or EMPTY)
@@ -213,7 +214,7 @@ class ClearlyClient(object):
                   typed_text(safe_compile_text(task.kwargs),
                              wrap=False, kdict=True) or EMPTY)
 
-        if show_result:
+        if result:
             if task.result:
                 output = typed_text(task.result)
             else:
@@ -221,12 +222,12 @@ class ClearlyClient(object):
                     .replace('\n', '\n' + HEADER_PADDING).strip()
             print(colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
-    def _display_worker(self, worker, show_params):
+    def _display_worker(self, worker, stats):
         print(self._worker_state(worker.alive),
               colors.DIM(colors.CYAN(worker.hostname)),
               colors.DIM(colors.YELLOW(str(worker.pid))))
 
-        if show_params:
+        if stats:
             print(colors.DIM('{:>{}}'.format('sw:', HEADER_SIZE)),
                   colors.DIM(colors.CYAN(worker.sw_sys)),
                   worker.sw_ident,
@@ -261,6 +262,6 @@ class ClearlyClient(object):
         return colors.BOLD(colors.RED(result))
 
 
-def _is_to_show_result(state, show_success, show_error):
-    return (state == states.FAILURE and show_error) \
-           or (state == states.SUCCESS and show_success)
+def _is_to_result(state, success, error):
+    return (state == states.FAILURE and error) \
+           or (state == states.SUCCESS and success)
