@@ -189,7 +189,8 @@ class ClearlyServer(object):
         if pattern:
             regex = re.compile(pattern)
             pcondition = lambda task: \
-                regex.search(task.name) or regex.search(task.routing_key)
+                regex.search(task.name or '') or \
+                regex.search(task.routing_key or '')
         if state:
             scondition = lambda task: task.state == state
 
