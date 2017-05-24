@@ -20,7 +20,7 @@ WorkerInfo = namedtuple('WorkerInfo', WORKER_FIELDS)
 def serialize_task(task, state, created):
     return TaskInfo._make(chain(
         (getattr(task, f) for f in TASK_OWN_FIELDS),
-        (v for v in (state, created))
+        (state, created)
     ))
 
 
