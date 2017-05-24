@@ -176,12 +176,13 @@ class ClearlyServer(object):
         print('Server stopped', threading.current_thread())
         sys.stdout.flush()
 
-    def tasks(self, pattern=None, state=None):
+    def tasks(self, pattern=None, state=None, negate=False):
         """Filters captured tasks.
         
         Args:
             pattern (Optional[str]): any part of the task name or routing key
             state (Optional[str]): a state to filter tasks
+            negate (bool): if True, finds tasks that do not match criteria
 
         """
         pcondition = scondition = lambda task: True
@@ -194,22 +195,24 @@ class ClearlyServer(object):
 
         found_tasks = islice(
             (task for _, task in self._memory.itertasks()
-             if pcondition(task) and scondition(task)
+             if bool(pcondition(task) and scondition(task)) ^ negate
              ), 0, None)
         for task in found_tasks:  # type:Task
             yield serialize_task(task, task.state, False)
 
-    def workers(self, pattern=None):
+    def workers(self, pattern=None, negate=False):
         """Filters known workers and prints their current status.
         
         Args:
             pattern (Optional[str]): any part of the task name or routing key
+            negate (bool): if True, finds tasks that do not match criteria
 
         """
         regex = re.compile(pattern or '.')
         found_workers = islice(
             (worker for worker in self._memory.workers.values()
-             if regex.search(worker.hostname)), 0, None)
+             if bool(regex.search(worker.hostname)) ^ negate
+             ), 0, None)
         for worker in found_workers:  # type:Worker
             yield serialize_worker(worker)
 

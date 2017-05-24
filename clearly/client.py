@@ -126,7 +126,7 @@ class ClearlyClient(object):
               '\ttasks', colors.RED(tasks),
               '\tworkers', colors.RED(workers))
 
-    def tasks(self, pattern=None, state=None,
+    def tasks(self, pattern=None, state=None, negate=False,
               params=None, success=False, error=False):
         """Filters captured tasks and prints their current status.
         There are a few params with different defaults from the equivalent
@@ -139,6 +139,7 @@ class ClearlyClient(object):
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
             state (Optional[str]): a state to filter tasks
+            negate (bool): if True, finds tasks that do not match criteria
             params (Optional[bool]): if True shows params of all tasks,
                 if False doesn't, if None use the success or error,
                 depending on the final state
@@ -149,13 +150,14 @@ class ClearlyClient(object):
                 default is False, to get an overview.
 
         """
-        for task in self._clearly_server.tasks(pattern, state):  # type:TaskInfo
+        for task in self._clearly_server.tasks(pattern, state,
+                                               negate):  # type:TaskInfo
             show = _is_to_result(task.state, success, error)
             self._display_task(task,
                                params if params is not None else show,
                                show)
 
-    def workers(self, pattern=None, stats=True):
+    def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
         
         Args:
@@ -163,10 +165,12 @@ class ClearlyClient(object):
                 ex.: '^dispatch|^email' to filter names starting with those
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
+            negate (bool): if True, finds tasks that do not match criteria
             stats (bool): if True shows worker stats
 
         """
-        for worker in self._clearly_server.workers(pattern):  # type:WorkerInfo
+        for worker in self._clearly_server.workers(pattern,
+                                                   negate):  # type:WorkerInfo
             self._display_worker(worker, stats)
 
     def task(self, task_uuid):
