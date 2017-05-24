@@ -235,8 +235,14 @@ class ClearlyClient(object):
                   worker.loadavg or DIM_NONE,
                   colors.DIM('processed:'), worker.processed or DIM_NONE)
             if worker.alive:
+                if worker.heartbeat:
+                    ts = datetime.fromtimestamp(worker.heartbeat)
+                    tsstr = ts.strftime('%H:%M:%S.%f')[:-3]
+                else:
+                    tsstr = DIM_NONE
                 print(colors.DIM('{:>{}}'.format('heartbeat:', HEADER_SIZE)),
-                      '/{}s'.format(worker.freq))
+                      '/{}s'.format(worker.freq),
+                      colors.DIM(tsstr))
 
     @staticmethod
     def _task_state(state):
