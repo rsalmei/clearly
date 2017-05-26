@@ -85,6 +85,8 @@ class ClearlyServer(object):
         """
 
         with self._background_lock:
+            if not self._background_thread:
+                return
             print('Stopping server')
             self._background_receiver.should_stop = True
             while self._background_thread.is_alive():
