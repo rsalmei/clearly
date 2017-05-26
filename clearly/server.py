@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
+import signal
 import threading
 from Queue import Queue
 from contextlib import contextmanager
@@ -62,6 +63,12 @@ class ClearlyServer(object):
         self._client_regex = None
         self._client_negate = None
 
+        # detect shutdown.
+        def sigterm_handler(_signo, _stack_frame):
+            self.stop()
+
+        signal.signal(signal.SIGTERM, sigterm_handler)
+
     def start(self):
         """Starts the real-time engine that captures tasks.
 
@@ -85,6 +92,8 @@ class ClearlyServer(object):
         """
 
         with self._background_lock:
+            if not self._background_thread:
+                return
             print('Stopping server')
             self._background_receiver.should_stop = True
             while self._background_thread.is_alive():
