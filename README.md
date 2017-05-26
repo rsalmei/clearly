@@ -113,8 +113,8 @@ def start(self):
     
     """
 
-def capture(self, pattern=None,
-            show_params=False, show_success=False, show_error=True):
+def capture(self, pattern=None, negate=False,
+            params=False, success=False, error=True):
     """Starts the real-time engine that captures tasks. It will capture
     all tasks being sent to celery and all workers known to it.
 
@@ -128,11 +128,12 @@ def capture(self, pattern=None,
             ex.: '^dispatch|^email' to filter names starting with that
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
-        show_params (bool): if True shows params of all tasks
+        negate (bool): if True, finds tasks that do not match criteria
+        params (bool): if True shows params of all tasks
             default is False
-        show_success (bool): if True shows successful tasks' results
+        success (bool): if True shows successful tasks' results
             default is False
-        show_error (bool): if True shows failed tasks' results
+        error (bool): if True shows failed tasks' results
             default is True, as you monitoring to find errors, right?
 
     """
@@ -154,8 +155,8 @@ def stats(self):
     
     """
 
-def tasks(self, pattern=None, state=None,
-          show_params=None, show_success=False, show_error=False):
+def tasks(self, pattern=None, state=None, negate=False,
+          params=None, success=False, error=False):
     """Filters captured tasks and prints their current status.
     There are a few params with different defaults from the equivalent
     capture method. This is because here we have more info about the tasks,
@@ -167,18 +168,19 @@ def tasks(self, pattern=None, state=None,
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
         state (Optional[str]): a state to filter tasks
-        show_params (Optional[bool]): if True shows params of all tasks,
-            if False doesn't, if None use the show_success or show_error,
+        negate (bool): if True, finds tasks that do not match criteria
+        params (Optional[bool]): if True shows params of all tasks,
+            if False doesn't, if None use the success or error,
             depending on the final state
             default is None
-        show_success (bool): if True shows successful tasks' results
+        success (bool): if True shows successful tasks' results
             default is False
-        show_error (bool): if True shows failed tasks' tracebacks
+        error (bool): if True shows failed tasks' tracebacks
             default is False, to get an overview.
 
     """
 
-def workers(self, pattern=None, show_params=True):
+def workers(self, pattern=None, negate=False, stats=True):
     """Filters known workers and prints their current status.
     
     Args:
@@ -186,7 +188,8 @@ def workers(self, pattern=None, show_params=True):
             ex.: '^dispatch|^email' to filter names starting with those
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
-        show_params (bool): if True shows worker stats
+        negate (bool): if True, finds tasks that do not match criteria
+        stats (bool): if True shows worker stats
 
     """
 
