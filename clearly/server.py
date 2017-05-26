@@ -119,27 +119,27 @@ class ClearlyServer(object):
         print('Starting server', threading.current_thread())
         sys.stdout.flush()
 
-        def maybe_publish(func):
-            if self._client_queue:
-                obj = func()
-                try:
-                    self._client_queue.put(obj)
-                except AttributeError:
-                    # the capture is not synced with terminal anymore.
-                    # no problem.
-                    pass
-
-        def client_accepts(*values):
+        def client_accepts(values):
             return any(v and self._client_regex.search(v)
                        for v in values) ^ self._client_negate
+
+        def maybe_publish(func, *values):
+            if self._client_queue:
+                if values and client_accepts(values):
+                    obj = func()
+                    try:
+                        self._client_queue.put(obj)
+                    except AttributeError:
+                        # the capture is not synced with terminal anymore.
+                        # no problem.
+                        pass
 
         def process_event(event):
             event_type = event['type']
             if event_type.startswith('task'):
                 for task, state, created in process_task_event(event):
-                    if not client_accepts(task.name, task.routing_key):
-                        continue
-                    maybe_publish(lambda: serialize_task(task, state, created))
+                    maybe_publish(lambda: serialize_task(task, state, created),
+                                  task.name, task.routing_key)
 
             elif event_type.startswith('worker'):
                 for worker in process_worker_event(event):
