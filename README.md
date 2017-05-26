@@ -1,6 +1,8 @@
 # clearly
 ## Clear and accurate real-time monitor for celery
 
+[![Join the chat at https://gitter.im/clearly-celery/Lobby](https://badges.gitter.im/clearly-celery/Lobby.svg)](https://gitter.im/clearly-celery/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Clearly is an alternative to [flower](https://github.com/mher/flower).
 While I do like it, to me it's not been totally up to the task (pun intended).
 Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once and complete, whole, thorough, comprehensive results!
