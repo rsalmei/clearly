@@ -2,9 +2,9 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 from Queue import Queue
+from datetime import datetime
 
 from celery import states
-from datetime import datetime
 from pygments import highlight
 from pygments.formatters import Terminal256Formatter
 from pygments.lexers import Python3TracebackLexer
