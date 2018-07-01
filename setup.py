@@ -25,15 +25,15 @@ setup(
     description='Simple and accurate real-time monitor for celery',
     long_description=readme,
     url='https://github.com/rsalmei/clearly',
-    author='Rogério Sampaio de Almeida',
-    author_email='rsalmei@gmail.com',
+    author=clearly.__author__,
+    author_email=clearly.__email__,
     license='MIT',
     classifiers=[
         # How mature is this project? Common values are
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
@@ -54,6 +54,9 @@ setup(
         # 'Programming Language :: Python :: 3.2',
         # 'Programming Language :: Python :: 3.3',
         # 'Programming Language :: Python :: 3.4',
+        # 'Programming Language :: Python :: 3.5',
+        # 'Programming Language :: Python :: 3.6',
+        # 'Programming Language :: Python :: 3.7',
     ],
     keywords='celery task-queue monitoring rabbitmq rabbitmq-consumer asynchronous'.split(),
     packages=find_packages(exclude=['img']),
@@ -61,5 +64,5 @@ setup(
         'six',
         'celery>=3.1,<4',
         'pygments'
-    ]
+    ],
 )

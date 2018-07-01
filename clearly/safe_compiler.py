@@ -1,8 +1,7 @@
 # coding=utf-8
 from __future__ import unicode_literals
 
-from ast import *
-
+import ast
 from collections import OrderedDict, namedtuple
 
 CallDescriptor = namedtuple('CallDescriptor', 'name args kwargs')
@@ -28,20 +27,20 @@ def safe_compile_text(txt):
     """
 
     def _convert(node):
-        if isinstance(node, Tuple):
+        if isinstance(node, ast.Tuple):
             return tuple(map(_convert, node.elts))
 
-        if isinstance(node, List):
+        if isinstance(node, ast.List):
             return list(map(_convert, node.elts))
 
-        if isinstance(node, Set):
+        if isinstance(node, ast.Set):
             return set(map(_convert, node.elts))
 
-        if isinstance(node, Dict):
+        if isinstance(node, ast.Dict):
             return OrderedDict((_convert(k), _convert(v)) for k, v
                                in zip(node.keys, node.values))
 
-        if isinstance(node, Call):
+        if isinstance(node, ast.Call):
             name = _convert(node.func)
             if name in ('set',):
                 return set(map(_convert, node.args)[0])
@@ -52,20 +51,20 @@ def safe_compile_text(txt):
                                   args if args else None,
                                   kwargs if kwargs else None)
 
-        if isinstance(node, Attribute):
+        if isinstance(node, ast.Attribute):
             return '.'.join((node.value.id, node.attr))
 
         try:
-            return literal_eval(node)
+            return ast.literal_eval(node)
         except ValueError:
-            if isinstance(node, Name):
+            if isinstance(node, ast.Name):
                 return node.id
             return repr(node)
 
     try:
-        txt = parse(txt, mode='eval')
+        txt = ast.parse(txt, mode='eval')
     except SyntaxError:
         return txt
-    if isinstance(txt, Expression):
+    if isinstance(txt, ast.Expression):
         txt = txt.body
     return _convert(txt)
