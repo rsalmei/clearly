@@ -11,7 +11,6 @@ from pygments.lexers import Python3TracebackLexer
 
 from .safe_compiler import safe_compile_text
 from .serializer import TaskInfo, WorkerInfo
-from .server import ClearlyServer
 from .text_highlighter import typed_text
 from .utils.colors import colors
 
@@ -44,6 +43,7 @@ class ClearlyClient(object):
         formatter = Terminal256Formatter(style='native')
         self._tb_highlighter = lambda tb: highlight(tb, lexer, formatter)
 
+        from .server import ClearlyServer
         self._clearly_server = ClearlyServer(app, broker_url,
                                              max_tasks_in_memory,
                                              max_workers_in_memory)

@@ -1,20 +1,24 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
+import re
 import signal
 import threading
 from Queue import Queue
 from contextlib import contextmanager
 from itertools import chain, islice
 
-import re
 from celery import Celery, states
 from celery.events import EventReceiver
 from celery.events.state import State, Task, Worker
+from kombu import log as kombu_log
 
 from .expected_state import ExpectedStateHandler, setup_task_states, \
     setup_worker_states
 from .serializer import serialize_task, serialize_worker
+
+kombu_log.get_logger('').setLevel(logging.ERROR)
 
 
 class ClearlyServer(object):
