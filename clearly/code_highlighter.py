@@ -32,12 +32,12 @@ def typed_code(p, wrap=True):
         return colors.GREEN(force_text(p))
 
     if isinstance(p, CallDescriptor):
-        fargs = typed_code(p.args, wrap=False) if p.args else ''
+        func_args = typed_code(p.args, wrap=False) if p.args else ''
         if p.kwargs:
             if p.args:
-                fargs += SEPARATOR
-            fargs += typed_code(p.kwargs, wrap=False)
-        return '{}({})'.format(force_text(p.name), fargs)
+                func_args += SEPARATOR
+            func_args += typed_code(p.kwargs, wrap=False)
+        return '{}({})'.format(force_text(p.name), func_args)
 
     if isinstance(p, (list, tuple, set)):
         if wrap:
