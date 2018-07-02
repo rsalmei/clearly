@@ -37,17 +37,24 @@ def safe_compile_text(txt):
             return set(map(_convert, node.elts))
 
         if isinstance(node, ast.Dict):
-            return OrderedDict((_convert(k), _convert(v)) for k, v
-                               in zip(node.keys, node.values))
+            return OrderedDict((_convert(k), _convert(v))
+                               for k, v in zip(node.keys, node.values))
 
         if isinstance(node, ast.Call):
             name = _convert(node.func)
-            if name in ('set',):
-                return set(map(_convert, node.args)[0])
             args = tuple(map(_convert, node.args))
+            if name in ('tuple', 'list', 'set'):
+                if len(node.args) > 1:
+                    raise ValueError('{} takes at most 1 argument'.format(name))
+                params = args[0] if node.args else ()
+                return tuple(params) if name == 'tuple' else \
+                    list(params) if name == 'list' else \
+                        set(params)
             kwargs = OrderedDict((k.arg, _convert(k.value))
                                  for k in node.keywords)
-            return CallDescriptor(_convert(node.func),
+            if name == 'dict':
+                return kwargs
+            return CallDescriptor(name,
                                   args if args else None,
                                   kwargs if kwargs else None)
 
