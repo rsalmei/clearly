@@ -122,5 +122,37 @@ from clearly.safe_compiler import CallDescriptor, safe_compile_text
       [CallDescriptor('f1', (True,), {'ok': 0}),
        CallDescriptor('f2', None, {'ignore': {'x', 'y'}})])),
 ])
-def test_compiler_data(text, obj):
+def test_safe_compile_generic(text, obj):
     assert safe_compile_text(text) == obj
+
+
+@pytest.mark.parametrize('text', [
+    'a a',
+    '$',
+    'a=1',  # it's invalid in 'eval' ast mode.
+])
+def test_safe_compile_invalid_python(text):
+    assert safe_compile_text(text) == text
+
+
+@pytest.mark.parametrize('text', [
+    '1 and 2',
+    '1 / 2',
+    '~1',
+    'lambda: 1',
+    'a if b else c',
+    'a < b',
+])
+def test_safe_compile_valid_but_unsupported_python(text):
+    result = safe_compile_text(text)
+    assert result.startswith('unsupported')
+
+
+@pytest.mark.parametrize('text', [
+    'tuple(1,2)',
+    'list(1,2)',
+    'set(1,2)',
+])
+def test_safe_compile_wrong_iterable_in_tuples_lists_sets(text):
+    with pytest.raises(ValueError):
+        safe_compile_text(text)
