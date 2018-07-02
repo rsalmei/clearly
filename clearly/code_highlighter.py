@@ -20,7 +20,13 @@ def typed_code(p, wrap=True):
         return colors.CYAN(force_text(p))
 
     if isinstance(p, (str, unicode)):
-        return colors.YELLOW("'{}'".format(force_text(p)))
+        p = force_text(p)
+        if "'" in p and '"' not in p:
+            escape = '"'
+        else:
+            escape = "'"
+            p = p.replace("'", "\\'")
+        return colors.YELLOW('{c}{p}{c}'.format(p=p, c=escape))
 
     if isinstance(p, (int, long, float)):
         return colors.GREEN(force_text(p))
