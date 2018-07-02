@@ -16,4 +16,4 @@ def color_func(request):
 
 
 def test_escape_color(color_func, text):
-    assert re.match(r'\033\[.*m{}\033\[0m'.format(text), color_func(text))
+    assert re.match(r'\033\[.+?m{}\033\[0m'.format(text), color_func(text))
