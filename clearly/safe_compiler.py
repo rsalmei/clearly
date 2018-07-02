@@ -72,6 +72,5 @@ def safe_compile_text(txt):
         txt = ast.parse(txt, mode='eval')
     except SyntaxError:
         return txt
-    if isinstance(txt, ast.Expression):
-        txt = txt.body
-    return _convert(txt)
+
+    return _convert(txt.body)
