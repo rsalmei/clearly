@@ -12,7 +12,7 @@ DICT_SEPARATOR = colors.RED(': ')
 NONE = colors.CYAN('None')
 
 
-def typed_text(p, wrap=True):
+def typed_code(p, wrap=True):
     if p is None:
         return NONE
 
@@ -26,11 +26,11 @@ def typed_text(p, wrap=True):
         return colors.GREEN(force_text(p))
 
     if isinstance(p, CallDescriptor):
-        fargs = typed_text(p.args, wrap=False) if p.args else ''
+        fargs = typed_code(p.args, wrap=False) if p.args else ''
         if p.kwargs:
             if p.args:
                 fargs += SEPARATOR
-            fargs += typed_text(p.kwargs, wrap=False)
+            fargs += typed_code(p.kwargs, wrap=False)
         return '{}({})'.format(force_text(p.name), fargs)
 
     if isinstance(p, (list, tuple, set)):
@@ -39,7 +39,7 @@ def typed_text(p, wrap=True):
                 else '({})' if isinstance(p, tuple) else '{{{}}}'
         else:
             f = '{}'
-        return f.format(SEPARATOR.join(typed_text(x) for x in p))
+        return f.format(SEPARATOR.join(typed_code(x) for x in p))
 
     if isinstance(p, dict):
         if wrap:
@@ -47,7 +47,7 @@ def typed_text(p, wrap=True):
             sep = DICT_SEPARATOR
 
             def key(k):
-                return typed_text(k)
+                return typed_code(k)
         else:
             f = '{}'
             sep = KWARGS_SEPARATOR
@@ -56,7 +56,7 @@ def typed_text(p, wrap=True):
                 return colors.ORANGE(k)
 
         return f.format(
-            SEPARATOR.join('{}{}{}'.format(key(k), sep, typed_text(v))
+            SEPARATOR.join('{}{}{}'.format(key(k), sep, typed_code(v))
                            for k, v in p.items()))
 
     return force_text(repr(p))

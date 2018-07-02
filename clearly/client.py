@@ -11,7 +11,7 @@ from pygments.lexers import Python3TracebackLexer
 
 from .safe_compiler import safe_compile_text
 from .serializer import TaskInfo, WorkerInfo
-from .text_highlighter import typed_text
+from .code_highlighter import typed_code
 from .utils.colors import colors
 
 HEADER_SIZE = 8
@@ -214,15 +214,15 @@ class ClearlyClient(object):
 
         if params:
             print(colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
-                  typed_text(safe_compile_text(task.args),
+                  typed_code(safe_compile_text(task.args),
                              wrap=False) or EMPTY)
             print(colors.DIM('{:>{}}'.format('kwargs:', HEADER_SIZE)),
-                  typed_text(safe_compile_text(task.kwargs),
+                  typed_code(safe_compile_text(task.kwargs),
                              wrap=False) or EMPTY)
 
         if result:
             if task.result:
-                output = typed_text(task.result)
+                output = typed_code(task.result)
             else:
                 output = self._tb_highlighter(task.traceback) \
                     .replace('\n', '\n' + HEADER_PADDING).strip()
