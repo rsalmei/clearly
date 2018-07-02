@@ -9,9 +9,9 @@ from pygments import highlight
 from pygments.formatters import Terminal256Formatter
 from pygments.lexers import Python3TracebackLexer
 
+from .code_highlighter import typed_code
 from .safe_compiler import safe_compile_text
 from .serializer import TaskInfo, WorkerInfo
-from .code_highlighter import typed_code
 from .utils.colors import colors
 
 HEADER_SIZE = 8
