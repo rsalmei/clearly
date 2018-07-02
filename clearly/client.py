@@ -218,7 +218,7 @@ class ClearlyClient(object):
                              wrap=False) or EMPTY)
             print(colors.DIM('{:>{}}'.format('kwargs:', HEADER_SIZE)),
                   typed_text(safe_compile_text(task.kwargs),
-                             wrap=False, kdict=True) or EMPTY)
+                             wrap=False) or EMPTY)
 
         if result:
             if task.result:
