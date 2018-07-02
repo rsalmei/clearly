@@ -42,17 +42,21 @@ def typed_text(p, wrap=True):
         return f.format(SEPARATOR.join(typed_text(x) for x in p))
 
     if isinstance(p, dict):
-            key = lambda k: colors.ORANGE(k)
-            sep = KWARGS_SEPARATOR
-        else:
-            key = lambda k: typed_text(k)
         if wrap:
             f = '{{{}}}'
             sep = DICT_SEPARATOR
+
+            def key(k):
+                return typed_text(k)
+        else:
             f = '{}'
+            sep = KWARGS_SEPARATOR
+
+            def key(k):
+                return colors.ORANGE(k)
+
         return f.format(
-            SEPARATOR.join('{}{}{}'.format(key(k), sep,
-                                           typed_text(v))
+            SEPARATOR.join('{}{}{}'.format(key(k), sep, typed_text(v))
                            for k, v in p.items()))
 
     return force_text(repr(p))
