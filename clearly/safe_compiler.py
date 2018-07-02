@@ -66,7 +66,7 @@ def safe_compile_text(txt):
         except ValueError:
             if isinstance(node, ast.Name):
                 return node.id
-            return repr(node)
+            return 'unsupported: {}'.format(type(node))
 
     try:
         txt = ast.parse(txt, mode='eval')
