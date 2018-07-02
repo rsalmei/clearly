@@ -117,8 +117,8 @@ from clearly.safe_compiler import CallDescriptor, safe_compile_text
                     {'params': CallDescriptor('get_all', None, {'name': 'ok'}),
                      'ignore': ['False']})),
 
-    ('decimal.Decimal("3.50"), [f1(True, ok=0), f2(ignore=set(("x", "y")))]',
-     (CallDescriptor('decimal.Decimal', ('3.50',), None),
+    ('Decimal("3.50"), [f1(True, ok=0), f2(ignore=set(("x", "y")))]',
+     (CallDescriptor('Decimal', ('3.50',), None),
       [CallDescriptor('f1', (True,), {'ok': 0}),
        CallDescriptor('f2', None, {'ignore': {'x', 'y'}})])),
 ])
