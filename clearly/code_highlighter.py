@@ -39,10 +39,13 @@ def typed_code(p, wrap=True):
             func_args += typed_code(p.kwargs, wrap=False)
         return '{}({})'.format(force_text(p.name), func_args)
 
-    if isinstance(p, (list, tuple, set)):
+    if isinstance(p, (list, set)):
+        f = '[{}]' if isinstance(p, list) else '{{{}}}'
+        return f.format(SEPARATOR.join(typed_code(x) for x in p))
+
+    if isinstance(p, tuple):
         if wrap:
-            f = '[{}]' if isinstance(p, list) \
-                else '({})' if isinstance(p, tuple) else '{{{}}}'
+            f = '({})' if len(p) != 1 else '({},)'
         else:
             f = '{}'
         return f.format(SEPARATOR.join(typed_code(x) for x in p))
