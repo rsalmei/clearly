@@ -90,6 +90,8 @@ class ClearlyClient(object):
                                                     ClearlyClient._is_to_result(obj.state, success, error))
                     elif isinstance(obj, WorkerInfo):
                         ClearlyClient._display_worker(obj, True)
+                    elif obj is None:
+                        break
                     else:
                         print('unknown event:', obj)
             except KeyboardInterrupt:
