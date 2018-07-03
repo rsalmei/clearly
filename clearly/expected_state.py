@@ -31,8 +31,7 @@ class ExpectedStateHandler(object):
         self.post = getattr(obj, self.field)
 
     def states_through(self):
-        if self.pre == self.post or (self.post == self.expected_path.name
-                                     and self.expected_path.ignore):
+        if self.pre == self.post:
             raise StopIteration
 
         pointer = self.expected_path
@@ -44,17 +43,18 @@ class ExpectedStateHandler(object):
         stop = pointer.name
         while True:
             pointer = pointer.find(expected)
+            if pointer.name == stop:
+                raise ValueError('impossible go from {} to {}'.format(self.pre, self.post))
             yield pointer.name
-            if pointer.name in (expected, stop):
+            if pointer.name == expected:
                 break
 
 
 class ExpectedPath(object):
-    def __init__(self, name, ignore=False):
+    def __init__(self, name):
         self.name = name
-        self.possibles = None
+        self.possibles = ()
         self.default = None
-        self.ignore = ignore
 
     def to(self, names, default=None):
         if not isinstance(names, tuple):
@@ -80,7 +80,7 @@ class ExpectedPath(object):
 
 
 def setup_task_states():
-    expected_path = ExpectedPath(states.PENDING, True)
+    expected_path = ExpectedPath(states.PENDING)
     return_path = expected_path.to(states.RECEIVED)
     # noinspection PyTypeChecker
     return_path.to(states.STARTED) \
@@ -95,7 +95,7 @@ def setup_task_states():
 
 
 def setup_worker_states():
-    expected_path = ExpectedPath(False, False)
+    expected_path = ExpectedPath(False)
     # noinspection PyTypeChecker
     expected_path.to(True).to(expected_path)
 
