@@ -5,10 +5,8 @@ from Queue import Queue
 from datetime import datetime
 
 from celery import states
-from pygments import highlight
-from pygments.formatters import Terminal256Formatter
-from pygments.lexers import Python3TracebackLexer
 
+from clearly.utils.traceback import create_highlighter
 from .code_highlighter import typed_code
 from .safe_compiler import safe_compile_text
 from .serializer import TaskInfo, WorkerInfo
@@ -18,6 +16,7 @@ HEADER_SIZE = 8
 HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = colors.DIM(':)')
 DIM_NONE = colors.DIM(colors.CYAN('None'))
+TRACEBACK_HIGHLIGHTER = create_highlighter()
 
 
 class ClearlyClient(object):
@@ -38,10 +37,6 @@ class ClearlyClient(object):
              'amqp://guest@localhost//'
 
         """
-
-        lexer = Python3TracebackLexer()
-        formatter = Terminal256Formatter(style='native')
-        self._tb_highlighter = lambda tb: highlight(tb, lexer, formatter)
 
         from .server import ClearlyServer
         self._clearly_server = ClearlyServer(app, broker_url,
@@ -224,7 +219,7 @@ class ClearlyClient(object):
             if task.result:
                 output = typed_code(task.result)
             else:
-                output = self._tb_highlighter(task.traceback) \
+                output = TRACEBACK_HIGHLIGHTER(task.traceback) \
                     .replace('\n', '\n' + HEADER_PADDING).strip()
             print(colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
