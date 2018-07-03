@@ -80,19 +80,16 @@ class ClearlyClient(object):
 
         """
         self.start()
-        with self._clearly_server \
-                .client_connect(pattern, negate) as q:  # type: Queue
+        with self._clearly_server.client_connect(pattern, negate) as q:  # type: Queue
             try:
                 while True:
                     obj = q.get(timeout=99999)
                     if isinstance(obj, TaskInfo):
-                        self._display_task(obj,
-                                           params and obj.created,
-                                           _is_to_result(obj.state,
-                                                         success,
-                                                         error))
+                        ClearlyClient._display_task(obj,
+                                                    params and obj.created,
+                                                    ClearlyClient._is_to_result(obj.state, success, error))
                     elif isinstance(obj, WorkerInfo):
-                        self._display_worker(obj, True)
+                        ClearlyClient._display_worker(obj, True)
                     else:
                         print('unknown event:', obj)
             except KeyboardInterrupt:
@@ -149,10 +146,10 @@ class ClearlyClient(object):
         """
         for task in self._clearly_server.tasks(pattern, state,
                                                negate):  # type:TaskInfo
-            show = _is_to_result(task.state, success, error)
-            self._display_task(task,
-                               params if params is not None else show,
-                               show)
+            show = ClearlyClient._is_to_result(task.state, success, error)
+            ClearlyClient._display_task(task,
+                                        params if params is not None else show,
+                                        show)
 
     def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
@@ -168,7 +165,7 @@ class ClearlyClient(object):
         """
         for worker in self._clearly_server.workers(pattern,
                                                    negate):  # type:WorkerInfo
-            self._display_worker(worker, stats)
+            ClearlyClient._display_worker(worker, stats)
 
     def task(self, task_uuid):
         """Shows one specific task.
@@ -179,7 +176,7 @@ class ClearlyClient(object):
         """
         task = self._clearly_server.task(task_uuid)
         if task:
-            self._display_task(task, True, True)
+            ClearlyClient._display_task(task, True, True)
 
     def seen_tasks(self):
         """Shows a list of task types seen.
@@ -193,7 +190,8 @@ class ClearlyClient(object):
         """
         self._clearly_server.reset()
 
-    def _display_task(self, task, params, result):
+    @staticmethod
+    def _display_task(task, params, result):
         ts = datetime.fromtimestamp(task.timestamp)
         print(colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
@@ -202,7 +200,7 @@ class ClearlyClient(object):
                                  if task.routing_key else '?'),
                   colors.DIM(task.uuid))
         else:
-            print(self._task_state(task.state),
+            print(ClearlyClient._task_state(task.state),
                   colors.DIM(colors.BLUE(task.retries)),
                   end=' ')
             print(colors.BLUE(task.name), colors.DIM(task.uuid))
@@ -223,8 +221,9 @@ class ClearlyClient(object):
                     .replace('\n', '\n' + HEADER_PADDING).strip()
             print(colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
-    def _display_worker(self, worker, stats):
-        print(self._worker_state(worker.alive),
+    @staticmethod
+    def _display_worker(worker, stats):
+        print(ClearlyClient._worker_state(worker.alive),
               colors.DIM(colors.CYAN(worker.hostname)),
               colors.DIM(colors.YELLOW(str(worker.pid))))
 
@@ -262,7 +261,7 @@ class ClearlyClient(object):
             return colors.BOLD(colors.GREEN(result))
         return colors.BOLD(colors.RED(result))
 
-
-def _is_to_result(state, success, error):
-    return (state == states.FAILURE and error) \
-           or (state == states.SUCCESS and success)
+    @staticmethod
+    def _is_to_result(state, success, error):
+        return (state == states.FAILURE and error) \
+               or (state == states.SUCCESS and success)
