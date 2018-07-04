@@ -1,3 +1,11 @@
+[![Travis](https://img.shields.io/travis/rsalmei/clearly.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-74%25-yellow.svg)]()
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/rsalmei/clearly/graphs/commit-activity)
+[![PyPI version fury.io](https://badge.fury.io/py/clearly.svg)](https://pypi.python.org/pypi/clearly/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/clearly.svg)](https://pypi.python.org/pypi/clearly/)
+[![PyPI status](https://img.shields.io/pypi/status/clearly.svg)](https://pypi.python.org/pypi/clearly/)
+
+
 # clearly
 ## Clear and accurate real-time monitor for celery
 
