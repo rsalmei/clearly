@@ -6,7 +6,7 @@ from datetime import datetime
 
 from celery import states
 
-from clearly.utils.traceback import create_highlighter
+from clearly.utils.traceback_hilighter import create_highlighter
 from .code_highlighter import typed_code
 from .safe_compiler import safe_compile_text
 from .serializer import TaskInfo, WorkerInfo
