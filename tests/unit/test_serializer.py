@@ -1,3 +1,5 @@
+from __future__ import absolute_import, print_function, unicode_literals
+
 import pytest
 
 from clearly.serializer import TASK_OWN_FIELDS, WORKER_OWN_FIELDS, serialize_task, serialize_worker

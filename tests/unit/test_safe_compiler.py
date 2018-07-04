@@ -1,3 +1,5 @@
+from __future__ import absolute_import, print_function, unicode_literals
+
 import pytest
 
 from clearly.safe_compiler import CallDescriptor, safe_compile_text
