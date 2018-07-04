@@ -195,9 +195,11 @@ class ClearlyClient(object):
         ts = datetime.fromtimestamp(task.timestamp)
         print(colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
+            routing_key = task.routing_key or '?'
             print(colors.BLUE(task.name),
-                  colors.MAGENTA(task.routing_key[len(task.name):] or '-'
-                                 if task.routing_key else '?'),
+                  colors.MAGENTA(routing_key[len(task.name):] or '-'
+                                 if routing_key.startswith(task.name)
+                                 else routing_key),
                   colors.DIM(task.uuid))
         else:
             print(ClearlyClient._task_state(task.state),
