@@ -10,6 +10,6 @@ def create_highlighter():
     formatter = Terminal256Formatter(style='native')
 
     def inner(tb):
-        highlight(tb, lexer, formatter)
+        return highlight(tb, lexer, formatter)
 
     return inner
