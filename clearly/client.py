@@ -218,9 +218,11 @@ class ClearlyClient(object):
         if result:
             if task.result:
                 output = typed_code(task.result)
-            else:
+            elif task.traceback:
                 output = TRACEBACK_HIGHLIGHTER(task.traceback) \
                     .replace('\n', '\n' + HEADER_PADDING).strip()
+            else:
+                output = EMPTY
             print(colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
     @staticmethod
