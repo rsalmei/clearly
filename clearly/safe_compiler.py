@@ -1,5 +1,5 @@
 # coding=utf-8
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import ast
 from collections import OrderedDict, namedtuple
@@ -66,12 +66,11 @@ def safe_compile_text(txt):
         except ValueError:
             if isinstance(node, ast.Name):
                 return node.id
-            return repr(node)
+            return 'unsupported: {}'.format(type(node))
 
     try:
         txt = ast.parse(txt, mode='eval')
     except SyntaxError:
         return txt
-    if isinstance(txt, ast.Expression):
-        txt = txt.body
-    return _convert(txt)
+
+    return _convert(txt.body)

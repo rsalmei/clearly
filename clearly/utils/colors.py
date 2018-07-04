@@ -1,6 +1,7 @@
 # coding=utf-8
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+import re
 from functools import partial
 
 
@@ -15,3 +16,7 @@ class colors:
     ORANGE = partial(_col, '\033[38;5;208m')
     BOLD = partial(_col, '\033[1m')
     DIM = partial(_col, '\033[2m')
+
+
+def strip_colors(text):
+    return re.sub(r'\033\[.+?m', '', text)
