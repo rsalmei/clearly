@@ -146,8 +146,7 @@ class ClearlyClient(object):
                 default is False, to get an overview.
 
         """
-        for task in self._clearly_server.tasks(pattern, state,
-                                               negate):  # type:TaskInfo
+        for task in self._clearly_server.tasks(pattern, state, negate):  # type:TaskInfo
             show = ClearlyClient._is_to_result(task.state, success, error)
             ClearlyClient._display_task(task,
                                         params if params is not None else show,
@@ -165,8 +164,7 @@ class ClearlyClient(object):
             stats (bool): if True shows worker stats
 
         """
-        for worker in self._clearly_server.workers(pattern,
-                                                   negate):  # type:WorkerInfo
+        for worker in self._clearly_server.workers(pattern, negate):  # type:WorkerInfo
             ClearlyClient._display_worker(worker, stats)
 
     def task(self, task_uuid):
