@@ -5,7 +5,6 @@ app = Celery('tasks', broker='amqp://localhost', backend='redis://localhost')
 
 @app.task(bind=True, max_retries=20)
 def function_value(self, retries, **kwargs):
-    print(vars(self.request))
     if retries > self.request.retries:
         raise self.retry(countdown=1)
     return kwargs.get('value', -1)
