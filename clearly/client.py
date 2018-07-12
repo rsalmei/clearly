@@ -49,9 +49,9 @@ class ClearlyClient(object):
 
         self._clearly_server.start()
 
-    def capture(self, pattern=None, negate=False,
+    def capture(self, pattern=None, negate=False, workers=None, negate_workers=True,
                 params=False, success=False, error=True):
-        """Starts the real-time engine that captures tasks. It will capture
+        """Starts the real-time engine that captures events. It will capture
         all tasks being sent to celery and all workers known to it.
 
         This will be run in the foreground, so you can see in real-time
@@ -65,16 +65,20 @@ class ClearlyClient(object):
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
             negate (bool): if True, finds tasks that do not match criteria
+            workers (Optional[str]): a pattern to filter workers to capture.
+                ex.: 'service|priority' to filter names containing that
+            negate_workers (bool): if True, finds workers that do not match criteria
             params (bool): if True shows params of all tasks
                 default is False
             success (bool): if True shows successful tasks' results
                 default is False
             error (bool): if True shows failed tasks' results
-                default is True, as you monitoring to find errors, right?
+                default is True, as you're monitoring to find errors, right?
 
         """
         self.start()
-        with self._clearly_server.client_connect(pattern, negate) as q:  # type: Queue
+        with self._clearly_server.client_connect(pattern, negate,
+                                                 workers, negate_workers) as q:  # type: Queue
             try:
                 while True:
                     obj = q.get(timeout=99999)

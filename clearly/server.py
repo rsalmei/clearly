@@ -70,6 +70,8 @@ class ClearlyServer(object):
         self._client_queue = None  # type:Queue
         self._client_regex = None
         self._client_negate = None
+        self._client_workers_regex = None
+        self._client_workers_negate = None
 
         # detect shutdown.
         def sigterm_handler(_signo, _stack_frame):
@@ -110,7 +112,8 @@ class ClearlyServer(object):
             self._background_receiver = None
 
     @contextmanager
-    def client_connect(self, pattern=None, negate=False):
+    def client_connect(self, pattern=None, negate=False,
+                       workers=None, negate_workers=True):
         """Connects a client to this server, filtering the tasks that are sent
         to it.
 
@@ -120,11 +123,16 @@ class ClearlyServer(object):
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
             negate (bool): if True, finds tasks that do not match criteria
+            workers (Optional[str]): a pattern to filter workers to capture.
+                ex.: 'service|priority' to filter names containing that
+            negate_workers (bool): if True, finds workers that do not match criteria
 
         """
 
         self._client_regex = re.compile(pattern or '.')
         self._client_negate = negate
+        self._client_workers_regex = re.compile(workers or '.')
+        self._client_workers_negate = negate_workers
 
         with self._background_lock:
             self._client_queue = Queue()
@@ -136,34 +144,36 @@ class ClearlyServer(object):
         print('Starting server', threading.current_thread())
         sys.stdout.flush()
 
-        def client_accepts(values):
-            return any(v and self._client_regex.search(v)
-                       for v in values) ^ self._client_negate
+        def maybe_publish(func, regex, negate, *values):
+            if not self._client_queue:
+                return
+            if any(v and regex.search(v) for v in values) == negate:
+                return
 
-        def maybe_publish(func, *values):
-            if self._client_queue:
-                if values and client_accepts(values):
-                    obj = func()
-                    try:
-                        self._client_queue.put(obj)
-                    except AttributeError:
-                        # the capture is not synced with terminal anymore.
-                        # no problem.
-                        pass
+            obj = func()
+            try:
+                self._client_queue.put(obj)
+            except AttributeError:
+                # the capture is not synced with terminal anymore.
+                # no problem.
+                pass
 
         def process_event(event):
             event_type = event['type']
             if event_type.startswith('task'):
                 for task, state, created in process_task_event(event):
                     maybe_publish(lambda: serialize_task(task, state, created),
+                                  self._client_regex, self._client_negate,
                                   task.name, task.routing_key)
 
             elif event_type.startswith('worker'):
                 for worker in process_worker_event(event):
-                    maybe_publish(lambda: serialize_worker(worker))
+                    maybe_publish(lambda: serialize_worker(worker),
+                                  self._client_workers_regex, self._client_workers_negate,
+                                  worker.hostname)
 
             else:
-                maybe_publish(lambda: event)
+                print('unknown event:', event)
 
         def process_task_event(event):
             task, created = self._memory.get_or_create_task(event['uuid'])
@@ -196,8 +206,7 @@ class ClearlyServer(object):
                     '*': process_event,
                 })  # type: EventReceiver
             self._background_connected.set()
-            self._background_receiver.capture(limit=None, timeout=None,
-                                              wakeup=True)
+            self._background_receiver.capture(limit=None, timeout=None, wakeup=True)
 
         print('Server stopped', threading.current_thread())
         sys.stdout.flush()
