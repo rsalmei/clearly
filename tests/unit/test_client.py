@@ -15,8 +15,8 @@ from clearly.utils.colors import strip_colors
 
 @pytest.fixture
 def mocked_client():
-    with mock.patch('clearly.server.ClearlyServer'):
-        yield ClearlyClient()
+    with mock.patch('clearly.server.ClearlyServer') as mocked_server:
+        yield ClearlyClient(mocked_server)
 
 
 @pytest.fixture
