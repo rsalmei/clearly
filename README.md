@@ -28,10 +28,13 @@ See what `clearly` looks like:
 
 ## Requirements
 
-You can **always** use `clearly`! Regardless of your celery configuration!
-- you just have to enable *Events* and you're good to go!
+To use `clearly`, you currently need to:
+- be in python 2.7 (will support 3.4+ very soon)
+- have a result backend configured
+- enable *Events* (`celery worker -E`)
 
-(previous version did not use celery events, so it had several limitations, that's gone)
+and you're good to go!
+(any version of celery will work :)
 
 
 ## How `clearly` works
@@ -87,7 +90,7 @@ clearlycli.capture()
 ### you can also grab like
 
 ```python
-clearly.capture(show_params=True)
+clearlycli.capture(params=True)
 ```
 
 
@@ -227,14 +230,14 @@ def reset(self):
 That way, you'll be able to filter tasks based on any of those constraints, like an id of an entity.
 - if you're using [django](https://www.djangoproject.com/) and [django-extensions](https://github.com/django-extensions/django-extensions), put in your settings a `SHELL_PLUS_POST_IMPORT` to auto import this!
 Now you just have to create a pre-configured instance of it and you're good to go. Put together a simple python module in your project to provide an already initialized instance of `clearly`.
-Now you have a tool always ready to be used, easily pluggable even in production, to actually see what's going on in your tasks, and figure out that pesky bug.
-- the more you filter, the less you'll have to analyze, so find the best combination for you debugging needs. A busy system can have a thousand or more messages in only a minute.
+Now you have a tool always ready to be used, easily pluggable even in production, to actually see what's going on in your tasks, and figure out those pesky bugs.
+- the more you filter, the less you'll have to analyze, so find the best combination for you debugging needs. A busy system can have thousands per minute.
 
 
 ## To do
 
 - support python 3 (not actually tested yet, soon);
-- implement a weak reference in tasks data, to be able to release the host's memory if the need arises;
+- split clearly client and server in two, to allow a always-on server to run, and multiple clients connect;
 - include a plugin system, to be able to print representations of custom objects;
 - include a script mode, to call right from the shell (make work even a "| grep");
 - any other ideas welcome!
