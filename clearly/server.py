@@ -170,11 +170,14 @@ class ClearlyServer(object):
             with self._task_states.track_changes(task):
                 (_, _), subject = self._memory.event(event)
             if task.state == states.SUCCESS:
-                if self._ignore_result_backend:
+                try:
                     # celery tasks' results are escaped, so we must compile them.
-                    task.result = safe_compile_text(task.result)
-                else:
-                    task.result = self._app.AsyncResult(task.uuid).result
+                    task.result = safe_compile_text(task.result, raises=True)
+                except SyntaxError:
+                    # celery must have truncated task result.
+                    # use result backend as fallback if allowed and available.
+                    if not self._ignore_result_backend:
+                        task.result = self._app.AsyncResult(task.uuid).result
             if created:
                 yield task, '-', True
             for state in self._task_states.states_through():
