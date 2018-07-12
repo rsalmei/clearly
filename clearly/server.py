@@ -10,10 +10,12 @@ from contextlib import contextmanager
 from itertools import chain, islice
 
 from celery import Celery, states
+from celery.backends.base import DisabledBackend
 from celery.events import EventReceiver
 from celery.events.state import State, Task, Worker
 from kombu import log as kombu_log
 
+from clearly.safe_compiler import safe_compile_text
 from .expected_state import ExpectedStateHandler, setup_task_states, \
     setup_worker_states
 from .serializer import serialize_task, serialize_worker
@@ -32,18 +34,22 @@ class ClearlyServer(object):
             _worker_states: ExpectedStateHandler
     """
 
-    def __init__(self, app=None, 
+    def __init__(self, app=None, ignore_result_backend=False,
                  max_tasks_in_memory=1000, max_workers_in_memory=100):
         """Constructs a server instance.
         
         Args:
             app (Celery): a configured celery app instance
+            ignore_result_backend (bool): if True, do not fetch results from the actual result backend
             max_tasks_in_memory (int): max tasks stored
             max_workers_in_memory (int): max workers stored
 
         """
+        if isinstance(app.backend, DisabledBackend):
+            ignore_result_backend = True
 
         self._app = app
+        self._ignore_result_backend = ignore_result_backend
 
         self._memory = self._app.events.State(
             max_tasks_in_memory=max_tasks_in_memory,
@@ -164,13 +170,15 @@ class ClearlyServer(object):
             with self._task_states.track_changes(task):
                 (_, _), subject = self._memory.event(event)
             if task.state == states.SUCCESS:
-                ar_result = self._app.AsyncResult(task.uuid).result
-                if ar_result:
-                    task.result = ar_result
             for state in chain(range(created),
                                self._task_states.states_through()):
                 yield task, state, created
                 created = False
+                if self._ignore_result_backend:
+                    # celery tasks' results are escaped, so we must compile them.
+                    task.result = safe_compile_text(task.result)
+                else:
+                    task.result = self._app.AsyncResult(task.uuid).result
 
         def process_worker_event(event):
             worker, _ = self._memory.get_or_create_worker(event['hostname'])
