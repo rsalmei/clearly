@@ -68,7 +68,7 @@ DO NOT FEAR the memory consumption! It is very optimized, and by default only st
 ## Get `clearly`
 
 1. `pip install -U clearly`
-2. there's no step 2.
+2. that's all!
 
 
 ## How to use
@@ -77,8 +77,9 @@ DO NOT FEAR the memory consumption! It is very optimized, and by default only st
 
 ```python
 from yourproject.celeryconf import app
-from clearly import ClearlyClient
-clearlycli = ClearlyClient(app)
+from clearly.server import ClearlyServer
+from clearly.client import ClearlyClient
+clearlycli = ClearlyClient(ClearlyServer(app))
 ```
 
 ### grab them
