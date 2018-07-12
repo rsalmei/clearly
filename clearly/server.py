@@ -26,27 +26,25 @@ class ClearlyServer(object):
     Server object, to capture events and handle tasks and workers.
     
         Attributes:
-            _app: celery.app
+            _app: Celery
             _memory: celery.events.State
             _task_states: ExpectedStateHandler
             _worker_states: ExpectedStateHandler
     """
 
-    def __init__(self, app=None, broker_url=None,
+    def __init__(self, app=None, 
                  max_tasks_in_memory=1000, max_workers_in_memory=100):
         """Constructs a server instance.
         
         Args:
-            app (Optional[celery.app]): a configured celery app instance
-            broker_url (Optional[str]): a broker connection string, like
-             'amqp://guest@localhost//'
+            app (Celery): a configured celery app instance
+            max_tasks_in_memory (int): max tasks stored
+            max_workers_in_memory (int): max workers stored
 
         """
 
-        if not (app or broker_url):
-            raise UserWarning('either app or broker has to be provided')
+        self._app = app
 
-        self._app = app or Celery(broker=broker_url)
         self._memory = self._app.events.State(
             max_tasks_in_memory=max_tasks_in_memory,
             max_workers_in_memory=max_workers_in_memory,
