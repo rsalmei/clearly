@@ -41,7 +41,7 @@ def tristate(request):
     yield request.param
 
 
-@pytest.fixture(params=(states.PENDING, states.SUCCESS, states.FAILURE))
+@pytest.fixture(params=(states.PENDING, states.SUCCESS, states.FAILURE, states.RETRY))
 def state_type(request):
     # contains a transient state, a successfully finished, and a failure.
     yield request.param
@@ -76,7 +76,7 @@ def test_client_capture_task(state_type, bool1, bool2, mocked_client_display):
     _prepare_capture(mocked_client_display, task)
     mocked_client_display.capture(success=bool1, error=bool2)
     show_result = (state_type == states.SUCCESS and bool1) \
-                  or (state_type == states.FAILURE and bool2)
+                  or (state_type in (states.FAILURE, states.RETRY) and bool2)
     mocked_client_display._display_task.assert_called_once_with(task, False, show_result)
 
 
@@ -109,7 +109,7 @@ def test_client_tasks(state_type, bool1, bool2, tristate, mocked_client_display)
     mocked_client_display._clearly_server.tasks.return_value = (task,)
     mocked_client_display.tasks(success=bool1, error=bool2, params=tristate)
     show_result = (state_type == states.SUCCESS and bool1) \
-                  or (state_type == states.FAILURE and bool2)
+                  or (state_type in (states.FAILURE, states.RETRY) and bool2)
     show_params = tristate if tristate is not None else show_result
     mocked_client_display._display_task.assert_called_once_with(task, show_params, show_result)
 

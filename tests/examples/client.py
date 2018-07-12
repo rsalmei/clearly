@@ -4,3 +4,5 @@ from tasks import app
 
 srv = ClearlyServer(app)
 cli = ClearlyClient(srv)
+
+cli.capture(params=True, success=True)

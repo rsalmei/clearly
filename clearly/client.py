@@ -265,5 +265,5 @@ class ClearlyClient(object):
 
     @staticmethod
     def _is_to_result(state, success, error):
-        return (state == states.FAILURE and error) \
+        return (state in (states.FAILURE, states.RETRY) and error) \
                or (state == states.SUCCESS and success)
