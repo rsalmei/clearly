@@ -62,7 +62,7 @@ setup(
     packages=find_packages(exclude=['img']),
     install_requires=[
         'six',
-        'celery>=3.1,<4',
+        'celery>=3.1',
         'pygments'
     ],
 )
