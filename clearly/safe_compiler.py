@@ -7,7 +7,7 @@ from collections import OrderedDict, namedtuple
 CallDescriptor = namedtuple('CallDescriptor', 'name args kwargs')
 
 
-def safe_compile_text(txt):
+def safe_compile_text(txt, raises=False):
     """Based on actual ast.literal_eval, but this one supports 'calls', 
     like in a repr of a datetime: `datetime.datetime(2017, 5, 20)`.
     
@@ -24,6 +24,10 @@ def safe_compile_text(txt):
     the safe parts. Any calls or attribute lookups are returned as descriptors
     or strings, never being executed. And their parameters _will_ be analysed,
     and correctly syntax colored!
+
+    Args:
+        txt: the text
+        raises: if True, raise an exception in case of error
     """
 
     def _convert(node):
@@ -71,6 +75,8 @@ def safe_compile_text(txt):
     try:
         txt = ast.parse(txt, mode='eval')
     except SyntaxError:
+        if raises:
+            raise
         return txt
 
     return _convert(txt.body)

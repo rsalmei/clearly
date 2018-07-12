@@ -128,13 +128,26 @@ def test_safe_compile_generic(text, obj):
     assert safe_compile_text(text) == obj
 
 
-@pytest.mark.parametrize('text', [
+INVALID = [
     'a a',
     '$',
     'a=1',  # it's invalid in 'eval' ast mode.
-])
+    'import time',  # it's invalid in 'eval' ast mode.
+    'if import',
+    '1 if True: else 1',
+    'if True: pass; else 1',  # it's invalid in 'eval' ast mode.
+]
+
+
+@pytest.mark.parametrize('text', INVALID)
 def test_safe_compile_invalid_python(text):
     assert safe_compile_text(text) == text
+
+
+@pytest.mark.parametrize('text', INVALID)
+def test_safe_compile_invalid_python_with_raises(text):
+    with pytest.raises(SyntaxError):
+        safe_compile_text(text, raises=True)
 
 
 @pytest.mark.parametrize('text', [
