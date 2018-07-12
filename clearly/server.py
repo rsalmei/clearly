@@ -7,7 +7,7 @@ import signal
 import threading
 from Queue import Queue
 from contextlib import contextmanager
-from itertools import chain, islice
+from itertools import islice
 
 from celery import Celery, states
 from celery.backends.base import DisabledBackend
@@ -170,15 +170,15 @@ class ClearlyServer(object):
             with self._task_states.track_changes(task):
                 (_, _), subject = self._memory.event(event)
             if task.state == states.SUCCESS:
-            for state in chain(range(created),
-                               self._task_states.states_through()):
-                yield task, state, created
-                created = False
                 if self._ignore_result_backend:
                     # celery tasks' results are escaped, so we must compile them.
                     task.result = safe_compile_text(task.result)
                 else:
                     task.result = self._app.AsyncResult(task.uuid).result
+            if created:
+                yield task, '-', True
+            for state in self._task_states.states_through():
+                yield task, state, False
 
         def process_worker_event(event):
             worker, _ = self._memory.get_or_create_worker(event['hostname'])
