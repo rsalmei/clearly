@@ -15,11 +15,11 @@ Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at on
 And flower needs page refreshes, filter only one task type at a time and truncates results... 😞
 
 Ok, `clearly` does provide all that!  
-And it works right in the terminal, has an advanced syntax coloring system, client server, multiple filters and complete results!
-It's great to actually _see_ what's going on in your celery tasks, and in real-time, so it's great for debugging.
+And it works right in the (i)python terminal, has an advanced syntax coloring system, multiple filters and complete results!
+It's great to actually _see_ what's going on in your celery tasks, and in real-time! So it's great for debugging and demoing.
 
-Actually, `clearly` does not have an outer process server yet (it is a thread), and it doesn't persist any data.
-In the future it should have a proper server, with persistence, and a Docker image for simple deploying.
+Actually, `clearly` does not have an outer process server yet, it is a background thread.
+In the future it will have a proper server, and a Docker image for simple deploying.
 But regardless that, `clearly` is quite complete, and should complement flower nicely.
 
 See what `clearly` looks like:
@@ -30,18 +30,23 @@ See what `clearly` looks like:
 
 To use `clearly`, you currently need to:
 - be in python 2.7 (will support 3.4+ very soon)
-- have a result backend configured
 - enable *Events* (`celery worker -E`)
 
 and you're good to go!
-(any version of celery will work :)
+
+Highlights:
+- any version of celery will work :)
+- a result backend is not necessary (but used if available :)
 
 
 ## How `clearly` works
 
 This tool creates a background thread with a celery events receiver, which receives events from all clients and all workers connected, dynamically updating states.
 
-These events are processed and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird. The parameters of the tasks are dynamically compiled, and beautifully syntax colored, while tasks completed get their results directly from the result backend, to overcome the problem of truncated results. All async workers life cycles are managed and listed on screen. All tasks triggered show up immediately on screen, and you start seeing what's going on with those tasks, in real-time!
+These events are processed, and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird.
+The parameters of the tasks are dynamically (and safely) compiled, and beautifully syntax colored, while tasks completed get their results directly from the result backend if available, to overcome the problem of truncated results.
+All async workers' life cycles are also processed and listed on screen.
+All tasks triggered show up immediately on screen, and you start seeing what's going on with those tasks, in real-time!
 
 At any moment, you can CTRL+C out of the client, and rest assured that the background thread will continue gathering all updates seamlessly.
 
@@ -99,8 +104,8 @@ clearlycli.capture(params=True)
 
 
 ### note
-Any way you capture them, `clearly` is always storing the same data about the tasks. The `show_params` is only informative, for you to see them right in the capture mode. You can see them later too, after capturing.
-(The default is to `show_error`, as it is much more likely to get your interest)
+Any way you capture them, `clearly` is always storing the same data about the tasks. The `params` is only informative, for you to see them right in the capture mode. You can see them later too, after capturing.
+(The default is to show `error`s, as they are much more likely to get your interest).
 
 
 ### stop capturing and analyze

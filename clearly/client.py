@@ -27,21 +27,15 @@ class ClearlyClient(object):
             _clearly_server: the server instance
     """
 
-    def __init__(self, app=None, broker_url=None,
-                 max_tasks_in_memory=1000, max_workers_in_memory=100):
+    def __init__(self, clearly_server):
         """Constructs a client instance.
         
         Args:
-            app (Optional[celery.app]): a configured celery app instance
-            broker_url (Optional[str]): a broker connection string like
-             'amqp://guest@localhost//'
+            clearly_server (clearly.server.ClearlyServer): a configured clearly server
 
         """
 
-        from .server import ClearlyServer
-        self._clearly_server = ClearlyServer(app, broker_url,
-                                             max_tasks_in_memory,
-                                             max_workers_in_memory)
+        self._clearly_server = clearly_server
 
     def start(self):
         """Starts the real-time engine that captures tasks. It will capture 
@@ -195,7 +189,7 @@ class ClearlyClient(object):
         ts = datetime.fromtimestamp(task.timestamp)
         print(colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
-            routing_key = task.routing_key or '?'
+            routing_key = task.routing_key or EMPTY
             print(colors.BLUE(task.name),
                   colors.MAGENTA(routing_key[len(task.name):] or '-'
                                  if routing_key.startswith(task.name)
