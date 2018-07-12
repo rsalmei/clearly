@@ -2,28 +2,22 @@
 from __future__ import unicode_literals
 
 from distutils.core import setup
-
 from setuptools import find_packages
 
 import clearly
 
-try:
-    import pandoc
-    import os
 
-    doc = pandoc.Document()
+def get_readme():
     with open('README.md') as readme_file:
-        doc.markdown = readme_file.read()
-    readme = doc.rst
-except:
-    with open('README.md') as readme_file:
-        readme = readme_file.read()
+        return readme_file.read()
+
 
 setup(
     name='clearly',
     version=clearly.__version__,
     description='Simple and accurate real-time monitor for celery',
-    long_description=readme,
+    long_description=get_readme(),
+    long_description_content_type='text/markdown',
     url='https://github.com/rsalmei/clearly',
     author=clearly.__author__,
     author_email=clearly.__email__,
@@ -58,8 +52,9 @@ setup(
         # 'Programming Language :: Python :: 3.6',
         # 'Programming Language :: Python :: 3.7',
     ],
-    keywords='celery task-queue monitoring rabbitmq rabbitmq-consumer asynchronous'.split(),
+    keywords='celery task-queue flower monitoring asynchronous'.split(),
     packages=find_packages(exclude=['img']),
+    python_requires='>=2.7,<3',
     install_requires=[
         'six',
         'celery>=3.1',
