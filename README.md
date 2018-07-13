@@ -6,10 +6,10 @@
 [![PyPI status](https://img.shields.io/pypi/status/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 
 
-# clearly
+# clearly :)
 ## Clear and accurate real-time monitor for celery
 
-Clearly is an alternative to [flower](https://github.com/mher/flower).
+`Clearly` is an alternative to [flower](https://github.com/mher/flower).
 While I do like it, to me it's not been totally up to the task (pun intended).
 Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once and complete, whole, thorough, comprehensive results!
 And flower needs page refreshes, filter only one task type at a time and truncates results... 😞
@@ -243,7 +243,7 @@ Now you have a tool always ready to be used, easily pluggable even in production
 ## To do
 
 - ~~support python 3 (not actually tested yet, soon);~~
-- split clearly client and server in two, to allow a always-on server to run, and multiple clients connect;
+- split `Clearly` client and server, to allow a always-on server to run, and multiple clients connect;
 - include a plugin system, to be able to print representations of custom objects;
 - include a script mode, to call right from the shell (make work even a "| grep");
 - any other ideas welcome!
