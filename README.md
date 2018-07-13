@@ -71,13 +71,6 @@ DO NOT FEAR the memory consumption! It is very optimized, and by default only st
 2. that's all!
 
 
-## Versions highlights:
-- 0.2.6: marked production quality
-- 0.3.0: result backend is not mandatory
-- 0.3.6: last version to support py2 only
-- 0.4.0: supports both py2.7 and py3.4+
-
-
 ## How to use
 
 ### initialize it
@@ -254,6 +247,15 @@ Now you have a tool always ready to be used, easily pluggable even in production
 - include a plugin system, to be able to print representations of custom objects;
 - include a script mode, to call right from the shell (make work even a "| grep");
 - any other ideas welcome!
+
+
+## Changelog highlights:
+- 0.4.0: supports both py2.7 and py3.4+
+- 0.3.6: last version to support py2 only
+- 0.3.0: result backend is not mandatory anymore
+- 0.2.6: gets production quality
+- 0.2.0: support standard celery events
+- 0.1.4: last version that doesn't use events
 
 
 ## License
