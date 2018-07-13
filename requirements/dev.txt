@@ -1,0 +1,4 @@
+-e .
+ipython
+pdbpp
+redis

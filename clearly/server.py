@@ -5,9 +5,15 @@ import logging
 import re
 import signal
 import threading
-from Queue import Queue
 from contextlib import contextmanager
 from itertools import islice
+
+try:
+    # noinspection PyCompatibility
+    from queue import Queue
+except ImportError:
+    # noinspection PyUnresolvedReferences,PyCompatibility
+    from Queue import Queue
 
 from celery import Celery, states
 from celery.backends.base import DisabledBackend

@@ -5,11 +5,19 @@ import six
 
 from .safe_compiler import CallDescriptor
 from .utils.colors import colors
+from .utils.text import force_text
 
 SEPARATOR = colors.RED(', ')
 KWARGS_SEPARATOR = colors.RED('=')
 DICT_SEPARATOR = colors.RED(': ')
 NONE = colors.CYAN('None')
+
+try:
+    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
+    unicode
+except:
+    def unicode(x):
+        return str(x)
 
 
 def typed_code(p, wrap=True):
@@ -17,9 +25,9 @@ def typed_code(p, wrap=True):
         return NONE
 
     if isinstance(p, bool):
-        return colors.CYAN(force_text(p))
+        return colors.CYAN(str(p))
 
-    if isinstance(p, (str, unicode)):
+    if isinstance(p, six.string_types):
         p = force_text(p)
         if "'" in p and '"' not in p:
             escape = '"'
@@ -28,8 +36,8 @@ def typed_code(p, wrap=True):
             p = p.replace("'", "\\'")
         return colors.YELLOW('{c}{p}{c}'.format(p=p, c=escape))
 
-    if isinstance(p, (int, long, float)):
-        return colors.GREEN(force_text(p))
+    if isinstance(p, six.integer_types + (float,)):
+        return colors.GREEN(str(p))
 
     if isinstance(p, CallDescriptor):
         func_args = typed_code(p.args, wrap=False) if p.args else ''
@@ -44,7 +52,7 @@ def typed_code(p, wrap=True):
         return f.format(SEPARATOR.join(typed_code(x) for x in p))
 
     if isinstance(p, set):
-        return '{{{}}}'.format(typed_code(sorted(p), wrap=False))
+        return '{{{}}}'.format(typed_code(sorted(p, key=lambda x: unicode(x)), wrap=False))
 
     if isinstance(p, tuple):
         if wrap:
@@ -72,19 +80,3 @@ def typed_code(p, wrap=True):
                            for k, v in p.items()))
 
     return force_text(repr(p))
-
-
-def force_text(s, encoding='utf-8', errors='strict'):
-    """Based on the django.text.encoding.force_text.
-    
-    """
-    if isinstance(s, six.text_type):
-        return s
-    if not isinstance(s, six.string_types):
-        if hasattr(s, '__unicode__'):
-            s = s.__unicode__()
-        else:
-            s = six.text_type(bytes(s), encoding, errors)
-    else:
-        s = six.text_type(s, encoding, errors)
-    return s

@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
 import re
@@ -7,7 +8,7 @@ import pytest
 from clearly.utils.colors import colors
 
 
-@pytest.fixture(scope='session', params=('a', 'A', 'Tests are fun!'))
+@pytest.fixture(scope='session', params=('a', 'A', 'Tests are fun!', 'rogério'))
 def text(request):
     yield request.param
 

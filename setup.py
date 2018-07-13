@@ -1,7 +1,8 @@
 # coding=utf-8
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 from distutils.core import setup
+
 from setuptools import find_packages
 
 import clearly
@@ -44,17 +45,17 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        # 'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3',
         # 'Programming Language :: Python :: 3.2',
         # 'Programming Language :: Python :: 3.3',
-        # 'Programming Language :: Python :: 3.4',
-        # 'Programming Language :: Python :: 3.5',
-        # 'Programming Language :: Python :: 3.6',
-        # 'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
-    keywords='celery task-queue flower monitoring asynchronous'.split(),
+    keywords='celery task queue job flower monitoring distributed asynchronous'.split(),
     packages=find_packages(exclude=['img']),
-    python_requires='>=2.7,<3',
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
     install_requires=[
         'six',
         'celery>=3.1',
