@@ -45,7 +45,7 @@ from clearly.utils.colors import strip_colors
     ({'1'}, "{'1'}"),
     ({True}, '{True}'),
     ({None}, '{None}'),
-    ({'1', 2, False, None}, "{None, False, 2, '1'}"),  # deterministic sorted
+    ({'1', 2, False, None}, "{'1', 2, False, None}"),  # deterministic sorted
 
     # simple dicts
     ({}, '{}'),
@@ -72,7 +72,7 @@ from clearly.utils.colors import strip_colors
     (CallDescriptor('datetime.timedelta', None, {'secs': 1}), 'datetime.timedelta(secs=1)'),
     ((1, CallDescriptor('f', (1,), None), CallDescriptor('g', None, {'x': 2})), '(1, f(1), g(x=2))'),
     (['a', CallDescriptor('m.n', ('1',), None)], "['a', m.n('1')]"),
-    ({True, CallDescriptor('f', (False,), None)}, '{True, f(False)}'),
+    ({True, CallDescriptor('f', (False,), None)}, '{f(False), True}'),
     ({None: CallDescriptor('f', None, {'param': None})}, '{None: f(param=None)}'),
 
     # complex functions

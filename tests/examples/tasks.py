@@ -28,3 +28,8 @@ def function_ignore(self, retries, **kwargs):
     if retries > self.request.retries:
         raise self.retry(countdown=1)
     return kwargs
+
+
+@app.task
+def function_any(*args, **kwargs):
+    return dict(result=args, extra=kwargs)
