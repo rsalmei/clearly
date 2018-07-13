@@ -4,11 +4,16 @@ from __future__ import absolute_import, print_function, unicode_literals
 import re
 from functools import partial
 
-from .text import force_text
+try:
+    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
+    unicode
+except:
+    def unicode(x):
+        return str(x)
 
 
 class colors:
-    _col = lambda color, text: color + force_text(text) + '\033[0m'
+    _col = lambda color, text: color + unicode(text) + '\033[0m'
     BLUE = partial(_col, '\033[94m')
     GREEN = partial(_col, '\033[92m')
     YELLOW = partial(_col, '\033[93m')

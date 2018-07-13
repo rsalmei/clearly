@@ -12,6 +12,13 @@ KWARGS_SEPARATOR = colors.RED('=')
 DICT_SEPARATOR = colors.RED(': ')
 NONE = colors.CYAN('None')
 
+try:
+    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
+    unicode
+except:
+    def unicode(x):
+        return str(x)
+
 
 def typed_code(p, wrap=True):
     if p is None:
@@ -45,7 +52,7 @@ def typed_code(p, wrap=True):
         return f.format(SEPARATOR.join(typed_code(x) for x in p))
 
     if isinstance(p, set):
-        return '{{{}}}'.format(typed_code(sorted(p, key=lambda x: force_text(repr(x))), wrap=False))
+        return '{{{}}}'.format(typed_code(sorted(p, key=lambda x: unicode(x)), wrap=False))
 
     if isinstance(p, tuple):
         if wrap:
