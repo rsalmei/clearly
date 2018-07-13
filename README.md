@@ -29,14 +29,14 @@ See what `clearly` looks like:
 ## Requirements
 
 To use `clearly`, you currently need to:
-- be in python 2.7 (will support 3.4+ very soon)
 - enable *Events* (`celery worker -E`)
 
 and you're good to go!
 
 Highlights:
-- any version of celery will work :)
-- a result backend is not necessary (but used if available :)
+- any version of celery will work, from 3.1 to 4.2+ :)
+- a result backend is not mandatory (but used if available :)
+- now the code supports both python 2.7 and python 3.4+ :)
 
 
 ## How `clearly` works
@@ -230,6 +230,13 @@ def reset(self):
 ```
 
 
+## Versions highlights:
+- 0.2.6: marked production quality
+- 0.3.0: result backend is not mandatory
+- 0.3.6: last version to support py2 only
+- 0.4.0: supports both py2.7 and py3.4+
+
+
 ## Hints
 
 - write a small [celery router](http://docs.celeryproject.org/en/latest/userguide/routing.html#routers) and in there generate dynamic routing keys, based on the actual arguments of the async call in place.
@@ -242,11 +249,12 @@ Now you have a tool always ready to be used, easily pluggable even in production
 
 ## To do
 
-- support python 3 (not actually tested yet, soon);
+- ~~support python 3 (not actually tested yet, soon);~~
 - split clearly client and server in two, to allow a always-on server to run, and multiple clients connect;
 - include a plugin system, to be able to print representations of custom objects;
 - include a script mode, to call right from the shell (make work even a "| grep");
 - any other ideas welcome!
+
 
 ## License
 This software is licensed under the MIT License. See the LICENSE file in the top distribution directory for the full license text.
