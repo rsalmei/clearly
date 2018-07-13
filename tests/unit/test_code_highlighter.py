@@ -58,6 +58,12 @@ from clearly.utils.colors import strip_colors
     ({None: None}, "{None: None}"),
     (OrderedDict((('1', 2), (False, None))), "{'1': 2, False: None}"),  # deterministic
 
+    # unicode
+    ('rogério', "'rogério'"),
+    (('á', 'ç'), "('á', 'ç')"),
+    ({'ñ', 'ô'}, "{'ñ', 'ô'}"),
+    ({'ì': 'ü'}, "{'ì': 'ü'}"),
+
     # complex structures
     ((1, (2, True, {5, 4}), ['ba', 'b'], {1: 2}), "(1, (2, True, {4, 5}), ['ba', 'b'], {1: 2})"),
     ([1, (2, 3), {'ok': True}], "[1, (2, 3), {'ok': True}]"),

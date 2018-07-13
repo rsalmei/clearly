@@ -8,7 +8,7 @@ import pytest
 from clearly.utils.colors import colors
 
 
-@pytest.fixture(scope='session', params=('a', 'A', 'Tests are fun!'))
+@pytest.fixture(scope='session', params=('a', 'A', 'Tests are fun!', 'rogério'))
 def text(request):
     yield request.param
 
