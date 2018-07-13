@@ -1,7 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
-VERSION = (0, 4, 1)
+VERSION = (0, 4, 2)
 
 __author__ = 'Rogério Sampaio de Almeida'
 __email__ = 'rsalmei@gmail.com'
