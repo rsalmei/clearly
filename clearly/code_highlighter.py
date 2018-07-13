@@ -20,7 +20,7 @@ def typed_code(p, wrap=True):
     if isinstance(p, bool):
         return colors.CYAN(force_text(p))
 
-    if isinstance(p, (str, unicode)):
+    if isinstance(p, six.string_types):
         p = force_text(p)
         if "'" in p and '"' not in p:
             escape = '"'
@@ -29,7 +29,7 @@ def typed_code(p, wrap=True):
             p = p.replace("'", "\\'")
         return colors.YELLOW('{c}{p}{c}'.format(p=p, c=escape))
 
-    if isinstance(p, (int, long, float)):
+    if isinstance(p, six.integer_types + (float,)):
         return colors.GREEN(force_text(p))
 
     if isinstance(p, CallDescriptor):
@@ -45,7 +45,7 @@ def typed_code(p, wrap=True):
         return f.format(SEPARATOR.join(typed_code(x) for x in p))
 
     if isinstance(p, set):
-        return '{{{}}}'.format(typed_code(sorted(p, key=lambda x: str(x)), wrap=False))
+        return '{{{}}}'.format(typed_code(sorted(p, key=lambda x: force_text(x)), wrap=False))
 
     if isinstance(p, tuple):
         if wrap:
