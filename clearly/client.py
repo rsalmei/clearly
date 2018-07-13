@@ -220,7 +220,7 @@ class ClearlyClient(object):
                              wrap=False) or EMPTY)
 
         if result:
-            if task.result:
+            if task.result is not None:
                 output = typed_code(task.result)
             elif task.traceback:
                 output = TRACEBACK_HIGHLIGHTER(task.traceback) \
