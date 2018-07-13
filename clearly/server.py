@@ -15,7 +15,7 @@ except ImportError:
     # noinspection PyUnresolvedReferences,PyCompatibility
     from Queue import Queue
 
-from celery import Celery, states
+from celery import Celery, states, __version__ as CELERY_VERSION
 from celery.backends.base import DisabledBackend
 from celery.events import EventReceiver
 from celery.events.state import State, Task, Worker
@@ -188,7 +188,7 @@ class ClearlyServer(object):
             if task.state == states.SUCCESS:
                 try:
                     # celery tasks' results are escaped, so we must compile them.
-                    task.result = safe_compile_text(task.result, raises=True)
+                    task.result = compile_task_result(task.result)
                 except SyntaxError:
                     # celery must have truncated task result.
                     # use result backend as fallback if allowed and available.
@@ -282,3 +282,13 @@ class ClearlyServer(object):
     def stats(self):
         m = self._memory
         return m.task_count, m.event_count, len(m.tasks), len(m.workers)
+
+
+if CELERY_VERSION >= '4':
+    def compile_task_result(result):
+        # compile with `raises`, to detect truncated results.
+        return safe_compile_text(result, raises=True)
+else:
+    def compile_task_result(result):
+        # old celery tasks' results are escaped twice.
+        return safe_compile_text(safe_compile_text(result, raises=True), raises=True)
