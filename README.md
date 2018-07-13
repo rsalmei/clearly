@@ -71,6 +71,13 @@ DO NOT FEAR the memory consumption! It is very optimized, and by default only st
 2. that's all!
 
 
+## Versions highlights:
+- 0.2.6: marked production quality
+- 0.3.0: result backend is not mandatory
+- 0.3.6: last version to support py2 only
+- 0.4.0: supports both py2.7 and py3.4+
+
+
 ## How to use
 
 ### initialize it
@@ -228,13 +235,6 @@ def reset(self):
     
     """
 ```
-
-
-## Versions highlights:
-- 0.2.6: marked production quality
-- 0.3.0: result backend is not mandatory
-- 0.3.6: last version to support py2 only
-- 0.4.0: supports both py2.7 and py3.4+
 
 
 ## Hints
