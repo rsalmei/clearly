@@ -1,8 +1,14 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import re
-from Queue import Queue
 from datetime import datetime
+
+try:
+    # noinspection PyCompatibility
+    from queue import Queue
+except ImportError:
+    # noinspection PyUnresolvedReferences,PyCompatibility
+    from Queue import Queue
 
 import pytest
 from celery import states
