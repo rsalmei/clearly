@@ -140,8 +140,13 @@ def test_client_task(bool1, mocked_client_display):
         mocked_client_display._display_task.assert_not_called()
 
 
-@pytest.fixture(params=(None, 'nice'))
-def task_result(request):
+@pytest.fixture(params=[
+    (None, None),
+    (False, 'False'),
+    (0, '0'),
+    ('nice', "'nice'"),
+], ids=lambda x: str(x[0]))
+def task_result_expected(request):
     yield request.param
 
 
@@ -155,7 +160,9 @@ def task_tb(request):
     yield request.param
 
 
-def test_client_display_task(bool1, bool2, task_result, task_created, task_tb, mocked_client, capsys):
+def test_client_display_task(bool1, bool2, task_result_expected, task_created,
+                             task_tb, mocked_client, capsys):
+    task_result, task_expected = task_result_expected
     task = TaskInfo('name', 'routing_key', 'uuid', 'retries', 'abc123', 'def456',
                     task_result, task_tb, 123.1, 'state', task_created)
 
@@ -178,7 +185,7 @@ def test_client_display_task(bool1, bool2, task_result, task_created, task_tb, m
 
     # result
     if bool2:
-        assert (task_result or task_tb or ':)') in generated
+        assert '==> ' + (task_expected or task_tb or ':)') in generated
 
 
 @pytest.fixture(params=(None, 123456789))
