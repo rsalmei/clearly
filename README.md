@@ -235,8 +235,8 @@ def reset(self):
 - write a small [celery router](http://docs.celeryproject.org/en/latest/userguide/routing.html#routers) and in there generate dynamic routing keys, based on the actual arguments of the async call in place.
 That way, you'll be able to filter tasks based on any of those constraints, like an id of an entity.
 - if you're using [django](https://www.djangoproject.com/) and [django-extensions](https://github.com/django-extensions/django-extensions), put in your settings a `SHELL_PLUS_POST_IMPORT` to auto import this!
-Now you just have to create a pre-configured instance of it and you're good to go. Put together a simple python module in your project to provide an already initialized instance of `clearly`.
-Now you have a tool always ready to be used, easily pluggable even in production, to actually see what's going on in your tasks, and figure out those pesky bugs.
+Just create a module to initialize a `clearlycli` instance and you're good to go, the shell_plus will have it always available!
+Now you have a tool always ready to be used, without importing or creating anything, to actually see what's going on in your tasks, even in production :)
 - the more you filter, the less you'll have to analyze, so find the best combination for you debugging needs. A busy system can have thousands per minute.
 
 
