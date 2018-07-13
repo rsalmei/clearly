@@ -1,7 +1,8 @@
 # coding=utf-8
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 from distutils.core import setup
+
 from setuptools import find_packages
 
 import clearly
