@@ -250,3 +250,7 @@ class ClearlyClient():
             return colors.BOLD(colors.GREEN(result))
         return colors.BOLD(colors.RED(result))
 
+
+if __name__ == '__main__':  # pragma: no cover
+    cli = ClearlyClient()
+    cli.capture(params=True, success=True)
