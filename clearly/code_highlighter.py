@@ -18,7 +18,7 @@ NONE = colors.CYAN('None')
 try:
     # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
     unicode
-except:
+except:  # pragma: no cover
     def unicode(x):
         return str(x)
 
