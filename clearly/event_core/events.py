@@ -2,32 +2,36 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 from collections import namedtuple
+
 from itertools import chain
 
+# direct fields come directly from method call.
+DIRECT_FIELDS = ('state', 'pre_state', 'created')
+
+# own fields are retrieved directly from the original object.
 TASK_OWN_FIELDS = ('name', 'routing_key', 'uuid', 'retries', 'args', 'kwargs',
                    'result', 'traceback', 'timestamp')
-TASK_DYNAMIC_FIELDS = ('state', 'created')
-TASK_FIELDS = TASK_OWN_FIELDS + TASK_DYNAMIC_FIELDS
-
-TaskInfo = namedtuple('TaskInfo', TASK_FIELDS)
-
 WORKER_OWN_FIELDS = ('hostname', 'pid', 'sw_sys', 'sw_ident', 'sw_ver',
-                     'loadavg', 'processed', 'alive', 'freq')
-WORKER_DYNAMIC_FIELDS = ('heartbeat',)
-WORKER_FIELDS = WORKER_OWN_FIELDS + WORKER_DYNAMIC_FIELDS
+                     'loadavg', 'processed', 'freq', 'alive')
 
-WorkerInfo = namedtuple('WorkerInfo', WORKER_FIELDS)
+TaskData = namedtuple('TaskData', TASK_OWN_FIELDS + DIRECT_FIELDS)
+WorkerData = namedtuple('WorkerData', WORKER_OWN_FIELDS + DIRECT_FIELDS + ('last_heartbeat',))
 
 
-def serialize_task(task, state, created):
-    return TaskInfo._make(chain(
+def immutable_task(task, state, pre_state, created):
+    """Converts to an immutable slots class to handle internally."""
+    # noinspection PyUnresolvedReferences,PyProtectedMember
+    return TaskData._make(chain(
         (getattr(task, f) for f in TASK_OWN_FIELDS),
-        (state, created)
+        (state, pre_state, created),
     ))
 
 
-def serialize_worker(worker):
-    return WorkerInfo._make(chain(
+def immutable_worker(worker, state, pre_state, created):
+    """Converts to an immutable slots class to handle internally."""
+    # noinspection PyUnresolvedReferences,PyProtectedMember
+    return WorkerData._make(chain(
         (getattr(worker, f) for f in WORKER_OWN_FIELDS),
-        (worker.heartbeats[-1] if worker.heartbeats else None,)
+        (state, pre_state, created),
+        (worker.heartbeats[-1] if worker.heartbeats else None,),
     ))
