@@ -16,10 +16,10 @@ HEADER_SIZE = 8
 HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = colors.DIM(':)')
 DIM_NONE = colors.DIM(colors.CYAN('None'))
-TRACEBACK_HIGHLIGHTER = create_highlighter()
+TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
 
 
-class ClearlyClient(object):
+class ClearlyClient():
     """Simple and real-time monitor for celery.
     Client object, to display and manage server captured tasks and workers.
 
