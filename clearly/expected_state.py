@@ -26,15 +26,20 @@ class ExpectedStateHandler(object):
 
         pointer = self.expected_path
         expected = pre
+        seen = [pointer.name]
         while pointer.name != expected:
             pointer = pointer.find(expected)
+            if pointer.name in seen:
+                raise ValueError('impossible to start from {}'.format(pre))
+            seen.append(pointer.name)
 
-        stop = pointer.name
         expected = post
+        seen = [pointer.name]
         while True:
             pointer = pointer.find(expected)
-            if pointer.name == stop:
-                raise ValueError('impossible go from {} to {}'.format(self.pre, self.post))
+            if pointer.name in seen:
+                raise ValueError('impossible to go from {} to {}'.format(pre, post))
+            seen.append(pointer.name)
             yield pointer.name
             if pointer.name == expected:
                 break
