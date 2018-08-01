@@ -149,3 +149,25 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         return m.task_count, m.event_count, len(m.tasks), len(m.workers)
 
 
+def serve(instance):  # pragma: no cover
+    server = grpc.server(futures.ThreadPoolExecutor())
+    clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, server)
+    server.add_insecure_port('[::]:12223')
+    server.start()
+
+    import time
+    ONE_DAY_IN_SECONDS = 24 * 60 * 60
+    try:
+        while True:
+            time.sleep(ONE_DAY_IN_SECONDS)
+    except KeyboardInterrupt:
+        server.stop(None)
+
+
+if __name__ == '__main__':  # pragma: no cover
+    app = Celery(broker='amqp://localhost', backend='redis://localhost')
+    queue_listener_dispatcher = Queue()
+    listener = EventListener(app, queue_listener_dispatcher)
+    dispatcher = StreamingDispatcher(queue_listener_dispatcher)
+    clearlysrv = ClearlyServer(listener, dispatcher)
+    serve(clearlysrv)
