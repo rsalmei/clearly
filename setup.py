@@ -34,7 +34,6 @@ setup(
         'Intended Audience :: Developers',
         'Environment :: Console',
         'Natural Language :: English',
-        'Topic :: Software Development :: Bug Tracking',
         'Topic :: System :: Distributed Computing',
         'Topic :: System :: Monitoring',
 
@@ -54,11 +53,11 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     keywords='celery task queue job flower monitoring distributed asynchronous'.split(),
-    packages=find_packages(exclude=['img']),
     install_requires=[
         'six',
         'celery>=3.1',
         'pygments'
     ],
+    packages=find_packages(),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4, <4',
 )
