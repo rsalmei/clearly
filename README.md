@@ -250,6 +250,8 @@ Now you have a tool always ready to be used, without importing or creating anyth
 
 
 ## Changelog highlights:
+- 0.5.0: split client and server, connected by gRPC (supports one server with multiple clients)
+- 0.4.2: last version with client and server combined
 - 0.4.0: supports both py2.7 and py3.4+
 - 0.3.6: last version to support py2 only
 - 0.3.0: result backend is not mandatory anymore
