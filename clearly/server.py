@@ -1,121 +1,48 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
-import logging
+import operator
 import re
-import signal
-import threading
-from contextlib import contextmanager
-from itertools import islice
+# noinspection PyCompatibility
+from concurrent import futures
+
+import grpc
+from celery import Celery
+from celery.events.state import Task, Worker
+
+from event_core.events import WorkerData
+from .event_core.event_listener import EventListener
+from .event_core.events import TaskData
+from .event_core.streaming_dispatcher import StreamingDispatcher
+from .protos import clearly_pb2, clearly_pb2_grpc
+from .utils.data import accepts
 
 try:
     # noinspection PyCompatibility
-    from queue import Queue
-except ImportError:
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue
+    from queue import Queue, Empty
+except:
+    # noinspection PyCompatibility
+    from Queue import Queue, Empty
 
-from celery import Celery, states, __version__ as CELERY_VERSION
-from celery.backends.base import DisabledBackend
-from celery.events import EventReceiver
-from celery.events.state import State, Task, Worker
-from kombu import log as kombu_log
-
-from clearly.safe_compiler import safe_compile_text
-from .expected_state import ExpectedStateHandler, setup_task_states, \
-    setup_worker_states
-from .serializer import serialize_task, serialize_worker
-
-kombu_log.get_logger('').setLevel(logging.ERROR)
 
 
 class ClearlyServer(object):
     """Simple and real-time monitor for celery.
     Server object, to capture events and handle tasks and workers.
     
-        Attributes:
-            _app: Celery
-            _memory: celery.events.State
-            _task_states: ExpectedStateHandler
-            _worker_states: ExpectedStateHandler
     """
 
-    def __init__(self, app=None, ignore_result_backend=False,
-                 max_tasks_in_memory=1000, max_workers_in_memory=100):
         """Constructs a server instance.
         
         Args:
-            app (Celery): a configured celery app instance
-            ignore_result_backend (bool): if True, do not fetch results from the actual result backend
-            max_tasks_in_memory (int): max tasks stored
-            max_workers_in_memory (int): max workers stored
-
         """
-        if isinstance(app.backend, DisabledBackend):
-            ignore_result_backend = True
-
-        self._app = app
-        self._ignore_result_backend = ignore_result_backend
-
-        self._memory = self._app.events.State(
-            max_tasks_in_memory=max_tasks_in_memory,
-            max_workers_in_memory=max_workers_in_memory,
-        )  # type: State
-        self._task_states = setup_task_states()  # type: ExpectedStateHandler
-        self._worker_states = setup_worker_states()  # type: ExpectedStateHandler
-
-        # concurrency control
-        self._background_lock = threading.RLock()
-        self._background_connected = threading.Event()
-
-        # running engine
-        self._background_thread = None  # type:threading.Thread
-        self._background_receiver = None  # type:EventReceiver
-
-        # connected client
-        self._client_queue = None  # type:Queue
-        self._client_regex = None
-        self._client_negate = None
-        self._client_workers_regex = None
-        self._client_workers_negate = None
-
-        # detect shutdown.
-        def sigterm_handler(_signo, _stack_frame):
-            self.stop()
-
-        signal.signal(signal.SIGTERM, sigterm_handler)
-
-    def start(self):
-        """Starts the real-time engine that captures tasks.
 
         """
 
-        with self._background_lock:
-            if self._background_thread:
-                return
-            self._background_thread = threading.Thread(
-                target=self.__run_server, name='clearly-agent')
-            self._background_thread.daemon = True
 
-            self._background_connected.clear()
-            self._background_thread.start()
-            self._background_connected.wait()
 
-    def stop(self):
-        """Stops the background engine, without losing anything already 
-        captured.
-    
         """
 
-        with self._background_lock:
-            if not self._background_thread:
-                return
-            print('Stopping server')
-            self._background_receiver.should_stop = True
-            while self._background_thread.is_alive():
-                self._background_thread.join()
-            self._background_thread = None
-            self._background_receiver = None
 
     @contextmanager
     def client_connect(self, pattern=None, negate=False,
@@ -145,77 +72,6 @@ class ClearlyServer(object):
             yield self._client_queue
             self._client_queue = None
 
-    def __run_server(self):
-        import sys
-        print('Starting server', threading.current_thread())
-        sys.stdout.flush()
-
-        def maybe_publish(func, regex, negate, *values):
-            if not self._client_queue:
-                return
-            if any(v and regex.search(v) for v in values) == negate:
-                return
-
-            obj = func()
-            try:
-                self._client_queue.put(obj)
-            except AttributeError:
-                # the capture is not synced with terminal anymore.
-                # no problem.
-                pass
-
-        def process_event(event):
-            event_type = event['type']
-            if event_type.startswith('task'):
-                for task, state, created in process_task_event(event):
-                    maybe_publish(lambda: serialize_task(task, state, created),
-                                  self._client_regex, self._client_negate,
-                                  task.name, task.routing_key)
-
-            elif event_type.startswith('worker'):
-                for worker in process_worker_event(event):
-                    maybe_publish(lambda: serialize_worker(worker),
-                                  self._client_workers_regex, self._client_workers_negate,
-                                  worker.hostname)
-
-            else:
-                print('unknown event:', event)
-
-        def process_task_event(event):
-            task, created = self._memory.get_or_create_task(event['uuid'])
-            with self._task_states.track_changes(task):
-                (_, _), subject = self._memory.event(event)
-            if task.state == states.SUCCESS:
-                try:
-                    # celery tasks' results are escaped, so we must compile them.
-                    task.result = compile_task_result(task.result)
-                except SyntaxError:
-                    # celery must have truncated task result.
-                    # use result backend as fallback if allowed and available.
-                    if not self._ignore_result_backend:
-                        task.result = self._app.AsyncResult(task.uuid).result
-            if created:
-                yield task, '-', True
-            for state in self._task_states.states_through():
-                yield task, state, False
-
-        def process_worker_event(event):
-            worker, _ = self._memory.get_or_create_worker(event['hostname'])
-            with self._worker_states.track_changes(worker):
-                (_, _), subject = self._memory.event(event)
-            for _ in self._worker_states.states_through():
-                yield worker
-
-        with self._app.connection() as connection:
-            self._background_receiver = self._app.events.Receiver(
-                connection, handlers={
-                    '*': process_event,
-                })  # type: EventReceiver
-            self._background_connected.set()
-            self._background_receiver.capture(limit=None, timeout=None, wakeup=True)
-
-        print('Server stopped', threading.current_thread())
-        sys.stdout.flush()
 
     def tasks(self, pattern=None, state=None, negate=False):
         """Filters captured tasks.
@@ -284,11 +140,3 @@ class ClearlyServer(object):
         return m.task_count, m.event_count, len(m.tasks), len(m.workers)
 
 
-if CELERY_VERSION >= '4':
-    def compile_task_result(result):
-        # compile with `raises`, to detect truncated results.
-        return safe_compile_text(result, raises=True)
-else:
-    def compile_task_result(result):
-        # old celery tasks' results are escaped twice.
-        return safe_compile_text(safe_compile_text(result, raises=True), raises=True)
