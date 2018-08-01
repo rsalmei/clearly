@@ -3,8 +3,9 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import pytest
 from celery.states import FAILURE, PENDING, RECEIVED, REJECTED, RETRY, REVOKED, STARTED, SUCCESS
-from clearly.utils.worker_states import OFFLINE, ONLINE
+
 from clearly.expected_state import setup_task_states, setup_worker_states
+from clearly.utils.worker_states import OFFLINE, ONLINE
 
 
 @pytest.mark.parametrize('state_initial, state, expected', [

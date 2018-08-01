@@ -66,7 +66,7 @@ def test_dispatcher_dispatch(event_data, path, change, accepts_params, bool1, di
         dispatcher._dispatch(event_data)
 
     acc.assert_called_once_with(*accepts_params)
-    if bool1: # accepted or not
+    if bool1:  # accepted or not
         gs.assert_called_once_with(event_data, getattr(dispatcher, path))
         to_client = q.get_nowait()
         assert all(getattr(to_client, k) == v for k, v in change.items())
