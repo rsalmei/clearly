@@ -2,6 +2,9 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import six
+from pygments import highlight
+from pygments.formatters.terminal256 import Terminal256Formatter
+from pygments.lexers.python import Python3TracebackLexer
 
 from .safe_compiler import CallDescriptor
 from .utils.colors import colors
@@ -80,3 +83,13 @@ def typed_code(p, wrap=True):
                            for k, v in p.items()))
 
     return force_text(repr(p))
+
+
+def create_traceback_highlighter():
+    lexer = Python3TracebackLexer()
+    formatter = Terminal256Formatter(style='native')
+
+    def inner(tb):
+        return highlight(tb, lexer, formatter)
+
+    return inner
