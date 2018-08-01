@@ -38,8 +38,8 @@ class ClearlyClient(object):
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self.stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
-    def capture(self, pattern=None, negate=False, workers=None, negate_workers=True,
-                params=False, success=False, error=True):
+    def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
+                params=None, success=False, error=True, stats=False):
         """Starts the real-time engine that captures events. It will capture
         all tasks being sent to celery and all workers known to it.
 
@@ -53,16 +53,19 @@ class ClearlyClient(object):
                 ex.: '^dispatch|^email' to filter names starting with that
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
-            negate (bool): if True, finds tasks that do not match criteria
+            negate (bool): if True, finds tasks that do not match criteria.
             workers (Optional[str]): a pattern to filter workers to capture.
                 ex.: 'service|priority' to filter names containing that
-            negate_workers (bool): if True, finds workers that do not match criteria
-            params (bool): if True shows params of all tasks
+            negate_workers (bool): if True, finds workers that do not match criteria.
+            params (Optional[bool]): if True shows args and kwargs in first/last state,
+                doesn't show if False, and follows the successes and errors if None.
+                default is None
+            success (bool): if True shows successful tasks' results.
                 default is False
-            success (bool): if True shows successful tasks' results
-                default is False
-            error (bool): if True shows failed tasks' results
+            error (bool): if True shows failed and retried tasks' tracebacks.
                 default is True, as you're monitoring to find errors, right?
+            stats (bool): if True shows complete workers' stats.
+                default is False
 
         """
         request = clearly_pb2.CaptureRequest(
