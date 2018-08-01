@@ -13,6 +13,7 @@ install_requires = [
     'celery>=3.1',
     'pygments',
     'grpcio',
+    'protobuf',
 ]
 if sys.version_info[0] == 2:
     install_requires.append('futures')
