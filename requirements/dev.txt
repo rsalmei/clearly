@@ -2,3 +2,5 @@
 ipython
 pdbpp
 redis
+grpcio-tools
+twine
