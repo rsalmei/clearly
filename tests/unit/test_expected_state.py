@@ -2,29 +2,33 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import pytest
-from celery.events.state import Task, Worker
 from celery.states import FAILURE, PENDING, RECEIVED, REJECTED, RETRY, REVOKED, STARTED, SUCCESS
-from mock import mock
-
+from clearly.utils.worker_states import OFFLINE, ONLINE
 from clearly.expected_state import setup_task_states, setup_worker_states
 
 
 @pytest.mark.parametrize('state_initial, state, expected', [
-    (False, False, []),
-    (False, True, [True]),
-    (True, True, []),
-    (True, False, [False]),
+    (OFFLINE, 'orange', ValueError),
+    ('banana', ONLINE, ValueError),
+    ('banana', 'orange', ValueError),
+    (OFFLINE, OFFLINE, []),
+    (OFFLINE, ONLINE, [ONLINE]),
+    (ONLINE, ONLINE, []),
+    (ONLINE, OFFLINE, [OFFLINE]),
 ])
 def test_expected_states_worker(state_initial, state, expected):
-    with mock.patch('celery.events.state.Worker.alive', new_callable=mock.PropertyMock) as m_alive:
-        m_alive.side_effect = (state_initial, state)
-        worker, states = Worker(), setup_worker_states()
-        with states.track_changes(worker):
-            pass
-    assert list(states.states_through()) == expected
+    states = setup_worker_states()
+    if isinstance(expected, list):
+        assert list(states.states_through(state_initial, state)) == expected
+    else:
+        with pytest.raises(expected):
+            list(states.states_through(state_initial, state))
 
 
 @pytest.mark.parametrize('state_initial, state, expected', [
+    (STARTED, 'orange', ValueError),
+    ('banana', RECEIVED, ValueError),
+    ('banana', 'orange', ValueError),
     (PENDING, PENDING, []),
     (PENDING, RECEIVED, [RECEIVED]),
     (PENDING, STARTED, [RECEIVED, STARTED]),
@@ -91,14 +95,10 @@ def test_expected_states_worker(state_initial, state, expected):
     (RETRY, RETRY, []),
 ])
 def test_expected_states_task(state_initial, state, expected):
-    with mock.patch('celery.events.state.Task.state', new_callable=mock.PropertyMock) as m_state:
-        m_state.side_effect = (state_initial, state)
-        task, states = Task(), setup_task_states()
-        with states.track_changes(task):
-            pass
+    states = setup_task_states()
 
     if isinstance(expected, list):
-        assert list(states.states_through()) == expected
+        assert list(states.states_through(state_initial, state)) == expected
     else:
         with pytest.raises(expected):
-            list(states.states_through())
+            list(states.states_through(state_initial, state))
