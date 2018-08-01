@@ -24,119 +24,128 @@ except:
     # noinspection PyCompatibility
     from Queue import Queue, Empty
 
+CAPTURE_PARAMS_OP = operator.attrgetter('pattern', 'negate')
 
 
-class ClearlyServer(object):
+class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
     """Simple and real-time monitor for celery.
     Server object, to capture events and handle tasks and workers.
     
+    Attributes:
+        listener (EventListener): the object that listens and keeps celery events
+        dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
     """
 
+    def __init__(self, listener, dispatcher):
         """Constructs a server instance.
         
         Args:
+            listener (EventListener): the object that listens and keeps celery events
+            dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
         """
+        self.listener = listener
+        self.dispatcher = dispatcher
 
+    def capture_realtime(self, request, context):
         """
-
-
-
-        """
-
-
-    @contextmanager
-    def client_connect(self, pattern=None, negate=False,
-                       workers=None, negate_workers=True):
-        """Connects a client to this server, filtering the tasks that are sent
-        to it.
 
         Args:
-            pattern (Optional[str]): a pattern to filter tasks to capture.
-                ex.: '^dispatch|^email' to filter names starting with that
-                      or 'dispatch.*123456' to filter that exact name and number
-                      or even '123456' to filter that exact number anywhere.
-            negate (bool): if True, finds tasks that do not match criteria
-            workers (Optional[str]): a pattern to filter workers to capture.
-                ex.: 'service|priority' to filter names containing that
-            negate_workers (bool): if True, finds workers that do not match criteria
+            request (clearly_pb2.CaptureRequest):
+            context:
+
+        Returns:
 
         """
+        print('request:', request)
+        tasks_pattern, tasks_negate = CAPTURE_PARAMS_OP(request.tasks_capture)
+        workers_pattern, workers_negate = CAPTURE_PARAMS_OP(request.workers_capture)
 
-        self._client_regex = re.compile(pattern or '.')
-        self._client_negate = negate
-        self._client_workers_regex = re.compile(workers or '.')
-        self._client_workers_negate = negate_workers
+        with self.dispatcher.streaming_client(tasks_pattern, tasks_negate,
+                                              workers_pattern, workers_negate) as q:  # type: Queue
+            while True:
+                try:
+                    event_data = q.get(timeout=1)
+                except Empty:
+                    continue
 
-        with self._background_lock:
-            self._client_queue = Queue()
-            yield self._client_queue
-            self._client_queue = None
+                key, obj = ClearlyServer._event_to_pb(event_data)
+                yield clearly_pb2.RealtimeEventMessage(**{key: obj})
 
+    @staticmethod
+    def _event_to_pb(event):
+        """Supports converting internal TaskData and WorkerData, as well as
+        celery Task and Worker to proto buffers messages.
 
-    def tasks(self, pattern=None, state=None, negate=False):
-        """Filters captured tasks.
-        
         Args:
-            pattern (Optional[str]): any part of the task name or routing key
-            state (Optional[str]): a state to filter tasks
-            negate (bool): if True, finds tasks that do not match criteria
+            event (Union[TaskData|Task|WorkerData|Worker]):
+
+        Returns:
+            ProtoBuf object
 
         """
+        if isinstance(event, (TaskData, Task)):
+            key, klass = 'task', clearly_pb2.TaskMessage
+        elif isinstance(event, (WorkerData, Worker)):
+            key, klass = 'worker', clearly_pb2.WorkerMessage
+        else:
+            raise ValueError('unknown event')
+        keys = klass.DESCRIPTOR.fields_by_name.keys()
+        data = {k: v for k, v in getattr(event, '_asdict',
+                                         event.as_dict)().items() if k in keys}
+        return key, klass(**data)
+
+    def filter_tasks(self, request, context):
+        """Filter task by matching a pattern and a state."""
+        tasks_pattern, tasks_negate = CAPTURE_PARAMS_OP(request.tasks_filter)
+        state_pattern = request.state_pattern
+
         pcondition = scondition = lambda task: True
-        if pattern:
-            regex = re.compile(pattern)
-            pcondition = lambda task: \
-                regex.search(task.name or '') or \
-                regex.search(task.routing_key or '')
-        if state:
-            scondition = lambda task: task.state == state
+        if tasks_pattern:
+            regex = re.compile(tasks_pattern)
+            pcondition = lambda task: accepts(regex, tasks_negate, task.name, task.routing_key)
 
-        found_tasks = islice(
-            (task for _, task in self._memory.itertasks()
-             if bool(pcondition(task) and scondition(task)) ^ negate
-             ), 0, None)
-        for task in found_tasks:  # type:Task
-            yield serialize_task(task, task.state, False)
+        if state_pattern:
+            regex = re.compile(state_pattern)
+            scondition = lambda task: accepts(regex, tasks_negate, task.state)
 
-    def workers(self, pattern=None, negate=False):
-        """Filters known workers and prints their current status.
-        
-        Args:
-            pattern (Optional[str]): any part of the task name or routing key
-            negate (bool): if True, finds tasks that do not match criteria
+        found_tasks = (task for _, task in self.listener.memory.itertasks()
+                       if pcondition(task) and scondition(task))
+        for task in found_tasks:
+            yield ClearlyServer._event_to_pb(task)[1]
 
-        """
-        regex = re.compile(pattern or '.')
-        found_workers = islice(
-            (worker for worker in map(lambda w: self._memory.workers[w],
-                                      sorted(self._memory.workers))
-             if bool(regex.search(worker.hostname)) ^ negate
-             ), 0, None)
-        for worker in found_workers:  # type:Worker
-            yield serialize_worker(worker)
+    def filter_workers(self, request, context):
+        """Filter task by matching a pattern and a state."""
+        workers_pattern, workers_negate = CAPTURE_PARAMS_OP(request.workers_filter)
 
-    def task(self, task_uuid):
-        """Finds one specific task.
+        hcondition = lambda worker: True
+        if workers_pattern:
+            regex = re.compile(workers_pattern)
+            hcondition = lambda worker: accepts(regex, workers_negate, worker.hostname)
 
-        Args:
-            task_uuid (str): any part of the task name or routing key
+        op = operator.attrgetter('hostname')
+        found_workers = (worker for worker in sorted(self.listener.memory.workers, key=op)
+                         if hcondition)
+        for worker in found_workers:
+            yield ClearlyServer._event_to_pb(worker)[1]
 
-        """
-        task = self._memory.tasks.get(task_uuid)
+    def task(self, request, context):
+        """Finds one specific task."""
+        task = self.listener.memory.tasks.get(request.task_uuid)
         if task:
-            return serialize_task(task, task.state, False)
+            return ClearlyServer._event_to_pb(task)[1]
 
-    def seen_tasks(self):
-        return self._memory.task_types()
+    def seen_tasks(self, request, context):
+        """Returns all seen task types."""
+        return clearly_pb2.SeenTasksMessage().task_types \
+            .extend(self.listener.memory.task_types())
 
-    def reset(self):
-        """Resets all captured tasks.
-        
-        """
-        self._memory.clear_tasks()
+    def reset_tasks(self, request, context):
+        """Resets all captured tasks."""
+        self.listener.memory.clear_tasks()
 
-    def stats(self):
-        m = self._memory
+    def stats(self, request, context):
+        """Returns the server statistics."""
+        m = self.listener.memory
         return m.task_count, m.event_count, len(m.tasks), len(m.workers)
 
 
