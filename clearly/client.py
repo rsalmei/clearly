@@ -3,19 +3,13 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from datetime import datetime
 
-try:
-    # noinspection PyCompatibility
-    from queue import Queue
-except ImportError:
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue
-
+import grpc
 from celery import states
 
-from clearly.utils.traceback_hilighter import create_highlighter
-from .code_highlighter import typed_code
+from .code_highlighter import create_traceback_highlighter, typed_code
+from .protos import clearly_pb2, clearly_pb2_grpc
 from .safe_compiler import safe_compile_text
-from .serializer import TaskInfo, WorkerInfo
+from .utils import worker_states
 from .utils.colors import colors
 
 HEADER_SIZE = 8
@@ -30,30 +24,19 @@ class ClearlyClient(object):
     Client object, to display and manage server captured tasks and workers.
 
         Attributes:
-            _clearly_server: the server instance
+            stub: the server stub instance
     """
 
-    def __init__(self, clearly_server):
+    def __init__(self, host='localhost', port=12223):
         """Constructs a client instance.
         
         Args:
-            clearly_server (clearly.server.ClearlyServer): a configured clearly server
-
+            host (str): the hostname of the server
+            port (int): the port of the server
         """
 
-        self._clearly_server = clearly_server
-
-    def start(self):
-        """Starts the real-time engine that captures tasks. It will capture 
-        all tasks being sent to celery and all workers known to it.
-        
-        This will be run in the background, so you can still send other
-        commands or analyze stats and real-time date without losing any
-        updates.
-        
-        """
-
-        self._clearly_server.start()
+        channel = grpc.insecure_channel('{}:{}'.format(host, port))
+        self.stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
     def capture(self, pattern=None, negate=False, workers=None, negate_workers=True,
                 params=False, success=False, error=True):
@@ -82,31 +65,23 @@ class ClearlyClient(object):
                 default is True, as you're monitoring to find errors, right?
 
         """
-        self.start()
-        with self._clearly_server.client_connect(pattern, negate,
-                                                 workers, negate_workers) as q:  # type: Queue
-            try:
-                while True:
-                    obj = q.get(timeout=99999)
-                    if isinstance(obj, TaskInfo):
-                        ClearlyClient._display_task(obj,
-                                                    params and obj.created,
-                                                    ClearlyClient._is_to_result(obj.state, success, error))
-                    elif isinstance(obj, WorkerInfo):
-                        ClearlyClient._display_worker(obj, True)
-                    elif obj is None:
-                        break
-                    else:
-                        print('unknown event:', obj)
-            except KeyboardInterrupt:
-                pass
-
-    def stop(self):
-        """Stops the background engine, without losing anything already
-        captured.
-
-        """
-        self._clearly_server.stop()
+        request = clearly_pb2.CaptureRequest(
+            tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
+            workers_capture=clearly_pb2.PatternFilter(pattern=workers or '.', negate=negate_workers),
+        )
+        try:
+            for realtime in self.stub.capture_realtime(request):
+                if realtime.HasField('task'):
+                    event = realtime.task
+                    ClearlyClient._display_task(event, params, success, error)
+                elif realtime.HasField('worker'):
+                    event = realtime.worker
+                    ClearlyClient._display_worker(event, stats)
+                else:
+                    print('unknown event:', realtime)
+                    break
+        except KeyboardInterrupt:
+            pass
 
     def stats(self):
         """Lists some metrics of your actual and capturing system.
@@ -118,7 +93,7 @@ class ClearlyClient(object):
             Workers stored: number of unique workers already seen.
 
         """
-        task_count, event_count, tasks, workers = self._clearly_server.stats()
+        task_count, event_count, tasks, workers = self.stub.stats()
         print(colors.DIM('Processed:'),
               '\ttasks', colors.RED(task_count),
               '\tevents', colors.RED(event_count))
@@ -150,11 +125,11 @@ class ClearlyClient(object):
                 default is False, to get an overview.
 
         """
-        for task in self._clearly_server.tasks(pattern, state, negate):  # type:TaskInfo
             show = ClearlyClient._is_to_result(task.state, success, error)
             ClearlyClient._display_task(task,
                                         params if params is not None else show,
                                         show)
+        for task in self.stub.tasks(pattern, state, negate):  # type:TaskInfo
 
     def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
@@ -168,7 +143,7 @@ class ClearlyClient(object):
             stats (bool): if True shows worker stats
 
         """
-        for worker in self._clearly_server.workers(pattern, negate):  # type:WorkerInfo
+        for worker in self.stub.workers(pattern, negate):  # type:WorkerInfo
             ClearlyClient._display_worker(worker, stats)
 
     def task(self, task_uuid):
@@ -178,7 +153,7 @@ class ClearlyClient(object):
             task_uuid (str): the task id
 
         """
-        task = self._clearly_server.task(task_uuid)
+        task = self.stub.task(task_uuid)
         if task:
             ClearlyClient._display_task(task, True, True)
 
@@ -186,16 +161,16 @@ class ClearlyClient(object):
         """Shows a list of task types seen.
 
         """
-        print('\n'.join(self._clearly_server.seen_tasks()))
+        print('\n'.join(self.stub.seen_tasks()))
 
     def reset(self):
         """Resets all captured tasks.
         
         """
-        self._clearly_server.reset()
+        self.stub.reset()
 
     @staticmethod
-    def _display_task(task, params, result):
+    def _display_task(task, params, success, error):
         ts = datetime.fromtimestamp(task.timestamp)
         print(colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
