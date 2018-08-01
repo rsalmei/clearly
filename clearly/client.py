@@ -225,8 +225,8 @@ class ClearlyClient():
                   worker.loadavg or DIM_NONE,
                   colors.DIM('processed:'), worker.processed or DIM_NONE)
             if worker.alive:
-                if worker.heartbeat:
-                    ts = datetime.fromtimestamp(worker.heartbeat)
+                if worker.last_heartbeat:
+                    ts = datetime.fromtimestamp(worker.last_heartbeat)
                     tsstr = ts.strftime('%H:%M:%S.%f')[:-3]
                 else:
                     tsstr = DIM_NONE
