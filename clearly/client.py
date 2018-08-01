@@ -127,11 +127,8 @@ class ClearlyClient(object):
                 default is False, to get an overview.
 
         """
-            show = ClearlyClient._is_to_result(task.state, success, error)
-            ClearlyClient._display_task(task,
-                                        params if params is not None else show,
-                                        show)
         for task in self.stub.tasks(pattern, state, negate):  # type:TaskInfo
+            ClearlyClient._display_task(task, params, success, error)
 
     def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
@@ -157,7 +154,7 @@ class ClearlyClient(object):
         """
         task = self.stub.task(task_uuid)
         if task:
-            ClearlyClient._display_task(task, True, True)
+            ClearlyClient._display_task(task, True, True, True)
 
     def seen_tasks(self):
         """Shows a list of task types seen.
@@ -188,7 +185,14 @@ class ClearlyClient(object):
                   end=' ')
             print(colors.BLUE(task.name), colors.DIM(task.uuid))
 
-        if params:
+        show_result = (task.state in states.EXCEPTION_STATES and error) \
+                      or (task.state == states.SUCCESS and success)
+
+        first_seen = bool(params) and task.created
+        result = params != False and (task.state in states.READY_STATES) and show_result
+        if first_seen or result:
+            print(type(task.kwargs), task.kwargs)
+            safe_compile_text(task.kwargs, 1)
             print(colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.args),
                              wrap=False) or EMPTY)
@@ -196,9 +200,9 @@ class ClearlyClient(object):
                   typed_code(safe_compile_text(task.kwargs),
                              wrap=False) or EMPTY)
 
-        if result:
-            if task.result is not None:
-                output = typed_code(task.result)
+        if show_result:
+            if task.result:
+                output = typed_code(safe_compile_text(task.result))
             elif task.traceback:
                 output = TRACEBACK_HIGHLIGHTER(task.traceback) \
                     .replace('\n', '\n' + HEADER_PADDING).strip()
@@ -246,7 +250,3 @@ class ClearlyClient(object):
             return colors.BOLD(colors.GREEN(result))
         return colors.BOLD(colors.RED(result))
 
-    @staticmethod
-    def _is_to_result(state, success, error):
-        return (state in (states.FAILURE, states.RETRY) and error) \
-               or (state == states.SUCCESS and success)
