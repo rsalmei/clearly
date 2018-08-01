@@ -164,7 +164,7 @@ def serve(instance):  # pragma: no cover
         server.stop(None)
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == '__main__':
     app = Celery(broker='amqp://localhost', backend='redis://localhost')
     queue_listener_dispatcher = Queue()
     listener = EventListener(app, queue_listener_dispatcher)
