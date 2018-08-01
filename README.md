@@ -1,5 +1,5 @@
 [![Travis](https://img.shields.io/travis/rsalmei/clearly.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-74%25-yellow.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-84%25-green.svg)]()
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/rsalmei/clearly/graphs/commit-activity)
 [![PyPI version](https://img.shields.io/pypi/v/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/clearly.svg)](https://pypi.python.org/pypi/clearly/)
