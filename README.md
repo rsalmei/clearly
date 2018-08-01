@@ -10,17 +10,21 @@
 ## Clear and accurate real-time monitor for celery
 
 `Clearly` is an alternative to [flower](https://github.com/mher/flower).
-While I do like it, to me it's not been totally up to the task (pun intended).
-Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once and complete, whole, thorough, comprehensive results!
-And flower needs page refreshes, filter only one task type at a time and truncates results... 😞
+While I do like flower, to me it's not been totally up to the task (pun intended :)).
+Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once, syntax coloring and complete, whole, thorough, comprehensive results!
+And flower needs page refreshes, filters only one task at a time, displays results as plain strings and on top of that truncates them... 😞
 
 Ok, `clearly` does provide all that!  
-And it works right in the (i)python terminal, has an advanced syntax coloring system, multiple filters and complete results!
-It's great to actually _see_ what's going on in your celery tasks, and in real-time! So it's great for debugging and demoing.
+It is actual real-time, has multiple simultaneous filters, an advanced syntax coloring system, and complete non-truncated results! Oh, and it works right in the (i)python terminal :)
+It's great to actually _see_ what's going on in your celery tasks, all in real-time! So it's great for debugging and demoing.
 
-Actually, `clearly` does not have an outer process server yet, it is a background thread.
-In the future it will have a proper server, and a Docker image for simple deploying.
-But regardless that, `clearly` is quite complete, and should complement flower nicely.
+Now, `clearly` even has an outer process server!
+You can always connect to it, and see the last 10,000 tasks, anytime.
+This makes `clearly` quite complete, and can even substitute flower entirely.
+
+It's only missing a Docker image for simple deploying now.
+And a command line to call the client directly from the shell!
+(spoilers :))
 
 See what `clearly` looks like:
 ![very cool](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_highlights.png)
@@ -237,20 +241,20 @@ That way, you'll be able to filter tasks based on any of those constraints, like
 - if you're using [django](https://www.djangoproject.com/) and [django-extensions](https://github.com/django-extensions/django-extensions), put in your settings a `SHELL_PLUS_POST_IMPORT` to auto import this!
 Just create a module to initialize a `clearlycli` instance and you're good to go, the shell_plus will have it always available!
 Now you have a tool always ready to be used, without importing or creating anything, to actually see what's going on in your tasks, even in production :)
-- the more you filter, the less you'll have to analyze, so find the best combination for you debugging needs. A busy system can have thousands per minute.
+(soon there will be a command line to get even easier to this)
+- the more you filter, the less you'll have to analyze, so find the best combination for you debugging needs. A busy system can have thousands of tasks per minute.
 
 
 ## To do
 
 - ~~support python 3 (not actually tested yet, soon);~~
-- split `Clearly` client and server, to allow a always-on server to run, and multiple clients connect;
-- include a plugin system, to be able to print representations of custom objects;
-- include a script mode, to call right from the shell (make work even a "| grep");
+- ~~split `Clearly` client and server, to allow a always-on server to run, and multiple clients connect;~~
+- include a script mode, to call right from the shell;
 - any other ideas welcome!
 
 
 ## Changelog highlights:
-- 0.5.0: split client and server, connected by gRPC (supports one server with multiple clients)
+- 0.5.0: independent client and server, connected by gRPC (supports a server with multiple clients)
 - 0.4.2: last version with client and server combined
 - 0.4.0: supports both py2.7 and py3.4+
 - 0.3.6: last version to support py2 only
