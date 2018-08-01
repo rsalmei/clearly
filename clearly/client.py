@@ -212,7 +212,7 @@ class ClearlyClient():
 
     @staticmethod
     def _display_worker(worker, stats):
-        print(ClearlyClient._worker_state(worker.alive),
+        print(ClearlyClient._worker_state(worker.state),
               colors.DIM(colors.CYAN(worker.hostname)),
               colors.DIM(colors.YELLOW(str(worker.pid))))
 
@@ -244,9 +244,9 @@ class ClearlyClient():
         return colors.YELLOW(result)  # transient states
 
     @staticmethod
-    def _worker_state(alive):
-        result = '{:>{}}'.format('ONLINE' if alive else 'OFFLINE', HEADER_SIZE)
-        if alive:
+    def _worker_state(state):
+        result = '{:>{}}'.format(state, HEADER_SIZE)
+        if state == worker_states.ONLINE:
             return colors.BOLD(colors.GREEN(result))
         return colors.BOLD(colors.RED(result))
 
