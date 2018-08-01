@@ -1,40 +1,60 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
+import copy
+
 import pytest
 
-from clearly.serializer import TASK_OWN_FIELDS, WORKER_OWN_FIELDS, serialize_task, serialize_worker
+from clearly.event_core.events import TaskData, WorkerData, immutable_task, immutable_worker
 
 
 class DummyObject:
     pass
 
 
-def get_dummy(params):
+def get_dummy(**kwargs):
     result = DummyObject()
-    for k in params:
-        setattr(result, k, k)
+    for k, v in kwargs.items():
+        setattr(result, k, v)
     return result
 
 
-@pytest.fixture
-def task():
-    yield get_dummy(TASK_OWN_FIELDS)
-
-
 @pytest.fixture(params=(0, 1, 10))
-def worker(request):
-    result = get_dummy(WORKER_OWN_FIELDS)
-    result.heartbeats = list(range(request.param))
-    yield result
+def heartbeats(request):
+    yield list(range(request.param))
 
 
-def test_serialize_task(task):
-    serialized = serialize_task(task, 'a_state', 'a_date')
-    assert serialized == TASK_OWN_FIELDS + ('a_state', 'a_date')
+def test_immutable_task():
+    task = get_dummy(name='name', routing_key='routing_key', uuid='uuid', retries='retries',
+                     args='args', kwargs='kwargs', result='result', traceback='traceback',
+                     timestamp=123.1, state='state')
+
+    data = copy.copy(task.__dict__)
+    data.update(state='new_state', pre_state='pre_state', created=True)
+    expected = TaskData(**data)
+
+    immutable = immutable_task(task, 'new_state', 'pre_state', True)
+    assert immutable == expected
+    assert immutable is not expected
+
+    task.state = 'oops'
+    assert immutable == expected
 
 
-def test_serialize_worker(worker):
-    serialized = serialize_worker(worker)
-    last = worker.heartbeats[-1] if worker.heartbeats else None
-    assert serialized == WORKER_OWN_FIELDS + (last,)
+def test_immutable_worker(heartbeats):
+    worker = get_dummy(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
+                       sw_ver='sw_ver', loadavg='loadavg', processed='processed',
+                       alive=True, freq=5, heartbeats=heartbeats)
+
+    data = copy.copy(worker.__dict__)
+    data.update(state='new_state', pre_state='pre_state', created=True,
+                last_heartbeat=heartbeats[-1] if heartbeats else None)
+    del data['heartbeats']
+    expected = WorkerData(**data)
+
+    immutable = immutable_worker(worker, 'new_state', 'pre_state', True)
+    assert immutable == expected
+    assert immutable is not expected
+
+    worker.state = 'oops'
+    assert immutable == expected
