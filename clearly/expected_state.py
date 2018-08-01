@@ -3,6 +3,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from celery import states
 
+from .utils import worker_states
+
 
 class ExpectedStateHandler(object):
     """Events received can be totally out of order, which is not a problem for
@@ -91,8 +93,8 @@ def setup_task_states():
 
 
 def setup_worker_states():
-    expected_path = ExpectedPath(False)
+    expected_path = ExpectedPath(worker_states.OFFLINE)
     # noinspection PyTypeChecker
-    expected_path.to(True).to(expected_path)
+    expected_path.to(worker_states.ONLINE).to(expected_path)
 
     return ExpectedStateHandler(expected_path)
