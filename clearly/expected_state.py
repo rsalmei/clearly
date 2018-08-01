@@ -47,6 +47,7 @@ class ExpectedStateHandler(object):
 
 class ExpectedPath(object):
     def __init__(self, name):
+        assert isinstance(name, str)
         self.name = name
         self.possibles = ()
         self.default = None
