@@ -2,9 +2,11 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import ast
+import re
 from collections import OrderedDict, namedtuple
 
 CallDescriptor = namedtuple('CallDescriptor', 'name args kwargs')
+NON_PRINTABLE_PATTERN = re.compile('[\x00-\x1f]')
 
 
 def safe_compile_text(txt, raises=False):
@@ -26,8 +28,8 @@ def safe_compile_text(txt, raises=False):
     and correctly syntax colored!
 
     Args:
-        txt: the text
-        raises: if True, raise an exception in case of error
+        txt (str): the text
+        raises (bool): if True, raise an exception in case of error
     """
 
     def _convert(node):
@@ -72,6 +74,7 @@ def safe_compile_text(txt, raises=False):
                 return node.id
             return 'unsupported: {}'.format(type(node))
 
+    txt = NON_PRINTABLE_PATTERN.sub(_encode_to_hex, txt)
     try:
         txt = ast.parse(txt, mode='eval')
     except SyntaxError:
@@ -80,3 +83,7 @@ def safe_compile_text(txt, raises=False):
         return txt
 
     return _convert(txt.body)
+
+
+def _encode_to_hex(match):
+    return r'\x{0:02x}'.format(ord(match.group()))
