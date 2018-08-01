@@ -106,7 +106,7 @@ class ClearlyClient(object):
 
     def tasks(self, pattern=None, state=None, negate=False,
               params=None, success=False, error=False):
-        """Filters captured tasks and prints their current status.
+        """Filters stored tasks and prints their current status.
         There are a few params with different defaults from the equivalent
         capture method. This is because here we have more info about the tasks,
         and so it can use new tricks.
@@ -118,13 +118,12 @@ class ClearlyClient(object):
                       or even '123456' to filter that exact number anywhere.
             state (Optional[str]): a state to filter tasks
             negate (bool): if True, finds tasks that do not match criteria
-            params (Optional[bool]): if True shows params of all tasks,
-                if False doesn't, if None use the success or error,
-                depending on the final state
+            params (Optional[bool]): if True shows called args and kwargs,
+                skips if False, and follows outcome if None.
                 default is None
             success (bool): if True shows successful tasks' results
                 default is False
-            error (bool): if True shows failed tasks' tracebacks
+            error (bool): if True shows failed and retried tasks' tracebacks
                 default is False, to get an overview.
 
         """
