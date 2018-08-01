@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
+import six
 from celery import states
 
 from .utils import worker_states
@@ -49,7 +50,7 @@ class ExpectedStateHandler(object):
 
 class ExpectedPath(object):
     def __init__(self, name):
-        assert isinstance(name, str)
+        assert isinstance(name, six.string_types)
         self.name = name
         self.possibles = ()
         self.default = None
