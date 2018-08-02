@@ -12,7 +12,7 @@ from clearly.event_core.streaming_dispatcher import CapturingClient, StreamingDi
 try:
     # noinspection PyCompatibility
     from queue import Queue, Empty
-except ImportError:
+except ImportError:  # pragma: no cover
     # noinspection PyUnresolvedReferences,PyCompatibility
     from Queue import Queue, Empty
 

@@ -15,7 +15,7 @@ from clearly.utils.colors import strip_colors
 try:
     # noinspection PyCompatibility
     from queue import Queue
-except ImportError:
+except ImportError:  # pragma: no cover
     # noinspection PyUnresolvedReferences,PyCompatibility
     from Queue import Queue
 

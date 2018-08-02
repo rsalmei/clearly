@@ -14,7 +14,7 @@ from clearly.utils import worker_states
 try:
     # noinspection PyCompatibility
     from queue import Queue, Empty
-except ImportError:
+except ImportError:  # pragma: no cover
     # noinspection PyUnresolvedReferences,PyCompatibility
     from Queue import Queue, Empty
 
