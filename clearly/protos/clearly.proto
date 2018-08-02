@@ -57,8 +57,6 @@ message StatsMessage {
 
 service ClearlyServer {
     rpc capture_realtime (CaptureRequest) returns (stream RealtimeEventMessage);
-    rpc filter_tasks_by_type (FilterTasksTypeRequest) returns (stream TaskMessage);
-    rpc filter_tasks_by_worker (FilterTasksWorkerRequest) returns (stream TaskMessage);
     rpc filter_tasks (FilterTasksRequest) returns (stream TaskMessage);
     rpc filter_workers (FilterWorkersRequest) returns (stream WorkerMessage);
     rpc find_task (FindTaskRequest) returns (TaskMessage);
@@ -75,16 +73,6 @@ message PatternFilter {
 message CaptureRequest {
     PatternFilter tasks_capture = 1;
     PatternFilter workers_capture = 2;
-}
-
-message FilterTasksTypeRequest {
-    string task_type = 1;
-    string state_pattern = 2;
-}
-
-message FilterTasksWorkerRequest {
-    string worker_hostname = 1;
-    string state_pattern = 2;
 }
 
 message FilterTasksRequest {

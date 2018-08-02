@@ -21,16 +21,6 @@ class ClearlyServerStub(object):
         request_serializer=protos_dot_clearly__pb2.CaptureRequest.SerializeToString,
         response_deserializer=protos_dot_clearly__pb2.RealtimeEventMessage.FromString,
         )
-    self.filter_tasks_by_type = channel.unary_stream(
-        '/ClearlyServer/filter_tasks_by_type',
-        request_serializer=protos_dot_clearly__pb2.FilterTasksTypeRequest.SerializeToString,
-        response_deserializer=protos_dot_clearly__pb2.TaskMessage.FromString,
-        )
-    self.filter_tasks_by_worker = channel.unary_stream(
-        '/ClearlyServer/filter_tasks_by_worker',
-        request_serializer=protos_dot_clearly__pb2.FilterTasksWorkerRequest.SerializeToString,
-        response_deserializer=protos_dot_clearly__pb2.TaskMessage.FromString,
-        )
     self.filter_tasks = channel.unary_stream(
         '/ClearlyServer/filter_tasks',
         request_serializer=protos_dot_clearly__pb2.FilterTasksRequest.SerializeToString,
@@ -70,20 +60,6 @@ class ClearlyServerServicer(object):
   """
 
   def capture_realtime(self, request, context):
-    # missing associated documentation comment in .proto file
-    pass
-    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-    context.set_details('Method not implemented!')
-    raise NotImplementedError('Method not implemented!')
-
-  def filter_tasks_by_type(self, request, context):
-    # missing associated documentation comment in .proto file
-    pass
-    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-    context.set_details('Method not implemented!')
-    raise NotImplementedError('Method not implemented!')
-
-  def filter_tasks_by_worker(self, request, context):
     # missing associated documentation comment in .proto file
     pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -139,16 +115,6 @@ def add_ClearlyServerServicer_to_server(servicer, server):
           servicer.capture_realtime,
           request_deserializer=protos_dot_clearly__pb2.CaptureRequest.FromString,
           response_serializer=protos_dot_clearly__pb2.RealtimeEventMessage.SerializeToString,
-      ),
-      'filter_tasks_by_type': grpc.unary_stream_rpc_method_handler(
-          servicer.filter_tasks_by_type,
-          request_deserializer=protos_dot_clearly__pb2.FilterTasksTypeRequest.FromString,
-          response_serializer=protos_dot_clearly__pb2.TaskMessage.SerializeToString,
-      ),
-      'filter_tasks_by_worker': grpc.unary_stream_rpc_method_handler(
-          servicer.filter_tasks_by_worker,
-          request_deserializer=protos_dot_clearly__pb2.FilterTasksWorkerRequest.FromString,
-          response_serializer=protos_dot_clearly__pb2.TaskMessage.SerializeToString,
       ),
       'filter_tasks': grpc.unary_stream_rpc_method_handler(
           servicer.filter_tasks,
