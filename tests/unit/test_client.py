@@ -102,11 +102,11 @@ def test_client_capture_worker(bool1, mocked_client_display):
 
 
 def test_client_stats_do_print(mocked_client, capsys):
-    stats = 1234, 5678, 2244, 333  # task_count, event_count, tasks, workers
-    mocked_client.stub.stats.return_value = stats
+    data = dict(task_count=1234, event_count=5678, len_tasks=2244, len_workers=333)
+    mocked_client.stub.get_stats.return_value = clearly_pb2.StatsMessage(**data)
     mocked_client.stats()
     generated = capsys.readouterr().out
-    assert all(re.search(str(x), generated) for x in stats)
+    assert all(re.search(str(x), generated) for x in data.values())
 
 
 def test_client_tasks(tristate, bool1, bool2, mocked_client_display):
