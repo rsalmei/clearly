@@ -1,5 +1,5 @@
 [![Travis](https://img.shields.io/travis/rsalmei/clearly.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-84%25-green.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-100%25-green.svg)]()
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/rsalmei/clearly/graphs/commit-activity)
 [![PyPI version](https://img.shields.io/pypi/v/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/clearly.svg)](https://pypi.python.org/pypi/clearly/)
@@ -40,21 +40,24 @@ and you're good to go!
 Highlights:
 - any version of celery will work, from 3.1 to 4.2+ :)
 - a result backend is not mandatory (but used if available :)
-- now the code supports both python 2.7 and python 3.4+ :)
+- now the code supports both python 2.7 and python 3.5+ :)
 
 
 ## How `clearly` works
 
-This tool creates a background thread with a celery events receiver, which receives events from all clients and all workers connected, dynamically updating states.
+`Clearly` is composed of a server and a client.
+The server creates a background thread with a celery events receiver, which receives events from all publishers and all workers connected, dynamically updating states.
+It also has another thread to handle connected clients, dispatching events in real-time to interested parties.
+The client(s) can also filter stored tasks and workers, find a specific task uuid, or get statistics about the cluster.
 
-These events are processed, and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird.
+Those events are processed in the server, and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird.
 The parameters of the tasks are dynamically (and safely) compiled, and beautifully syntax colored, while tasks completed get their results directly from the result backend if available, to overcome the problem of truncated results.
-All async workers' life cycles are also processed and listed on screen.
-All tasks triggered show up immediately on screen, and you start seeing what's going on with those tasks, in real-time!
+All async workers' life cycles are also processed and listed on screen (beautifully syntax colored, of course).
+All tasks triggered show up immediately on screen, and you start seeing what the workers are doing with them in real-time!
 
-At any moment, you can CTRL+C out of the client, and rest assured that the background thread will continue gathering all updates seamlessly.
+At any moment, you can CTRL+C out of the client, and rest assured that there's a server out there, which will continue gathering all updates seamlessly.
 
-DO NOT FEAR the memory consumption! It is very optimized, and by default only stores 1000 tasks and 100 workers at a time. You can increase them though.
+The memory consumption, although very optimized, must of course be limited. By default it stores 10,000 tasks and 100 workers at a time. You can increase them if you want.
 
 
 ## Features
@@ -77,13 +80,17 @@ DO NOT FEAR the memory consumption! It is very optimized, and by default only st
 
 ## How to use
 
-### initialize it
+### start the server
+
+```bash
+clearly-server <broker_url> [--backend backend_url] [--port 12223]
+```
+
+### start the client
 
 ```python
-from yourproject.celeryconf import app
-from clearly.server import ClearlyServer
 from clearly.client import ClearlyClient
-clearlycli = ClearlyClient(ClearlyServer(app))
+clearlycli = ClearlyClient(host='hostname', port=12223)
 ```
 
 ### grab them
@@ -121,22 +128,12 @@ Any way you capture them, `clearly` is always storing the same data about the ta
 ![useful overview](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_brief.png)
 
 
-## Documentation
+## API Reference
 
 ```python
-def start(self):
-    """Starts the real-time engine that captures tasks. It will capture 
-    all tasks being sent to celery and all workers known to it.
-    
-    This will be run in the background, so you can still send other
-    commands or analyze stats and real-time date without losing any
-    updates.
-    
-    """
-
-def capture(self, pattern=None, negate=False,
-            params=False, success=False, error=True):
-    """Starts the real-time engine that captures tasks. It will capture
+def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
+            params=None, success=False, error=True, stats=False):
+    """Starts the real-time engine that captures events. It will capture
     all tasks being sent to celery and all workers known to it.
 
     This will be run in the foreground, so you can see in real-time
@@ -149,36 +146,36 @@ def capture(self, pattern=None, negate=False,
             ex.: '^dispatch|^email' to filter names starting with that
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
-        negate (bool): if True, finds tasks that do not match criteria
-        params (bool): if True shows params of all tasks
+        negate (bool): if True, finds tasks that do not match criteria.
+        workers (Optional[str]): a pattern to filter workers to capture.
+            ex.: 'service|priority' to filter names containing that
+        negate_workers (bool): if True, finds workers that do not match criteria.
+        params (Optional[bool]): if True shows args and kwargs in first/last state,
+            doesn't show if False, and follows the successes and errors if None.
+            default is None
+        success (bool): if True shows successful tasks' results.
             default is False
-        success (bool): if True shows successful tasks' results
+        error (bool): if True shows failed and retried tasks' tracebacks.
+            default is True, as you're monitoring to find errors, right?
+        stats (bool): if True shows complete workers' stats.
             default is False
-        error (bool): if True shows failed tasks' results
-            default is True, as you monitoring to find errors, right?
-
     """
 
-def stop(self):
-    """Stops the background engine, without losing anything already
-    captured.
-
-    """
 
 def stats(self):
     """Lists some metrics of your actual and capturing system.
     Those are:
-        Tasks processed: the total number of reentrant tasks processed, 
+        Tasks processed: the total number of reentrant tasks processed,
             which includes retry attempts.
         Events processed: number of events captured and processed.
         Tasks stored: actual number of unique tasks processed.
         Workers stored: number of unique workers already seen.
-    
     """
 
-def tasks(self, pattern=None, state=None, negate=False,
-          params=None, success=False, error=False):
-    """Filters captured tasks and prints their current status.
+
+def tasks(self, pattern=None, negate=False, state=None,
+          params=None, success=False, error=True):
+    """Filters stored tasks and prints their current status.
     There are a few params with different defaults from the equivalent
     capture method. This is because here we have more info about the tasks,
     and so it can use new tricks.
@@ -188,18 +185,17 @@ def tasks(self, pattern=None, state=None, negate=False,
             ex.: '^dispatch|^email' to filter names starting with those
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
-        state (Optional[str]): a state to filter tasks
         negate (bool): if True, finds tasks that do not match criteria
-        params (Optional[bool]): if True shows params of all tasks,
-            if False doesn't, if None use the success or error,
-            depending on the final state
+        state (Optional[str]): a state to filter tasks
+        params (Optional[bool]): if True shows called args and kwargs,
+            skips if False, and follows outcome if None.
             default is None
         success (bool): if True shows successful tasks' results
             default is False
-        error (bool): if True shows failed tasks' tracebacks
-            default is False, to get an overview.
-
+        error (bool): if True shows failed and retried tasks' tracebacks.
+            default is True, as you're monitoring to find errors, right?
     """
+
 
 def workers(self, pattern=None, negate=False, stats=True):
     """Filters known workers and prints their current status.
@@ -211,26 +207,23 @@ def workers(self, pattern=None, negate=False, stats=True):
                   or even '123456' to filter that exact number anywhere.
         negate (bool): if True, finds tasks that do not match criteria
         stats (bool): if True shows worker stats
-
     """
+
 
 def task(self, task_uuid):
     """Shows one specific task.
 
     Args:
         task_uuid (str): the task id
-
     """
+
 
 def seen_tasks(self):
-    """Shows a list of task types seen.
-    
-    """
+    """Shows a list of task types seen."""
+
 
 def reset(self):
-    """Resets all captured tasks.
-    
-    """
+    """Resets all captured tasks."""
 ```
 
 

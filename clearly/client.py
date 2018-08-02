@@ -66,7 +66,6 @@ class ClearlyClient():
                 default is True, as you're monitoring to find errors, right?
             stats (bool): if True shows complete workers' stats.
                 default is False
-
         """
         request = clearly_pb2.CaptureRequest(
             tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
@@ -92,7 +91,6 @@ class ClearlyClient():
             Events processed: number of events captured and processed.
             Tasks stored: actual number of unique tasks processed.
             Workers stored: number of unique workers already seen.
-
         """
         stats = self.stub.get_stats(clearly_pb2.Empty())
         print(colors.DIM('Processed:'),
@@ -123,7 +121,6 @@ class ClearlyClient():
                 default is False
             error (bool): if True shows failed and retried tasks' tracebacks.
                 default is True, as you're monitoring to find errors, right?
-
         """
         request = clearly_pb2.FilterTasksRequest(
             tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
@@ -142,7 +139,6 @@ class ClearlyClient():
                       or even '123456' to filter that exact number anywhere.
             negate (bool): if True, finds tasks that do not match criteria
             stats (bool): if True shows worker stats
-
         """
         request = clearly_pb2.FilterWorkersRequest(
             workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
@@ -155,7 +151,6 @@ class ClearlyClient():
 
         Args:
             task_uuid (str): the task id
-
         """
         request = clearly_pb2.FindTaskRequest(task_uuid=task_uuid)
         task = self.stub.find_task(request)
@@ -165,15 +160,11 @@ class ClearlyClient():
             print(EMPTY)
 
     def seen_tasks(self):
-        """Shows a list of task types seen.
-
-        """
+        """Shows a list of task types seen."""
         print('\n'.join(self.stub.seen_tasks(clearly_pb2.Empty())))
 
     def reset(self):
-        """Resets all captured tasks.
-        
-        """
+        """Resets all captured tasks."""
         self.stub.reset_tasks(clearly_pb2.Empty())
 
     @staticmethod
