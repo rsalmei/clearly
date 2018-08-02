@@ -64,12 +64,9 @@ def worker_state_type(request):
     yield request.param
 
 
-@pytest.mark.parametrize('method', [
-    'reset'
-])
-def test_client_proxy_methods(method, mocked_client):
-    getattr(mocked_client, method)()
-    getattr(mocked_client.stub, method).assert_called_once()
+def test_client_reset(mocked_client):
+    mocked_client.reset()
+    mocked_client.stub.reset_tasks.assert_called_once()
 
 
 def test_client_seen_tasks_do_print(mocked_client, capsys):
