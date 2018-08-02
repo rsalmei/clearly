@@ -101,14 +101,13 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         tasks_pattern, tasks_negate = CAPTURE_PARAMS_OP(request.tasks_filter)
         state_pattern = request.state_pattern
 
-        pcondition = scondition = lambda task: True
-        if tasks_pattern:
-            regex = re.compile(tasks_pattern)
-            pcondition = lambda task: accepts(regex, tasks_negate, task.name, task.routing_key)
+        # pattern filter condition
+        pregex = re.compile(tasks_pattern)
+        pcondition = lambda task: accepts(pregex, tasks_negate, task.name, task.routing_key)
 
-        if state_pattern:
-            regex = re.compile(state_pattern)
-            scondition = lambda task: accepts(regex, tasks_negate, task.state)
+        # state filter condition
+        sregex = re.compile(state_pattern)
+        scondition = lambda task: accepts(sregex, tasks_negate, task.state)
 
         found_tasks = (task for _, task in self.listener.memory.itertasks()
                        if pcondition(task) and scondition(task))
@@ -119,10 +118,9 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         """Filter task by matching a pattern and a state."""
         workers_pattern, workers_negate = CAPTURE_PARAMS_OP(request.workers_filter)
 
-        hcondition = lambda worker: True
-        if workers_pattern:
-            regex = re.compile(workers_pattern)
-            hcondition = lambda worker: accepts(regex, workers_negate, worker.hostname)
+        # hostname filter condition
+        hregex = re.compile(workers_pattern)
+        hcondition = lambda worker: accepts(hregex, workers_negate, worker.hostname)  # pragma: no branch
 
         op = operator.attrgetter('hostname')
         found_workers = (worker for worker in sorted(self.listener.memory.workers, key=op)
