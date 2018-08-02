@@ -8,7 +8,7 @@ from celery import states
 from mock import mock
 
 from clearly.client import ClearlyClient
-from clearly.protos.clearly_pb2 import RealtimeEventMessage, TaskMessage, WorkerMessage
+from clearly.protos import clearly_pb2
 from clearly.utils import worker_states
 from clearly.utils.colors import strip_colors
 
@@ -81,25 +81,25 @@ def test_client_seen_tasks_do_print(mocked_client, capsys):
 
 
 def test_client_capture_task(tristate, bool1, bool2, mocked_client_display):
-    task = TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
-                       args='args', kwargs='kwargs', result='result', traceback='traceback',
-                       timestamp=123.1, state='ANY', created=False)
-    mocked_client_display.stub.capture_realtime.return_value = (RealtimeEventMessage(task=task),)
+    task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
+                                   args='args', kwargs='kwargs', result='result', traceback='traceback',
+                                   timestamp=123.1, state='ANY', created=False)
+    mocked_client_display.stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(task=task),)
     mocked_client_display.capture(params=tristate, success=bool1, error=bool2)
     mocked_client_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
 
 
 def test_client_capture_ignore_unknown(mocked_client_display):
-    mocked_client_display.stub.capture_realtime.return_value = (RealtimeEventMessage(),)
+    mocked_client_display.stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(),)
     mocked_client_display.capture()
     mocked_client_display._display_task.assert_not_called()
 
 
 def test_client_capture_worker(bool1, mocked_client_display):
-    worker = WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-                           sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
-                           alive=True, freq=5, last_heartbeat=234.2)
-    mocked_client_display.stub.capture_realtime.return_value = (RealtimeEventMessage(worker=worker),)
+    worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
+                                       sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
+                                       alive=True, freq=5, last_heartbeat=234.2)
+    mocked_client_display.stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(worker=worker),)
     mocked_client_display.capture(stats=bool1)
     mocked_client_display._display_worker.assert_called_once_with(worker, bool1)
 
@@ -113,28 +113,28 @@ def test_client_stats_do_print(mocked_client, capsys):
 
 
 def test_client_tasks(tristate, bool1, bool2, mocked_client_display):
-    task = TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
-                       args='args', kwargs='kwargs', result='result', traceback='traceback',
-                       timestamp=123.1, state='ANY', created=False)
-    mocked_client_display.stub.tasks.return_value = (task,)
+    task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
+                                   args='args', kwargs='kwargs', result='result', traceback='traceback',
+                                   timestamp=123.1, state='ANY', created=False)
+    mocked_client_display.stub.filter_tasks.return_value = (task,)
     mocked_client_display.tasks(params=tristate, success=bool1, error=bool2)
     mocked_client_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
 
 
 def test_client_workers(bool1, mocked_client_display):
-    worker = WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-                           sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
-                           alive=True, freq=5, last_heartbeat=234.2)
-    mocked_client_display.stub.workers.return_value = (worker,)
+    worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
+                                       sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
+                                       alive=True, freq=5, last_heartbeat=234.2)
+    mocked_client_display.stub.filter_workers.return_value = (worker,)
     mocked_client_display.workers(stats=bool1)
     mocked_client_display._display_worker.assert_called_once_with(worker, bool1)
 
 
 def test_client_task(bool1, mocked_client_display):
-    task = TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
-                       args='args', kwargs='kwargs', result='result', traceback='traceback',
-                       timestamp=123.1, state='state', created=False)
-    mocked_client_display.stub.task.return_value = task if bool1 else None
+    task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
+                                   args='args', kwargs='kwargs', result='result', traceback='traceback',
+                                   timestamp=123.1, state='state', created=False)
+    mocked_client_display.stub.find_task.return_value = task if bool1 else None
     mocked_client_display.task('uuid')
     if bool1:
         mocked_client_display._display_task.assert_called_once_with(task, True, True, True)
@@ -154,9 +154,9 @@ def task_result(request):
 
 def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
                              task_state_type, task_tb, mocked_client, capsys):
-    task = TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
-                       args='args123', kwargs='kwargs', result=task_result, traceback=task_tb,
-                       timestamp=123.1, state=task_state_type, created=bool3)
+    task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
+                                   args='args123', kwargs='kwargs', result=task_result, traceback=task_tb,
+                                   timestamp=123.1, state=task_state_type, created=bool3)
 
     with mock.patch('clearly.client.ClearlyClient._task_state') as m_task_state:
         mocked_client._display_task(task, params=tristate, success=bool1, error=bool2)
@@ -193,9 +193,9 @@ def worker_heartbeat(request):
 
 def test_client_display_worker(bool1, bool2, worker_state_type, worker_heartbeat,
                                mocked_client, capsys):
-    worker = WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-                           sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, alive=bool2,
-                           state=worker_state_type, freq=5, last_heartbeat=worker_heartbeat)
+    worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
+                                       sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, alive=bool2,
+                                       state=worker_state_type, freq=5, last_heartbeat=worker_heartbeat)
 
     with mock.patch('clearly.client.ClearlyClient._worker_state') as m_worker_state:
         mocked_client._display_worker(worker, stats=bool1)
