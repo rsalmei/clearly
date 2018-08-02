@@ -128,7 +128,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         for worker in found_workers:
             yield ClearlyServer._event_to_pb(worker)[1]
 
-    def task(self, request, context):
+    def find_task(self, request, context):
         """Finds one specific task."""
         task = self.listener.memory.tasks.get(request.task_uuid)
         if task:
@@ -143,10 +143,15 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         """Resets all captured tasks."""
         self.listener.memory.clear_tasks()
 
-    def stats(self, request, context):
+    def get_stats(self, request, context):
         """Returns the server statistics."""
         m = self.listener.memory
-        return m.task_count, m.event_count, len(m.tasks), len(m.workers)
+        return clearly_pb2.StatsMessage(
+            task_count=m.task_count,
+            event_count=m.event_count,
+            len_tasks=len(m.tasks),
+            len_workers=len(m.workers)
+        )
 
 
 def serve(instance):  # pragma: no cover
