@@ -10,9 +10,8 @@ import grpc
 from celery import Celery
 from celery.events.state import Task, Worker
 
-from event_core.events import WorkerData
 from .event_core.event_listener import EventListener
-from .event_core.events import TaskData
+from .event_core.events import TaskData, WorkerData
 from .event_core.streaming_dispatcher import StreamingDispatcher
 from .protos import clearly_pb2, clearly_pb2_grpc
 from .utils.data import accepts
@@ -20,7 +19,7 @@ from .utils.data import accepts
 try:
     # noinspection PyCompatibility
     from queue import Queue, Empty
-except:
+except ImportError:  # pragma: no cover
     # noinspection PyCompatibility
     from Queue import Queue, Empty
 
@@ -65,7 +64,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
             while True:
                 try:
                     event_data = q.get(timeout=1)
-                except Empty:
+                except Empty:  # pragma: no cover
                     continue
 
                 key, obj = ClearlyServer._event_to_pb(event_data)
