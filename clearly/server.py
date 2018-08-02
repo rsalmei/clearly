@@ -136,8 +136,9 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 
     def seen_tasks(self, request, context):
         """Returns all seen task types."""
-        return clearly_pb2.SeenTasksMessage().task_types \
-            .extend(self.listener.memory.task_types())
+        result = clearly_pb2.SeenTasksMessage()
+        result.task_types.extend(self.listener.memory.task_types())
+        return result
 
     def reset_tasks(self, request, context):
         """Resets all captured tasks."""
