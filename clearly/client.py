@@ -75,11 +75,9 @@ class ClearlyClient():
         try:
             for realtime in self.stub.capture_realtime(request):
                 if realtime.HasField('task'):
-                    event = realtime.task
-                    ClearlyClient._display_task(event, params, success, error)
+                    ClearlyClient._display_task(realtime.task, params, success, error)
                 elif realtime.HasField('worker'):
-                    event = realtime.worker
-                    ClearlyClient._display_worker(event, stats)
+                    ClearlyClient._display_worker(realtime.worker, stats)
                 else:
                     print('unknown event:', realtime)
                     break
@@ -96,16 +94,16 @@ class ClearlyClient():
             Workers stored: number of unique workers already seen.
 
         """
-        task_count, event_count, tasks, workers = self.stub.stats()
+        stats = self.stub.get_stats(clearly_pb2.Empty())
         print(colors.DIM('Processed:'),
-              '\ttasks', colors.RED(task_count),
-              '\tevents', colors.RED(event_count))
+              '\ttasks', colors.RED(stats.task_count),
+              '\tevents', colors.RED(stats.event_count))
         print(colors.DIM('Stored:'),
-              '\ttasks', colors.RED(tasks),
-              '\tworkers', colors.RED(workers))
+              '\ttasks', colors.RED(stats.len_tasks),
+              '\tworkers', colors.RED(stats.len_workers))
 
-    def tasks(self, pattern=None, state=None, negate=False,
-              params=None, success=False, error=False):
+    def tasks(self, pattern=None, negate=False, state=None,
+              params=None, success=False, error=True):
         """Filters stored tasks and prints their current status.
         There are a few params with different defaults from the equivalent
         capture method. This is because here we have more info about the tasks,
@@ -116,18 +114,22 @@ class ClearlyClient():
                 ex.: '^dispatch|^email' to filter names starting with those
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
-            state (Optional[str]): a state to filter tasks
             negate (bool): if True, finds tasks that do not match criteria
+            state (Optional[str]): a state to filter tasks
             params (Optional[bool]): if True shows called args and kwargs,
                 skips if False, and follows outcome if None.
                 default is None
             success (bool): if True shows successful tasks' results
                 default is False
-            error (bool): if True shows failed and retried tasks' tracebacks
-                default is False, to get an overview.
+            error (bool): if True shows failed and retried tasks' tracebacks.
+                default is True, as you're monitoring to find errors, right?
 
         """
-        for task in self.stub.tasks(pattern, state, negate):  # type:TaskInfo
+        request = clearly_pb2.FilterTasksRequest(
+            tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
+            state_pattern=state or '.',
+        )
+        for task in self.stub.filter_tasks(request):
             ClearlyClient._display_task(task, params, success, error)
 
     def workers(self, pattern=None, negate=False, stats=True):
@@ -142,7 +144,10 @@ class ClearlyClient():
             stats (bool): if True shows worker stats
 
         """
-        for worker in self.stub.workers(pattern, negate):  # type:WorkerInfo
+        request = clearly_pb2.FilterWorkersRequest(
+            workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
+        )
+        for worker in self.stub.filter_workers(request):
             ClearlyClient._display_worker(worker, stats)
 
     def task(self, task_uuid):
@@ -152,21 +157,24 @@ class ClearlyClient():
             task_uuid (str): the task id
 
         """
-        task = self.stub.task(task_uuid)
+        request = clearly_pb2.FindTaskRequest(task_uuid=task_uuid)
+        task = self.stub.find_task(request)
         if task:
             ClearlyClient._display_task(task, True, True, True)
+        else:
+            print(EMPTY)
 
     def seen_tasks(self):
         """Shows a list of task types seen.
 
         """
-        print('\n'.join(self.stub.seen_tasks()))
+        print('\n'.join(self.stub.seen_tasks(clearly_pb2.Empty())))
 
     def reset(self):
         """Resets all captured tasks.
         
         """
-        self.stub.reset()
+        self.stub.reset_tasks(clearly_pb2.Empty())
 
     @staticmethod
     def _display_task(task, params, success, error):
