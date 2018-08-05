@@ -14,6 +14,7 @@ install_requires = [
     'pygments',
     'grpcio',
     'protobuf',
+    'click',
 ]
 if sys.version_info[0] == 2:
     install_requires.append('futures')
@@ -67,4 +68,9 @@ setup(
     packages=find_packages(),
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4, <4',
     install_requires=install_requires,
+    entry_points={
+        'console_scripts': [
+            'clearly=clearly.command_line:clearly',
+        ],
+    },
 )
