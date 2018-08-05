@@ -50,26 +50,22 @@ class EventListener(object):
         app (Celery): a configured celery app instance
         queue_output (Queue): to send to streaming dispatcher
         memory (State): LRU storage object to keep tasks and workers
-        use_result_backend (bool): if True, it can fetch results from the actual result backend
+        use_result_backend (bool): if True, there's a result backend to fetch results from
     """
 
-    def __init__(self, app, queue_output, use_result_backend=True,
-                 max_tasks_in_memory=10000, max_workers_in_memory=100):
+    def __init__(self, app, queue_output, max_tasks_in_memory=10000, max_workers_in_memory=100):
         """Constructs an event listener instance.
 
         Args:
             app (Celery): a configured celery app instance
             queue_output (Queue): to send to streaming dispatcher.
-            use_result_backend (bool): if True, it can fetch results from the actual result backend
             max_tasks_in_memory (int): max tasks stored
             max_workers_in_memory (int): max workers stored
         """
         self.app = app
         self.queue_output = queue_output
 
-        if isinstance(app.backend, DisabledBackend):  # pragma: no cover
-            use_result_backend = False
-        self.use_result_backend = use_result_backend
+        self.use_result_backend = not isinstance(app.backend, DisabledBackend)
 
         # events handling: storage and filling missing states.
         self.memory = State(
