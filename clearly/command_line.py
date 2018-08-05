@@ -27,20 +27,21 @@ def clearly(debug):
 
 @clearly.command()
 @click.argument('broker')
-@click.argument('backend', required=False)
-def server(broker, backend):
+@click.option('--backend', help='Enables complete task results from result backend')
+@click.option('--port', default=12223, help='Listen port for Clearly')
+def server(broker, backend, port):
     app = Celery(broker=broker, backend=backend)
     queue_listener_dispatcher = Queue()
     listener = EventListener(app, queue_listener_dispatcher)
     dispatcher = StreamingDispatcher(queue_listener_dispatcher)
     clearlysrv = ClearlyServer(listener, dispatcher)
-    _serve(clearlysrv)
+    _serve(clearlysrv, port)
 
 
-def _serve(instance):
+def _serve(instance, port):
     server = grpc.server(futures.ThreadPoolExecutor())
     clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, server)
-    server.add_insecure_port('[::]:12223')
+    server.add_insecure_port('[::]:{}'.format(port))
     server.start()
 
     import time

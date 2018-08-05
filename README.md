@@ -80,17 +80,36 @@ The memory consumption, although very optimized, must of course be limited. By d
 
 ## How to use
 
-### start the server
+### start the server (bash)
 
 ```bash
-clearly-server <broker_url> [--backend backend_url] [--port 12223]
+>>> clearly server <broker_url> [--backend backend_url] [--port 12223]
+
+>>> clearly --help
+Usage: clearly [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --version             Show the version and exit.
+  --debug / --no-debug  Enables debug logging
+  --help                Show this message and exit.
+
+Commands:
+  server
+
+>>> clearly server --help
+Usage: clearly server [OPTIONS] BROKER
+
+Options:
+  --backend TEXT  Enables complete task results from result backend
+  --port INTEGER  Listen port for Clearly
+  --help          Show this message and exit.
 ```
 
-### start the client
+### start the client ([i]python)
 
 ```python
-from clearly.client import ClearlyClient
-clearlycli = ClearlyClient(host='hostname', port=12223)
+>>> from clearly.client import ClearlyClient
+>>> clearlycli = ClearlyClient(host='hostname', port=12223)
 ```
 
 ### grab them
