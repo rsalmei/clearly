@@ -85,7 +85,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         else:
             raise ValueError('unknown event')
         keys = klass.DESCRIPTOR.fields_by_name.keys()
-        data = {k: v for k, v in
+        data = {str(k): v for k, v in  # str() for py2
                 getattr(event, '_asdict',  # internal TaskData and WorkerData
                         lambda: {f: getattr(event, f) for f in event._fields})  # celery Task and Worker
                 ().items() if k in keys}
