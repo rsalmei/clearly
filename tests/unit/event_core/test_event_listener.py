@@ -19,12 +19,12 @@ except ImportError:  # pragma: no cover
     from Queue import Queue, Empty
 
 
-@pytest.fixture(params=(False, True))
-def listener(request):
+@pytest.fixture
+def listener():
     with mock.patch('threading.Thread'), \
          mock.patch('threading.Event'):
         # noinspection PyTypeChecker
-        yield EventListener(mock.Mock(), Queue(), use_result_backend=request.param)
+        yield EventListener(mock.Mock(), Queue())
 
 
 @pytest.fixture(params=(False, True))

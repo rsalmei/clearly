@@ -148,7 +148,7 @@ class EventListener(object):
                 task.result = EventListener.compile_task_result(task.result)
             except SyntaxError:
                 # use result backend as fallback if allowed and available.
-                if self.use_result_backend:
+                if self.use_result_backend:  # pragma: no cover
                     task.result = repr(self.app.AsyncResult(task.uuid).result)
         return immutable_task(task, task.state, pre_state, created)
 
