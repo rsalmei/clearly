@@ -3,11 +3,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import operator
 import re
-# noinspection PyCompatibility
-from concurrent import futures
 
-import grpc
-from celery import Celery
 from celery.events.state import Task, Worker
 
 from .event_core.event_listener import EventListener
@@ -20,7 +16,7 @@ try:
     # noinspection PyCompatibility
     from queue import Queue, Empty
 except ImportError:  # pragma: no cover
-    # noinspection PyCompatibility
+    # noinspection PyCompatibility,PyUnresolvedReferences
     from Queue import Queue, Empty
 
 CAPTURE_PARAMS_OP = operator.attrgetter('pattern', 'negate')
@@ -152,27 +148,3 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
             len_tasks=len(m.tasks),
             len_workers=len(m.workers)
         )
-
-
-def serve(instance):  # pragma: no cover
-    server = grpc.server(futures.ThreadPoolExecutor())
-    clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, server)
-    server.add_insecure_port('[::]:12223')
-    server.start()
-
-    import time
-    ONE_DAY_IN_SECONDS = 24 * 60 * 60
-    try:
-        while True:
-            time.sleep(ONE_DAY_IN_SECONDS)
-    except KeyboardInterrupt:
-        server.stop(None)
-
-
-if __name__ == '__main__':
-    app = Celery(broker='amqp://localhost', backend='redis://localhost')
-    queue_listener_dispatcher = Queue()
-    listener = EventListener(app, queue_listener_dispatcher)
-    dispatcher = StreamingDispatcher(queue_listener_dispatcher)
-    clearlysrv = ClearlyServer(listener, dispatcher)
-    serve(clearlysrv)
