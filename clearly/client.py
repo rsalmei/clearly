@@ -19,7 +19,7 @@ DIM_NONE = Colors.DIM(Colors.CYAN('None'))
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
 
 
-class ClearlyClient():
+class ClearlyClient(object):
     """Simple and real-time monitor for celery.
     Client object, to display and manage server captured tasks and workers.
 
