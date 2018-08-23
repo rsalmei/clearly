@@ -24,7 +24,7 @@ class ClearlyClient(object):
     Client object, to display and manage server captured tasks and workers.
 
         Attributes:
-            stub: the server stub instance
+            _stub: the server stub instance
     """
 
     def __init__(self, host='localhost', port=12223):
@@ -36,7 +36,7 @@ class ClearlyClient(object):
         """
 
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
-        self.stub = clearly_pb2_grpc.ClearlyServerStub(channel)
+        self._stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
     def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
                 params=None, success=False, error=True, stats=False):
@@ -72,7 +72,7 @@ class ClearlyClient(object):
             workers_capture=clearly_pb2.PatternFilter(pattern=workers or '.', negate=negate_workers),
         )
         try:
-            for realtime in self.stub.capture_realtime(request):
+            for realtime in self._stub.capture_realtime(request):
                 if realtime.HasField('task'):
                     ClearlyClient._display_task(realtime.task, params, success, error)
                 elif realtime.HasField('worker'):
@@ -92,7 +92,7 @@ class ClearlyClient(object):
             Tasks stored: actual number of unique tasks processed.
             Workers stored: number of unique workers already seen.
         """
-        stats = self.stub.get_stats(clearly_pb2.Empty())
+        stats = self._stub.get_stats(clearly_pb2.Empty())
         print(Colors.DIM('Processed:'),
               '\ttasks', Colors.RED(stats.task_count),
               '\tevents', Colors.RED(stats.event_count))
@@ -153,19 +153,19 @@ class ClearlyClient(object):
             task_uuid (str): the task id
         """
         request = clearly_pb2.FindTaskRequest(task_uuid=task_uuid)
-        task = self.stub.find_task(request)
         if task:
+        task = self._stub.find_task(request)
             ClearlyClient._display_task(task, True, True, True)
         else:
             print(EMPTY)
 
     def seen_tasks(self):
         """Shows a list of task types seen."""
-        print('\n'.join(self.stub.seen_tasks(clearly_pb2.Empty())))
+        print('\n'.join(self._stub.seen_tasks(clearly_pb2.Empty()).task_types))
 
     def reset(self):
         """Resets all captured tasks."""
-        self.stub.reset_tasks(clearly_pb2.Empty())
+        self._stub.reset_tasks(clearly_pb2.Empty())
 
     @staticmethod
     def _display_task(task, params, success, error):

@@ -50,7 +50,7 @@ class EventListener(object):
         app (Celery): a configured celery app instance
         queue_output (Queue): to send to streaming dispatcher
         memory (State): LRU storage object to keep tasks and workers
-        use_result_backend (bool): if True, there's a result backend to fetch results from
+        _use_result_backend (bool): if True, there's a result backend to fetch results from
     """
 
     def __init__(self, app, queue_output, max_tasks_in_memory=10000, max_workers_in_memory=100):
@@ -62,10 +62,10 @@ class EventListener(object):
             max_tasks_in_memory (int): max tasks stored
             max_workers_in_memory (int): max workers stored
         """
-        self.app = app
-        self.queue_output = queue_output
+        self._app = app
+        self._queue_output = queue_output
 
-        self.use_result_backend = not isinstance(app.backend, DisabledBackend)
+        self._use_result_backend = not isinstance(app.backend, DisabledBackend)
 
         # events handling: storage and filling missing states.
         self.memory = State(
@@ -74,11 +74,11 @@ class EventListener(object):
         )  # type: State
 
         # running engine (should be asyncio in the future)
-        self.listener_thread = None  # type:threading.Thread
-        self.celery_receiver = None  # type:EventReceiver
+        self._listener_thread = None  # type:threading.Thread
+        self._celery_receiver = None  # type:EventReceiver
 
         # concurrency control
-        self.wait_event = threading.Event()
+        self._wait_event = threading.Event()
 
         # detect shutdown.
         def sigterm_handler(_signo, _stack_frame):  # pragma: no cover
@@ -90,38 +90,38 @@ class EventListener(object):
     def __start(self):  # pragma: no cover
         """Starts the real-time engine that captures events."""
 
-        assert not self.listener_thread
+        assert not self._listener_thread
 
-        self.listener_thread = threading.Thread(target=self.__run_listener,
-                                                name='clearly-listener')
-        self.listener_thread.daemon = True
-        self.listener_thread.start()
-        self.wait_event.wait()
-        self.wait_event.clear()
+        self._listener_thread = threading.Thread(target=self.__run_listener,
+                                                 name='clearly-listener')
+        self._listener_thread.daemon = True
+        self._listener_thread.start()
+        self._wait_event.wait()
+        self._wait_event.clear()
 
     def __stop(self):  # pragma: no cover
         """Stops the background engine."""
 
-        if not self.listener_thread:
+        if not self._listener_thread:
             return
 
         print('Stopping listener')
-        self.celery_receiver.should_stop = True
-        self.listener_thread.join()
-        self.listener_thread = self.celery_receiver = None
+        self._celery_receiver.should_stop = True
+        self._listener_thread.join()
+        self._listener_thread = self._celery_receiver = None
 
     def __run_listener(self):  # pragma: no cover
         import sys
         print('Starting listener', threading.current_thread())
         sys.stdout.flush()
 
-        with self.app.connection() as connection:
-            self.celery_receiver = self.app.events.Receiver(
+        with self._app.connection() as connection:
+            self._celery_receiver = self._app.events.Receiver(
                 connection, handlers={
                     '*': self._process_event,
                 })  # type: EventReceiver
-            self.wait_event.set()
-            self.celery_receiver.capture(limit=None, timeout=None, wakeup=True)
+            self._wait_event.set()
+            self._celery_receiver.capture(limit=None, timeout=None, wakeup=True)
 
         print('Listener stopped', threading.current_thread())
         sys.stdout.flush()
@@ -136,7 +136,7 @@ class EventListener(object):
             print('unknown event:', event)
             return
 
-        self.queue_output.put(data)
+        self._queue_output.put(data)
 
     def _process_task_event(self, event):
         task = self.memory.tasks.get(event['uuid'])
@@ -148,8 +148,8 @@ class EventListener(object):
                 task.result = EventListener.compile_task_result(task.result)
             except SyntaxError:
                 # use result backend as fallback if allowed and available.
-                if self.use_result_backend:  # pragma: no cover
-                    task.result = repr(self.app.AsyncResult(task.uuid).result)
+                if self._use_result_backend:  # pragma: no cover
+                    task.result = repr(self._app.AsyncResult(task.uuid).result)
         return immutable_task(task, task.state, pre_state, created)
 
     def _process_worker_event(self, event):
