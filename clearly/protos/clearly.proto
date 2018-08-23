@@ -13,7 +13,7 @@ message TaskMessage {
     string kwargs = 6;
     string result = 7;
     string traceback = 8;
-    float timestamp = 9;
+    double timestamp = 9;
     string state = 10;
     bool created = 11;
 }
@@ -24,11 +24,11 @@ message WorkerMessage {
     string sw_sys = 3;
     string sw_ident = 4;
     string sw_ver = 5;
-    repeated float loadavg = 6;
+    repeated double loadavg = 6;
     int32 processed = 7;
     bool alive = 8;
     float freq = 9;
-    float last_heartbeat = 10;
+    double last_heartbeat = 10;
     string state = 11;
     bool created = 12;
 }
