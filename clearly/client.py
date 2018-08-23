@@ -10,12 +10,12 @@ from .code_highlighter import create_traceback_highlighter, typed_code
 from .protos import clearly_pb2, clearly_pb2_grpc
 from .safe_compiler import safe_compile_text
 from .utils import worker_states
-from .utils.colors import colors
+from .utils.colors import Colors
 
 HEADER_SIZE = 8
 HEADER_PADDING = ' ' * HEADER_SIZE
-EMPTY = colors.DIM(':)')
-DIM_NONE = colors.DIM(colors.CYAN('None'))
+EMPTY = Colors.DIM(':)')
+DIM_NONE = Colors.DIM(Colors.CYAN('None'))
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
 
 
@@ -93,12 +93,12 @@ class ClearlyClient():
             Workers stored: number of unique workers already seen.
         """
         stats = self.stub.get_stats(clearly_pb2.Empty())
-        print(colors.DIM('Processed:'),
-              '\ttasks', colors.RED(stats.task_count),
-              '\tevents', colors.RED(stats.event_count))
-        print(colors.DIM('Stored:'),
-              '\ttasks', colors.RED(stats.len_tasks),
-              '\tworkers', colors.RED(stats.len_workers))
+        print(Colors.DIM('Processed:'),
+              '\ttasks', Colors.RED(stats.task_count),
+              '\tevents', Colors.RED(stats.event_count))
+        print(Colors.DIM('Stored:'),
+              '\ttasks', Colors.RED(stats.len_tasks),
+              '\tworkers', Colors.RED(stats.len_workers))
 
     def tasks(self, pattern=None, negate=False, state=None,
               params=None, success=False, error=True):
@@ -170,19 +170,19 @@ class ClearlyClient():
     @staticmethod
     def _display_task(task, params, success, error):
         ts = datetime.fromtimestamp(task.timestamp)
-        print(colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
+        print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
             routing_key = task.routing_key or EMPTY
-            print(colors.BLUE(task.name),
-                  colors.MAGENTA(routing_key[len(task.name):] or '-'
+            print(Colors.BLUE(task.name),
+                  Colors.MAGENTA(routing_key[len(task.name):] or '-'
                                  if routing_key.startswith(task.name)
                                  else routing_key),
-                  colors.DIM(task.uuid))
+                  Colors.DIM(task.uuid))
         else:
             print(ClearlyClient._task_state(task.state),
-                  colors.DIM(colors.BLUE(task.retries)),
+                  Colors.DIM(Colors.BLUE(task.retries)),
                   end=' ')
-            print(colors.BLUE(task.name), colors.DIM(task.uuid))
+            print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
         show_result = (task.state in states.EXCEPTION_STATES and error) \
                       or (task.state == states.SUCCESS and success)
@@ -192,10 +192,10 @@ class ClearlyClient():
         if first_seen or result:
             print(type(task.kwargs), task.kwargs)
             safe_compile_text(task.kwargs, 1)
-            print(colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
+            print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.args),
                              wrap=False) or EMPTY)
-            print(colors.DIM('{:>{}}'.format('kwargs:', HEADER_SIZE)),
+            print(Colors.DIM('{:>{}}'.format('kwargs:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.kwargs),
                              wrap=False) or EMPTY)
 
@@ -207,44 +207,44 @@ class ClearlyClient():
                     .replace('\n', '\n' + HEADER_PADDING).strip()
             else:
                 output = EMPTY
-            print(colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
+            print(Colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
     @staticmethod
     def _display_worker(worker, stats):
         print(ClearlyClient._worker_state(worker.state),
-              colors.DIM(colors.CYAN(worker.hostname)),
-              colors.DIM(colors.YELLOW(str(worker.pid))))
+              Colors.DIM(Colors.CYAN(worker.hostname)),
+              Colors.DIM(Colors.YELLOW(str(worker.pid))))
 
         if stats:
-            print(colors.DIM('{:>{}}'.format('sw:', HEADER_SIZE)),
-                  colors.DIM(colors.CYAN(worker.sw_sys)),
+            print(Colors.DIM('{:>{}}'.format('sw:', HEADER_SIZE)),
+                  Colors.DIM(Colors.CYAN(worker.sw_sys)),
                   worker.sw_ident,
-                  colors.ORANGE(worker.sw_ver))
-            print(colors.DIM('{:>{}}'.format('load:', HEADER_SIZE)),
+                  Colors.ORANGE(worker.sw_ver))
+            print(Colors.DIM('{:>{}}'.format('load:', HEADER_SIZE)),
                   worker.loadavg or DIM_NONE,
-                  colors.DIM('processed:'), worker.processed or DIM_NONE)
+                  Colors.DIM('processed:'), worker.processed or DIM_NONE)
             if worker.alive:
                 if worker.last_heartbeat:
                     ts = datetime.fromtimestamp(worker.last_heartbeat)
                     tsstr = ts.strftime('%H:%M:%S.%f')[:-3]
                 else:
                     tsstr = DIM_NONE
-                print(colors.DIM('{:>{}}'.format('heartbeat:', HEADER_SIZE)),
+                print(Colors.DIM('{:>{}}'.format('heartbeat:', HEADER_SIZE)),
                       '/{}s'.format(worker.freq),
-                      colors.DIM(tsstr))
+                      Colors.DIM(tsstr))
 
     @staticmethod
     def _task_state(state):
         result = '{:>{}}'.format(state, HEADER_SIZE)
         if state == states.SUCCESS:  # final state in BOLD
-            return colors.BOLD(colors.GREEN(result))
+            return Colors.BOLD(Colors.GREEN(result))
         if state in (states.FAILURE, states.REVOKED):  # final states too
-            return colors.BOLD(colors.RED(result))
-        return colors.YELLOW(result)  # transient states
+            return Colors.BOLD(Colors.RED(result))
+        return Colors.YELLOW(result)  # transient states
 
     @staticmethod
     def _worker_state(state):
         result = '{:>{}}'.format(state, HEADER_SIZE)
         if state == worker_states.ONLINE:
-            return colors.BOLD(colors.GREEN(result))
-        return colors.BOLD(colors.RED(result))
+            return Colors.BOLD(Colors.GREEN(result))
+        return Colors.BOLD(Colors.RED(result))

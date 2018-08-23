@@ -12,7 +12,7 @@ except:  # pragma: no cover
         return str(x)
 
 
-class colors:
+class Colors:
     _col = lambda color, text: color + unicode(text) + '\033[0m'
     BLUE = partial(_col, '\033[94m')
     GREEN = partial(_col, '\033[92m')
