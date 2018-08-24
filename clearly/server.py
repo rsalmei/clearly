@@ -2,8 +2,8 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import operator
-import re
 
+import re
 from celery.events.state import Task, Worker
 
 from .event_core.event_listener import EventListener
