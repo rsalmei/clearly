@@ -53,14 +53,14 @@ ONE_DAY_IN_SECONDS = 24 * 60 * 60
 
 
 def _serve(instance, port):
-    server = grpc.server(futures.ThreadPoolExecutor())
-    clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, server)
-    server.add_insecure_port('[::]:{}'.format(port))
-    server.start()
+    gserver = grpc.server(futures.ThreadPoolExecutor())
+    clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, gserver)
+    gserver.add_insecure_port('[::]:{}'.format(port))
+    gserver.start()
 
     import time
     try:
         while True:
             time.sleep(ONE_DAY_IN_SECONDS)
     except KeyboardInterrupt:
-        server.stop(None)
+        gserver.stop(None)
