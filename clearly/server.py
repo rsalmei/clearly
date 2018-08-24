@@ -115,7 +115,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
             yield ClearlyServer._event_to_pb(task)[1]
 
     def filter_workers(self, request, context):
-        """Filter task by matching a pattern and a state."""
+        """Filter workers by matching a pattern to hostname."""
         workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_filter)
 
         hregex = re.compile(workers_pattern)  # hostname filter condition
