@@ -81,8 +81,8 @@ def test_listener_process_task(bool1, bool2, task_state_type, listener):
 
     if task_state_type == states.SUCCESS:
         ctr.assert_called_once_with('ok')
-        if bool2 and listener.use_result_backend:
-            listener.app.AsyncResult.assert_called_once_with('uuid')
+        if bool2:
+            listener._app.AsyncResult.assert_called_once_with('uuid')
     it.assert_called_once_with(task, task_state_type, 'pre_state' if bool1 else states.PENDING, not bool1)
 
 

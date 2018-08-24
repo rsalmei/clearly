@@ -82,7 +82,7 @@ def test_server_filter_tasks(mocked_server):
         tasks_filter=clearly_pb2.PatternFilter(pattern='tp', negate=True),
         state_pattern='sp',
     )
-    mlmt = mocked_server.listener.memory.itertasks
+    mlmt = mocked_server.listener.memory.tasks_by_time
     task = mock.Mock()
     mlmt.return_value = (('ignore', task),)
 
@@ -98,7 +98,7 @@ def test_server_filter_tasks(mocked_server):
 
 
 def test_server_filter_tasks_empty(mocked_server):
-    mlmt = mocked_server.listener.memory.itertasks
+    mlmt = mocked_server.listener.memory.tasks_by_time
     mlmt.return_value = ()
 
     gen = mocked_server.filter_tasks(clearly_pb2.FilterTasksRequest(), None)
@@ -111,7 +111,7 @@ def test_server_filter_workers(mocked_server):
         workers_filter=clearly_pb2.PatternFilter(pattern='wp', negate=True),
     )
     worker = mock.Mock()
-    mocked_server.listener.memory.workers = (worker,)
+    mocked_server.listener.memory.workers.values.return_value = (worker,)
 
     with mock.patch('clearly.server.accepts') as ma, \
             mock.patch('clearly.server.ClearlyServer._event_to_pb') as mepb:
@@ -125,7 +125,7 @@ def test_server_filter_workers(mocked_server):
 
 
 def test_server_filter_workers_empty(mocked_server):
-    mocked_server.listener.memory.workers = ()
+    mocked_server.listener.memory.workers.values.return_value = ()
 
     gen = mocked_server.filter_workers(clearly_pb2.FilterWorkersRequest(), None)
     with pytest.raises(StopIteration):
@@ -147,7 +147,7 @@ def test_server_find_task(task, mocked_server):
         assert result == 35
     else:
         mepb.assert_not_called()
-        assert result is None
+        assert isinstance(result, clearly_pb2.TaskMessage)
 
 
 def test_server_seen_tasks(mocked_server):
