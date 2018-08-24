@@ -5,10 +5,10 @@ import click
 import grpc
 from celery import Celery
 
-from clearly.event_core.event_listener import EventListener
-from clearly.event_core.streaming_dispatcher import StreamingDispatcher
-from clearly.protos import clearly_pb2_grpc
-from clearly.server import ClearlyServer
+from .event_core.event_listener import EventListener
+from .event_core.streaming_dispatcher import StreamingDispatcher
+from .protos import clearly_pb2_grpc
+from .server import ClearlyServer
 
 try:
     # noinspection PyCompatibility
