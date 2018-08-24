@@ -7,16 +7,16 @@ worker:
 	celery worker -A tasks -E --loglevel=info --heartbeat-interval 10 $(args)
 
 server:
-	python -m clearly.server
+	clearly --debug server amqp://localhost
 
 sender:
 	ipython sender.py
 
-senderi:
+isender:
 	ipython -i sender.py
 
 client:
 	ipython client.py
 
-clienti:
+iclient:
 	ipython -i client.py
