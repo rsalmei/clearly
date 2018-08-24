@@ -23,16 +23,22 @@ except ImportError:  # pragma: no cover
 @click.option('--debug/--no-debug', help='Enables debug logging', default=False)
 def clearly(debug):
     pass
+    """Clearly command line tools."""
 
 
 @clearly.command()
 @click.argument('broker')
-@click.option('--backend', help='Enables complete task results from result backend')
-@click.option('--port', default=12223, help='Listen port for Clearly')
-def server(broker, backend, port):
+@click.option('--backend', '-b',
+              help='Enables fetching task results from the result backend, like "redis://localhost"')
+@click.option('--port', '-p', default=12223, help='Listen port for Clearly Server')
 @click.option('--max_tasks', '-t', default=10000, help='Maximum number of tasks in memory')
 @click.option('--max_workers', '-w', default=100, help='Maximum number of workers in memory')
 def server(broker, backend, port, max_tasks, max_workers):
+    """
+    Starts the Clearly Server.
+
+        BROKER: The broker being used by celery, like "amqp://localhost".
+    """
     app = Celery(broker=broker, backend=backend)
     queue_listener_dispatcher = Queue()
     listener = EventListener(app, queue_listener_dispatcher,
