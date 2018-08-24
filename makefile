@@ -1,13 +1,15 @@
 .PHONY: clean build protos
 
+# grpc related
 SRC = clearly
 PROTOC = python -m grpc_tools.protoc
 PROTOS = $(SRC)/protos
+
+# coverage related
 COV = --cov=$(SRC) --cov-branch --cov-report=term-missing
 
-
 all:
-	@grep "^\w.*:" makefile | cut -d: -f1
+	@grep -E "^\w+:" makefile | cut -d: -f1
 
 install:
 	pip install -r requirements/dev.txt -r requirements/test.txt
