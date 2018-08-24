@@ -52,15 +52,26 @@ The server creates a background thread with a celery events receiver, which capt
 It also has another thread to handle connected clients, dispatching events in real-time to interested parties.
 The client(s) can also filter stored tasks and workers, find a specific task uuid, or get brief statistics about the server.
 
-The events are processed in the server, and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird. In a real-time system this is important, it's not just displaying the current state.
+The events are processed in the server, and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird. In a real-time system this is important, as it's not just displaying the current state.
 
 The parameters of the tasks are dynamically (and safely) compiled into an _Abstract Syntax Tree_, and beautifully syntax colored, while completed tasks get their results directly from the result backend if available, to overcome the problem of truncated results.
-All async workers' life cycles are also processed and listed on screen (beautifully syntax colored too, of course).
+All async workers' life cycles are also processed and displayed on screen (beautifully syntax colored too, of course).
 All tasks triggered show up immediately on screen, and you start seeing what the workers are doing with them in real-time!
 
 At any moment, you can CTRL+C out of the capturing client, and rest assured that there's a server out there, which continues to gather all updates seamlessly.
 
 The memory consumption, although very optimized, must of course be limited. By default it stores 10,000 tasks and 100 workers at a time. You can increase them (or decrease) if you want.
+
+
+### Architecture history
+
+`Clearly` has started as a fully contained tool, one that you just start anywhere and see events. The client has always connected directly to the broker, but it had two stages: one where it extracted events manually, and another with an actual event receiver from celery.
+
+The software architecture is quite different now, since 0.5. It has a threaded `EventListener` that captures raw celery events, storing them in the default LRU memory, and converting to an immutable format before passing up to the next phase via a Queue.
+
+Then there's the `StreamingDispatcher`, another threaded processor, that maintains interested parties and shares events with them. For each new event, it tests whether a connected client would like to see it, and if yes it generates the missing gaps in states and sends them to a client specific Queue.
+
+Finally there's the new `ClearlyServer`, a gRPC server in a `ThreadPoolExecutor`, that accepts connections and handles to: the streaming dispatcher if a real-time capture was requested, or to the listener memory for already persisted events. And of course there is the new `ClearlyClient`, which does not use threads anymore or any server resources like the broker or celery app, instead it uses a stub to connect to the server host:port via gRPC.
 
 
 ## Features
