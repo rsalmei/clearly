@@ -127,8 +127,9 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
     def find_task(self, request, context):
         """Finds one specific task."""
         task = self.listener.memory.tasks.get(request.task_uuid)
-        if task:
-            return ClearlyServer._event_to_pb(task)[1]
+        if not task:
+            return clearly_pb2.TaskMessage()
+        return ClearlyServer._event_to_pb(task)[1]
 
     def seen_tasks(self, request, context):
         """Returns all seen task types."""
@@ -139,6 +140,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
     def reset_tasks(self, request, context):
         """Resets all captured tasks."""
         self.listener.memory.clear_tasks()
+        return clearly_pb2.Empty()
 
     def get_stats(self, request, context):
         """Returns the server statistics."""

@@ -177,8 +177,8 @@ class ClearlyClient(object):
             task_uuid (str): the task id
         """
         request = clearly_pb2.FindTaskRequest(task_uuid=task_uuid)
-        if task:
         task = self._stub.find_task(request)
+        if task.uuid:
             ClearlyClient._display_task(task, True, True, True)
         else:
             print(EMPTY)
