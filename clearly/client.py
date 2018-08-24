@@ -110,9 +110,10 @@ class ClearlyClient(object):
               params=None, success=False, error=True):
         """Filters stored tasks and prints their current status.
 
-        Note that, in the server, to be able to list the tasks sorted chronologically,
-        they are retrieved from the LRU heap instead of the dict storage, so the total
-        number of tasks fetched may be different than the server `max_tasks` setting.
+        Note that, to be able to list the tasks sorted chronologically, celery retrieves
+        tasks from the LRU event heap instead of the dict storage, so the total number
+        of tasks fetched may be different than the server `max_tasks` setting. For
+        instance, the `limit` field refers to max events searched, not max tasks.
 
         Args:
             Filter args:
@@ -123,7 +124,7 @@ class ClearlyClient(object):
                       or even '123456' to filter that exact number anywhere.
             negate (bool): if True, finds tasks that do not match criteria
             state (Optional[str]): a state to filter tasks
-            limit (int): the maximum number of tasks to fetch
+            limit (int): the maximum number of events to fetch tasks from
                 if None or 0, fetches all.
             reverse (bool): if True (default), shows the most recent first
 
