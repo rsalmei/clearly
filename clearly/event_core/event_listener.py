@@ -5,10 +5,12 @@ import logging
 import signal
 import threading
 
+# noinspection PyPep8Naming
 from celery import Celery, __version__ as CELERY_VERSION, states
 from celery.backends.base import DisabledBackend
 from celery.events import EventReceiver
 from celery.events.state import State
+# noinspection PyPackageRequirements
 from kombu import log as kombu_log
 
 from .events import immutable_task, immutable_worker

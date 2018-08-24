@@ -49,6 +49,9 @@ def server(broker, backend, port, max_tasks, max_workers):
     _serve(clearlysrv, port)
 
 
+ONE_DAY_IN_SECONDS = 24 * 60 * 60
+
+
 def _serve(instance, port):
     server = grpc.server(futures.ThreadPoolExecutor())
     clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, server)
@@ -56,7 +59,6 @@ def _serve(instance, port):
     server.start()
 
     import time
-    ONE_DAY_IN_SECONDS = 24 * 60 * 60
     try:
         while True:
             time.sleep(ONE_DAY_IN_SECONDS)
