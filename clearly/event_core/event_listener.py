@@ -53,7 +53,7 @@ class EventListener(object):
         _use_result_backend (bool): if True, there's a result backend to fetch results from
     """
 
-    def __init__(self, app, queue_output, max_tasks_in_memory=10000, max_workers_in_memory=100):
+    def __init__(self, app, queue_output, max_tasks_in_memory=None, max_workers_in_memory=None):
         """Constructs an event listener instance.
 
         Args:
