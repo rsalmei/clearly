@@ -40,15 +40,18 @@ class ClearlyClient(object):
 
     def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
                 params=None, success=False, error=True, stats=False):
-        """Starts the real-time engine that captures events. It will capture
-        all tasks being sent to celery and all workers known to it.
+        """Starts capturing selected events in real-time. You can filter exactly what
+        you want to see, as the Clearly Server handles all tasks and workers updates
+        being sent to celery. Several clients can see different sets of events at the
+        same time.
 
-        This will be run in the foreground, so you can see in real-time
-        exactly what your celery workers are doing.
-        You can press CTRL+C at any time to stop it, without losing any
-        updates, which are still being captured in the background.
-        
+        This runs in the foreground, so you can see in real-time exactly what your
+        celery workers are doing.
+        Press CTRL+C at any time to stop it.
+
         Args:
+            Filter args:
+
             pattern (Optional[str]): a pattern to filter tasks to capture.
                 ex.: '^dispatch|^email' to filter names starting with that
                       or 'dispatch.*123456' to filter that exact name and number
@@ -60,6 +63,9 @@ class ClearlyClient(object):
             params (Optional[bool]): if True shows args and kwargs in first/last state,
                 doesn't show if False, and follows the successes and errors if None.
                 default is None
+
+            Display args:
+
             success (bool): if True shows successful tasks' results.
                 default is False
             error (bool): if True shows failed and retried tasks' tracebacks.
@@ -84,8 +90,8 @@ class ClearlyClient(object):
             pass
 
     def stats(self):
-        """Lists some metrics of your actual and capturing system.
-        Those are:
+        """Lists some metrics of the capturing system:
+
             Tasks processed: the total number of reentrant tasks processed,
                 which includes retry attempts.
             Events processed: number of events captured and processed.
@@ -103,11 +109,14 @@ class ClearlyClient(object):
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
               params=None, success=False, error=True):
         """Filters stored tasks and prints their current status.
-        There are a few params with different defaults from the equivalent
-        capture method. This is because here we have more info about the tasks,
-        and so it can use new tricks.
-        
+
+        Note that, in the server, to be able to list the tasks sorted chronologically,
+        they are retrieved from the LRU heap instead of the dict storage, so the total
+        number of tasks fetched may be different than the server `max_tasks` setting.
+
         Args:
+            Filter args:
+
             pattern (Optional[str]): a pattern to filter tasks
                 ex.: '^dispatch|^email' to filter names starting with those
                       or 'dispatch.*123456' to filter that exact name and number
@@ -117,6 +126,9 @@ class ClearlyClient(object):
             limit (int): the maximum number of tasks to fetch
                 if None or 0, fetches all.
             reverse (bool): if True (default), shows the most recent first
+
+            Display args:
+
             params (Optional[bool]): if True shows called args and kwargs,
                 skips if False, and follows outcome if None.
                 default is None
@@ -136,11 +148,16 @@ class ClearlyClient(object):
         """Filters known workers and prints their current status.
         
         Args:
+            Filter args:
+
             pattern (Optional[str]): a pattern to filter workers
                 ex.: '^dispatch|^email' to filter names starting with those
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
             negate (bool): if True, finds tasks that do not match criteria
+
+            Display args:
+
             stats (bool): if True shows worker stats
         """
         request = clearly_pb2.FilterWorkersRequest(
@@ -150,7 +167,7 @@ class ClearlyClient(object):
             ClearlyClient._display_worker(worker, stats)
 
     def task(self, task_uuid):
-        """Shows one specific task.
+        """Finds one specific task.
 
         Args:
             task_uuid (str): the task id
@@ -163,7 +180,7 @@ class ClearlyClient(object):
             print(EMPTY)
 
     def seen_tasks(self):
-        """Shows a list of task types seen."""
+        """Shows a list of seen task types."""
         print('\n'.join(self._stub.seen_tasks(clearly_pb2.Empty()).task_types))
 
     def reset(self):
