@@ -15,6 +15,17 @@ from clearly.safe_compiler import CallDescriptor, safe_compile_text
     ('False', False),
     ('None', None),
 
+    # literals with non printable chars
+    ('"\n"', '\n'),
+    ("'\n'", '\n'),
+    ('"a\na"', 'a\na'),
+    ('"a\\na"', 'a\na'),
+    ('"a\\\na"', 'a\\x0aa'),
+    ('"a\\\\na"', 'a\\na'),
+    ('"\j"', '\j'),
+    ('"\\j"', '\j'),
+    ('"\a\n\r\t"', '\a\n\r\t'),
+
     # simple tuples
     ('()', ()),
     ('(1,)', (1,)),

@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+/*
+    Core objects.
+*/
+
+message TaskMessage {
+    string name = 1;
+    string routing_key = 2;
+    string uuid = 3;
+    int32 retries = 4;
+    string args = 5;
+    string kwargs = 6;
+    string result = 7;
+    string traceback = 8;
+    double timestamp = 9;
+    string state = 10;
+    bool created = 11;
+}
+
+message WorkerMessage {
+    string hostname = 1;
+    int32 pid = 2;
+    string sw_sys = 3;
+    string sw_ident = 4;
+    string sw_ver = 5;
+    repeated double loadavg = 6;
+    int32 processed = 7;
+    bool alive = 8;
+    float freq = 9;
+    double last_heartbeat = 10;
+    string state = 11;
+    bool created = 12;
+}
+
+message RealtimeEventMessage {
+    oneof event {
+        TaskMessage task = 1;
+        WorkerMessage worker = 2;
+    }
+}
+
+message SeenTasksMessage {
+    repeated string task_types = 1;
+}
+
+message StatsMessage {
+    int32 task_count = 1;
+    int32 event_count = 2;
+    int32 len_tasks = 3;
+    int32 len_workers = 4;
+}
+
+/*
+    Server objects.
+*/
+
+service ClearlyServer {
+    rpc capture_realtime (CaptureRequest) returns (stream RealtimeEventMessage);
+    rpc filter_tasks (FilterTasksRequest) returns (stream TaskMessage);
+    rpc filter_workers (FilterWorkersRequest) returns (stream WorkerMessage);
+    rpc find_task (FindTaskRequest) returns (TaskMessage);
+    rpc seen_tasks (Empty) returns (SeenTasksMessage);
+    rpc reset_tasks (Empty) returns (Empty);
+    rpc get_stats (Empty) returns (StatsMessage);
+}
+
+message PatternFilter {
+    string pattern = 1;
+    bool negate = 2;
+}
+
+message CaptureRequest {
+    PatternFilter tasks_capture = 1;
+    PatternFilter workers_capture = 2;
+}
+
+message FilterTasksRequest {
+    PatternFilter tasks_filter = 1;
+    string state_pattern = 2;
+    int32 limit = 3;
+    bool reverse = 4;
+}
+
+message FilterWorkersRequest {
+    PatternFilter workers_filter = 1;
+}
+
+message FindTaskRequest {
+    string task_uuid = 1;
+}
+
+message Empty {
+}

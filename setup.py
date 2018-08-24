@@ -1,11 +1,23 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
+import sys
 from distutils.core import setup
 
 from setuptools import find_packages
 
 import clearly
+
+install_requires = [
+    'six',
+    'celery>=3.1',
+    'pygments',
+    'grpcio',
+    'protobuf',
+    'click',
+]
+if sys.version_info[0] == 2:
+    install_requires.append('futures')
 
 
 def get_readme():
@@ -28,13 +40,12 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
         'Environment :: Console',
         'Natural Language :: English',
-        'Topic :: Software Development :: Bug Tracking',
         'Topic :: System :: Distributed Computing',
         'Topic :: System :: Monitoring',
 
@@ -48,17 +59,18 @@ setup(
         'Programming Language :: Python :: 3',
         # 'Programming Language :: Python :: 3.2',
         # 'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
+        # 'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
     keywords='celery task queue job flower monitoring distributed asynchronous'.split(),
-    packages=find_packages(exclude=['img']),
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
-    install_requires=[
-        'six',
-        'celery>=3.1',
-        'pygments'
-    ],
+    packages=find_packages(),
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4, <4',
+    install_requires=install_requires,
+    entry_points={
+        'console_scripts': [
+            'clearly=clearly.command_line:clearly',
+        ],
+    },
 )

@@ -2,293 +2,174 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
+import operator
 import re
-import signal
-import threading
-from contextlib import contextmanager
-from itertools import islice
+
+from celery.events.state import Task, Worker
+
+from .event_core.event_listener import EventListener
+from .event_core.events import TaskData, WorkerData
+from .event_core.streaming_dispatcher import StreamingDispatcher
+from .protos import clearly_pb2, clearly_pb2_grpc
+from .utils.data import accepts
 
 try:
     # noinspection PyCompatibility
-    from queue import Queue
-except ImportError:
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue
+    from queue import Queue, Empty
+except ImportError:  # pragma: no cover
+    # noinspection PyCompatibility,PyUnresolvedReferences
+    from Queue import Queue, Empty
 
-from celery import Celery, states, __version__ as CELERY_VERSION
-from celery.backends.base import DisabledBackend
-from celery.events import EventReceiver
-from celery.events.state import State, Task, Worker
-from kombu import log as kombu_log
+logger = logging.getLogger('clearly.server')
 
-from clearly.safe_compiler import safe_compile_text
-from .expected_state import ExpectedStateHandler, setup_task_states, \
-    setup_worker_states
-from .serializer import serialize_task, serialize_worker
-
-kombu_log.get_logger('').setLevel(logging.ERROR)
+PATTERN_PARAMS_OP = operator.attrgetter('pattern', 'negate')
+WORKER_HOSTNAME_OP = operator.attrgetter('hostname')
 
 
-class ClearlyServer(object):
+class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
     """Simple and real-time monitor for celery.
     Server object, to capture events and handle tasks and workers.
     
-        Attributes:
-            _app: Celery
-            _memory: celery.events.State
-            _task_states: ExpectedStateHandler
-            _worker_states: ExpectedStateHandler
+    Attributes:
+        listener (EventListener): the object that listens and keeps celery events
+        dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
     """
 
-    def __init__(self, app=None, ignore_result_backend=False,
-                 max_tasks_in_memory=1000, max_workers_in_memory=100):
+    def __init__(self, listener, dispatcher):
         """Constructs a server instance.
         
         Args:
-            app (Celery): a configured celery app instance
-            ignore_result_backend (bool): if True, do not fetch results from the actual result backend
-            max_tasks_in_memory (int): max tasks stored
-            max_workers_in_memory (int): max workers stored
-
+            listener (EventListener): the object that listens and keeps celery events
+            dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
         """
-        if isinstance(app.backend, DisabledBackend):
-            ignore_result_backend = True
+        logger.info('Creating %s', ClearlyServer.__name__)
 
-        self._app = app
-        self._ignore_result_backend = ignore_result_backend
+        self.listener = listener
+        self.dispatcher = dispatcher
 
-        self._memory = self._app.events.State(
-            max_tasks_in_memory=max_tasks_in_memory,
-            max_workers_in_memory=max_workers_in_memory,
-        )  # type: State
-        self._task_states = setup_task_states()  # type: ExpectedStateHandler
-        self._worker_states = setup_worker_states()  # type: ExpectedStateHandler
-
-        # concurrency control
-        self._background_lock = threading.RLock()
-        self._background_connected = threading.Event()
-
-        # running engine
-        self._background_thread = None  # type:threading.Thread
-        self._background_receiver = None  # type:EventReceiver
-
-        # connected client
-        self._client_queue = None  # type:Queue
-        self._client_regex = None
-        self._client_negate = None
-        self._client_workers_regex = None
-        self._client_workers_negate = None
-
-        # detect shutdown.
-        def sigterm_handler(_signo, _stack_frame):
-            self.stop()
-
-        signal.signal(signal.SIGTERM, sigterm_handler)
-
-    def start(self):
-        """Starts the real-time engine that captures tasks.
-
+    def capture_realtime(self, request, context):
         """
-
-        with self._background_lock:
-            if self._background_thread:
-                return
-            self._background_thread = threading.Thread(
-                target=self.__run_server, name='clearly-agent')
-            self._background_thread.daemon = True
-
-            self._background_connected.clear()
-            self._background_thread.start()
-            self._background_connected.wait()
-
-    def stop(self):
-        """Stops the background engine, without losing anything already 
-        captured.
-    
-        """
-
-        with self._background_lock:
-            if not self._background_thread:
-                return
-            print('Stopping server')
-            self._background_receiver.should_stop = True
-            while self._background_thread.is_alive():
-                self._background_thread.join()
-            self._background_thread = None
-            self._background_receiver = None
-
-    @contextmanager
-    def client_connect(self, pattern=None, negate=False,
-                       workers=None, negate_workers=True):
-        """Connects a client to this server, filtering the tasks that are sent
-        to it.
 
         Args:
-            pattern (Optional[str]): a pattern to filter tasks to capture.
-                ex.: '^dispatch|^email' to filter names starting with that
-                      or 'dispatch.*123456' to filter that exact name and number
-                      or even '123456' to filter that exact number anywhere.
-            negate (bool): if True, finds tasks that do not match criteria
-            workers (Optional[str]): a pattern to filter workers to capture.
-                ex.: 'service|priority' to filter names containing that
-            negate_workers (bool): if True, finds workers that do not match criteria
+            request (clearly_pb2.CaptureRequest):
+            context:
+
+        Returns:
 
         """
+        _log_request(request, context)
+        tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_capture)
+        workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_capture)
 
-        self._client_regex = re.compile(pattern or '.')
-        self._client_negate = negate
-        self._client_workers_regex = re.compile(workers or '.')
-        self._client_workers_negate = negate_workers
-
-        with self._background_lock:
-            self._client_queue = Queue()
-            yield self._client_queue
-            self._client_queue = None
-
-    def __run_server(self):
-        import sys
-        print('Starting server', threading.current_thread())
-        sys.stdout.flush()
-
-        def maybe_publish(func, regex, negate, *values):
-            if not self._client_queue:
-                return
-            if any(v and regex.search(v) for v in values) == negate:
-                return
-
-            obj = func()
-            try:
-                self._client_queue.put(obj)
-            except AttributeError:
-                # the capture is not synced with terminal anymore.
-                # no problem.
-                pass
-
-        def process_event(event):
-            event_type = event['type']
-            if event_type.startswith('task'):
-                for task, state, created in process_task_event(event):
-                    maybe_publish(lambda: serialize_task(task, state, created),
-                                  self._client_regex, self._client_negate,
-                                  task.name, task.routing_key)
-
-            elif event_type.startswith('worker'):
-                for worker in process_worker_event(event):
-                    maybe_publish(lambda: serialize_worker(worker),
-                                  self._client_workers_regex, self._client_workers_negate,
-                                  worker.hostname)
-
-            else:
-                print('unknown event:', event)
-
-        def process_task_event(event):
-            task, created = self._memory.get_or_create_task(event['uuid'])
-            with self._task_states.track_changes(task):
-                (_, _), subject = self._memory.event(event)
-            if task.state == states.SUCCESS:
+        with self.dispatcher.streaming_client(tasks_pattern, tasks_negate,
+                                              workers_pattern, workers_negate) as q:  # type: Queue
+            while True:
                 try:
-                    # celery tasks' results are escaped, so we must compile them.
-                    task.result = compile_task_result(task.result)
-                except SyntaxError:
-                    # celery must have truncated task result.
-                    # use result backend as fallback if allowed and available.
-                    if not self._ignore_result_backend:
-                        task.result = self._app.AsyncResult(task.uuid).result
-            if created:
-                yield task, '-', True
-            for state in self._task_states.states_through():
-                yield task, state, False
+                    event_data = q.get(timeout=1)
+                except Empty:  # pragma: no cover
+                    continue
 
-        def process_worker_event(event):
-            worker, _ = self._memory.get_or_create_worker(event['hostname'])
-            with self._worker_states.track_changes(worker):
-                (_, _), subject = self._memory.event(event)
-            for _ in self._worker_states.states_through():
-                yield worker
+                key, obj = ClearlyServer._event_to_pb(event_data)
+                yield clearly_pb2.RealtimeEventMessage(**{key: obj})
 
-        with self._app.connection() as connection:
-            self._background_receiver = self._app.events.Receiver(
-                connection, handlers={
-                    '*': process_event,
-                })  # type: EventReceiver
-            self._background_connected.set()
-            self._background_receiver.capture(limit=None, timeout=None, wakeup=True)
-
-        print('Server stopped', threading.current_thread())
-        sys.stdout.flush()
-
-    def tasks(self, pattern=None, state=None, negate=False):
-        """Filters captured tasks.
-        
-        Args:
-            pattern (Optional[str]): any part of the task name or routing key
-            state (Optional[str]): a state to filter tasks
-            negate (bool): if True, finds tasks that do not match criteria
-
-        """
-        pcondition = scondition = lambda task: True
-        if pattern:
-            regex = re.compile(pattern)
-            pcondition = lambda task: \
-                regex.search(task.name or '') or \
-                regex.search(task.routing_key or '')
-        if state:
-            scondition = lambda task: task.state == state
-
-        found_tasks = islice(
-            (task for _, task in self._memory.itertasks()
-             if bool(pcondition(task) and scondition(task)) ^ negate
-             ), 0, None)
-        for task in found_tasks:  # type:Task
-            yield serialize_task(task, task.state, False)
-
-    def workers(self, pattern=None, negate=False):
-        """Filters known workers and prints their current status.
-        
-        Args:
-            pattern (Optional[str]): any part of the task name or routing key
-            negate (bool): if True, finds tasks that do not match criteria
-
-        """
-        regex = re.compile(pattern or '.')
-        found_workers = islice(
-            (worker for worker in map(lambda w: self._memory.workers[w],
-                                      sorted(self._memory.workers))
-             if bool(regex.search(worker.hostname)) ^ negate
-             ), 0, None)
-        for worker in found_workers:  # type:Worker
-            yield serialize_worker(worker)
-
-    def task(self, task_uuid):
-        """Finds one specific task.
+    @staticmethod
+    def _event_to_pb(event):
+        """Supports converting internal TaskData and WorkerData, as well as
+        celery Task and Worker to proto buffers messages.
 
         Args:
-            task_uuid (str): any part of the task name or routing key
+            event (Union[TaskData|Task|WorkerData|Worker]):
+
+        Returns:
+            ProtoBuf object
 
         """
-        task = self._memory.tasks.get(task_uuid)
-        if task:
-            return serialize_task(task, task.state, False)
+        if isinstance(event, (TaskData, Task)):
+            key, klass = 'task', clearly_pb2.TaskMessage
+        elif isinstance(event, (WorkerData, Worker)):
+            key, klass = 'worker', clearly_pb2.WorkerMessage
+        else:
+            raise ValueError('unknown event')
+        keys = klass.DESCRIPTOR.fields_by_name.keys()
+        data = {str(k): v for k, v in  # str() for py2
+                getattr(event, '_asdict',  # internal TaskData and WorkerData
+                        lambda: {f: getattr(event, f) for f in event._fields})  # celery Task and Worker
+                ().items() if k in keys}
+        return key, klass(**data)
 
-    def seen_tasks(self):
-        return self._memory.task_types()
+    def filter_tasks(self, request, context):
+        """Filter tasks by matching patterns to name, routing key and state."""
+        _log_request(request, context)
+        tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_filter)
+        state_pattern = request.state_pattern
+        limit, reverse = request.limit, request.reverse
 
-    def reset(self):
-        """Resets all captured tasks.
-        
-        """
-        self._memory.clear_tasks()
+        pregex = re.compile(tasks_pattern)  # pattern filter condition
+        sregex = re.compile(state_pattern)  # state filter condition
 
-    def stats(self):
-        m = self._memory
-        return m.task_count, m.event_count, len(m.tasks), len(m.workers)
+        def pcondition(task):
+            return accepts(pregex, tasks_negate, task.name, task.routing_key)
+
+        def scondition(task):
+            return accepts(sregex, tasks_negate, task.state)
+
+        found_tasks = (task for _, task in
+                       self.listener.memory.tasks_by_time(limit=limit or None,
+                                                          reverse=reverse)
+                       if pcondition(task) and scondition(task))
+        for task in found_tasks:
+            yield ClearlyServer._event_to_pb(task)[1]
+
+    def filter_workers(self, request, context):
+        """Filter workers by matching a pattern to hostname."""
+        _log_request(request, context)
+        workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_filter)
+
+        hregex = re.compile(workers_pattern)  # hostname filter condition
+
+        def hcondition(worker):
+            return accepts(hregex, workers_negate, worker.hostname)  # pragma: no branch
+
+        found_workers = (worker for worker in
+                         sorted(self.listener.memory.workers.values(),
+                                key=WORKER_HOSTNAME_OP)
+                         if hcondition(worker))
+        for worker in found_workers:
+            yield ClearlyServer._event_to_pb(worker)[1]
+
+    def find_task(self, request, context):
+        """Finds one specific task."""
+        _log_request(request, context)
+        task = self.listener.memory.tasks.get(request.task_uuid)
+        if not task:
+            return clearly_pb2.TaskMessage()
+        return ClearlyServer._event_to_pb(task)[1]
+
+    def seen_tasks(self, request, context):
+        """Returns all seen task types."""
+        _log_request(request, context)
+        result = clearly_pb2.SeenTasksMessage()
+        result.task_types.extend(self.listener.memory.task_types())
+        return result
+
+    def reset_tasks(self, request, context):
+        """Resets all captured tasks."""
+        _log_request(request, context)
+        self.listener.memory.clear_tasks()
+        return clearly_pb2.Empty()
+
+    def get_stats(self, request, context):
+        """Returns the server statistics."""
+        _log_request(request, context)
+        m = self.listener.memory
+        return clearly_pb2.StatsMessage(
+            task_count=m.task_count,
+            event_count=m.event_count,
+            len_tasks=len(m.tasks),
+            len_workers=len(m.workers)
+        )
 
 
-if CELERY_VERSION >= '4':
-    def compile_task_result(result):
-        # compile with `raises`, to detect truncated results.
-        return safe_compile_text(result, raises=True)
-else:
-    def compile_task_result(result):
-        # old celery tasks' results are escaped twice.
-        return safe_compile_text(safe_compile_text(result, raises=True), raises=True)
+def _log_request(request, context):  # pragma: no cover
+    text = ' '.join(part.strip() for part in repr(request).split('\n'))
+    logger.debug('%s', text)

@@ -1,6 +1,9 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
+omit =
+    clearly/protos/*
+    clearly/command_line.py
 
 [report]
 # Regexes for lines to exclude from consideration
@@ -17,6 +20,6 @@ exclude_lines =
     raise NotImplementedError
 
 # Don't complain if non-runnable code isn't run:
-    if __name__ == .__main__.:
+    if __name__ == '__main__':
 
 ignore_errors = True

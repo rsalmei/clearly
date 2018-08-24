@@ -1,9 +1,10 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
-from contextlib import contextmanager
-
+import six
 from celery import states
+
+from .utils import worker_states
 
 
 class ExpectedStateHandler(object):
@@ -11,40 +12,37 @@ class ExpectedStateHandler(object):
     the final state, as celery itself takes into account their precedence.
     Flower doesn't care either, as it shows a snapshot at that moment.
     
-    But for Clearly, which shows in real-time was is happening with the tasks,
+    But for Clearly, which shows in real-time what is happening with the tasks,
     it was very odd to show one with a RETRY state, before it was even STARTED,
     or STARTED before being RECEIVED.
     This class fixes that, with a state machine of the expected states, which 
     dynamically generates the missing states.
     
     """
-    pre = post = None
 
-    def __init__(self, field, expected_path):
-        self.field = field
+    def __init__(self, expected_path):
         self.expected_path = expected_path  # type:ExpectedPath
 
-    @contextmanager
-    def track_changes(self, obj):
-        self.pre = getattr(obj, self.field)
-        yield
-        self.post = getattr(obj, self.field)
-
-    def states_through(self):
-        if self.pre == self.post:
+    def states_through(self, pre, post):
+        if pre == post:
             raise StopIteration
 
         pointer = self.expected_path
-        expected = self.pre
+        expected = pre
+        seen = [pointer.name]
         while pointer.name != expected:
             pointer = pointer.find(expected)
+            if pointer.name in seen:
+                raise ValueError('impossible to start from {}'.format(pre))
+            seen.append(pointer.name)
 
-        expected = self.post
-        stop = pointer.name
+        expected = post
+        seen = [pointer.name]
         while True:
             pointer = pointer.find(expected)
-            if pointer.name == stop:
-                raise ValueError('impossible go from {} to {}'.format(self.pre, self.post))
+            if pointer.name in seen:
+                raise ValueError('impossible to go from {} to {}'.format(pre, post))
+            seen.append(pointer.name)
             yield pointer.name
             if pointer.name == expected:
                 break
@@ -52,6 +50,7 @@ class ExpectedStateHandler(object):
 
 class ExpectedPath(object):
     def __init__(self, name):
+        assert isinstance(name, six.string_types)
         self.name = name
         self.possibles = ()
         self.default = None
@@ -91,12 +90,12 @@ def setup_task_states():
             states.RETRY) \
         .to(return_path)
 
-    return ExpectedStateHandler('state', expected_path)
+    return ExpectedStateHandler(expected_path)
 
 
 def setup_worker_states():
-    expected_path = ExpectedPath(False)
+    expected_path = ExpectedPath(worker_states.OFFLINE)
     # noinspection PyTypeChecker
-    expected_path.to(True).to(expected_path)
+    expected_path.to(worker_states.ONLINE).to(expected_path)
 
-    return ExpectedStateHandler('alive', expected_path)
+    return ExpectedStateHandler(expected_path)
