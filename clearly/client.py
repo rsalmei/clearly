@@ -214,8 +214,6 @@ class ClearlyClient(object):
         first_seen = bool(params) and task.created
         result = params != False and (task.state in states.READY_STATES) and show_result
         if first_seen or result:
-            print(type(task.kwargs), task.kwargs)
-            safe_compile_text(task.kwargs, 1)
             print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.args),
                              wrap=False) or EMPTY)
