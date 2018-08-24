@@ -141,8 +141,10 @@ class ClearlyClient(object):
             tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
             state_pattern=state or '.', limit=limit, reverse=reverse
         )
-        for task in self.stub.filter_tasks(request):
+        i = -1
+        for i, task in enumerate(self._stub.filter_tasks(request)):
             ClearlyClient._display_task(task, params, success, error)
+        print(Colors.DIM('fetched:'), Colors.BOLD(i + 1))
 
     def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
@@ -163,8 +165,10 @@ class ClearlyClient(object):
         request = clearly_pb2.FilterWorkersRequest(
             workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
         )
-        for worker in self.stub.filter_workers(request):
+        i = -1
+        for i, worker in enumerate(self._stub.filter_workers(request)):
             ClearlyClient._display_worker(worker, stats)
+        print(Colors.DIM('fetched:'), Colors.BOLD(i + 1))
 
     def task(self, task_uuid):
         """Finds one specific task.
