@@ -9,18 +9,20 @@
 # clearly :)
 ## Clear and accurate real-time monitor for celery
 
-`Clearly` is an alternative to [flower](https://github.com/mher/flower).
+Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [flower]([flower](https://github.com/mher/flower)? You may really like **Clearly**!
+
+`Clearly` is a real-time monitor for your celery tasks and workers!
+
 While I do like flower, to me it's not been totally up to the task (pun intended :)).
-Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once, syntax coloring and complete, whole, thorough, comprehensive results!
-And flower needs page refreshes, filters only one task at a time, displays results as plain strings and on top of that truncates them... 😞
+Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once, syntax coloring, and complete, whole, thorough, comprehensive results!
+And flower needs page refreshes, filters only one task at a time, displays results as plain strings as well as truncates them...
 
 Ok, `clearly` does provide all that!  
-It is actual real-time, has multiple simultaneous filters, an advanced syntax coloring system, and complete non-truncated results! Oh, and it works right in the (i)python terminal :)
-It's great to actually _see_ what's going on in your celery tasks, all in real-time! So it's great for debugging and demoing.
+It is actually real-time, has multiple simultaneous filters, an advanced syntax coloring system, complete non-truncated results, and it's fast! :)
+It's great to actually _see_ what's going on in your celery workers, all in real-time! So it's great for inspecting, debugging, and demonstrating your company async-superpowers (put `clearly` on a big TV)!
 
-Now, `clearly` even has an outer process server!
-You can always connect to it, and see the last 10,000 tasks, anytime.
-This makes `clearly` quite complete, and can even substitute flower entirely.
+`Clearly` has an outer process server, and the clients connect to it via gRPC.
+This makes `clearly` quite complete, and could even substitute flower entirely for monitoring needs.
 
 It's only missing a Docker image for simple deploying now.
 And a command line to call the client directly from the shell!
@@ -32,78 +34,68 @@ See what `clearly` looks like:
 
 ## Requirements
 
-To use `clearly`, you currently need to:
+To use `clearly`, you just have to:
 - enable *Events* (`celery worker -E`)
 
 and you're good to go!
 
 Highlights:
-- any version of celery will work, from 3.1 to 4.2+ :)
-- a result backend is not mandatory (but used if available :)
-- now the code supports both python 2.7 and python 3.5+ :)
+- compatible with any version of celery, from 3.1 to 4.2+
+- a result backend is not mandatory (but used if available)
+- `clearly` supports both python 2.7 and python 3.5+ :)
 
 
 ## How `clearly` works
 
 `Clearly` is composed of a server and a client.
-The server creates a background thread with a celery events receiver, which receives events from all publishers and all workers connected, dynamically updating states.
+The server creates a background thread with a celery events receiver, which captures events from all publishers and all workers connected, dynamically updating states.
 It also has another thread to handle connected clients, dispatching events in real-time to interested parties.
-The client(s) can also filter stored tasks and workers, find a specific task uuid, or get statistics about the cluster.
+The client(s) can also filter stored tasks and workers, find a specific task uuid, or get brief statistics about the server.
 
-Those events are processed in the server, and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird.
-The parameters of the tasks are dynamically (and safely) compiled, and beautifully syntax colored, while tasks completed get their results directly from the result backend if available, to overcome the problem of truncated results.
-All async workers' life cycles are also processed and listed on screen (beautifully syntax colored, of course).
+The events are processed in the server, and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird. In a real-time system this is important, it's not just displaying the current state.
+
+The parameters of the tasks are dynamically (and safely) compiled into an _Abstract Syntax Tree_, and beautifully syntax colored, while completed tasks get their results directly from the result backend if available, to overcome the problem of truncated results.
+All async workers' life cycles are also processed and listed on screen (beautifully syntax colored too, of course).
 All tasks triggered show up immediately on screen, and you start seeing what the workers are doing with them in real-time!
 
-At any moment, you can CTRL+C out of the client, and rest assured that there's a server out there, which will continue gathering all updates seamlessly.
+At any moment, you can CTRL+C out of the capturing client, and rest assured that there's a server out there, which continues to gather all updates seamlessly.
 
-The memory consumption, although very optimized, must of course be limited. By default it stores 10,000 tasks and 100 workers at a time. You can increase them if you want.
+The memory consumption, although very optimized, must of course be limited. By default it stores 10,000 tasks and 100 workers at a time. You can increase them (or decrease) if you want.
 
 
 ## Features
 
 `clearly` enables you to:
-- Be informed of any and all tasks being requested and running, in real-time;
-- Know the workers available and be notified if any goes down;
-- Filter the async calls any way you want;
+- Be informed of any and all tasks being triggered and running and failing, in real-time;
+- Know the workers available and be notified immediately if any goes down or up;
+- Filter the async tasks any way you want, real-time and finished alike;
 - Inspect the actual parameters the tasks were called with;
 - See and analyze the outcome of these tasks, such as success results or fail tracebacks;
-- _Clearly_ see all types and representations of the parameters/outcomes of the tasks with an advanced printing system, syntax highlighting and symbols, similar to what your favorite REPL would do;
+- _Clearly_ see all types and representations of the parameters/outcomes of the tasks with an advanced printing system and syntax highlighting;
 - Analyze stats of your system.
 
 
 ## Get `clearly`
 
-1. `pip install -U clearly`
-2. that's all!
+Just do in python env:
+
+```bash
+$ pip install clearly
+```
 
 
 ## How to use
 
-### start the server (bash)
+### start the server
+
+Basically just do:
 
 ```bash
->>> clearly server <broker_url> [--backend backend_url] [--port 12223]
-
->>> clearly --help
-Usage: clearly [OPTIONS] COMMAND [ARGS]...
-
-Options:
-  --version             Show the version and exit.
-  --debug / --no-debug  Enables debug logging
-  --help                Show this message and exit.
-
-Commands:
-  server
-
->>> clearly server --help
-Usage: clearly server [OPTIONS] BROKER
-
-Options:
-  --backend TEXT  Enables complete task results from result backend
-  --port INTEGER  Listen port for Clearly
-  --help          Show this message and exit.
+$ clearly server <broker_url> [--backend backend_url] [--port 12223]
 ```
+
+Use `clearly --help` and `clearly server --help` for more options.
+
 
 ### start the client ([i]python)
 
@@ -115,7 +107,7 @@ Options:
 ### grab them
 
 ```python
-clearlycli.capture()
+>>> clearlycli.capture()
 ```
 
 
@@ -126,7 +118,7 @@ clearlycli.capture()
 ### you can also grab like
 
 ```python
-clearlycli.capture(params=True)
+>>> clearlycli.capture(params=True)
 ```
 
 
@@ -135,7 +127,8 @@ clearlycli.capture(params=True)
 
 
 ### note
-Any way you capture them, `clearly` is always storing the same data about the tasks. The `params` is only informative, for you to see them right in the capture mode. You can see them later too, after capturing.
+
+Any way you capture them, `clearly` server is always storing the same complete data about the tasks. The `params` (and other arguments) are only display related, for you to see the events the way you want, both in capture and stored modes.
 (The default is to show `error`s, as they are much more likely to get your interest).
 
 
@@ -152,15 +145,18 @@ Any way you capture them, `clearly` is always storing the same data about the ta
 ```python
 def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
             params=None, success=False, error=True, stats=False):
-    """Starts the real-time engine that captures events. It will capture
-    all tasks being sent to celery and all workers known to it.
+    """Starts capturing selected events in real-time. You can filter exactly what
+    you want to see, as the Clearly Server handles all tasks and workers updates
+    being sent to celery. Several clients can see different sets of events at the
+    same time.
 
-    This will be run in the foreground, so you can see in real-time
-    exactly what your celery workers are doing.
-    You can press CTRL+C at any time to stop it, without losing any
-    updates, which are still being captured in the background.
-    
+    This runs in the foreground, so you can see in real-time exactly what your
+    celery workers are doing.
+    Press CTRL+C at any time to stop it.
+
     Args:
+        Filter args:
+
         pattern (Optional[str]): a pattern to filter tasks to capture.
             ex.: '^dispatch|^email' to filter names starting with that
                   or 'dispatch.*123456' to filter that exact name and number
@@ -172,6 +168,9 @@ def capture(self, pattern=None, negate=False, workers=None, negate_workers=False
         params (Optional[bool]): if True shows args and kwargs in first/last state,
             doesn't show if False, and follows the successes and errors if None.
             default is None
+
+        Display args:
+
         success (bool): if True shows successful tasks' results.
             default is False
         error (bool): if True shows failed and retried tasks' tracebacks.
@@ -182,8 +181,8 @@ def capture(self, pattern=None, negate=False, workers=None, negate_workers=False
 
 
 def stats(self):
-    """Lists some metrics of your actual and capturing system.
-    Those are:
+    """Lists some metrics of the capturing system:
+
         Tasks processed: the total number of reentrant tasks processed,
             which includes retry attempts.
         Events processed: number of events captured and processed.
@@ -192,20 +191,29 @@ def stats(self):
     """
 
 
-def tasks(self, pattern=None, negate=False, state=None,
+def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
           params=None, success=False, error=True):
     """Filters stored tasks and prints their current status.
-    There are a few params with different defaults from the equivalent
-    capture method. This is because here we have more info about the tasks,
-    and so it can use new tricks.
-    
+
+    Note that, in the server, to be able to list the tasks sorted chronologically,
+    they are retrieved from the LRU heap instead of the dict storage, so the total
+    number of tasks fetched may be different than the server `max_tasks` setting.
+
     Args:
+        Filter args:
+
         pattern (Optional[str]): a pattern to filter tasks
             ex.: '^dispatch|^email' to filter names starting with those
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
         negate (bool): if True, finds tasks that do not match criteria
         state (Optional[str]): a state to filter tasks
+        limit (int): the maximum number of tasks to fetch
+            if None or 0, fetches all.
+        reverse (bool): if True (default), shows the most recent first
+
+        Display args:
+
         params (Optional[bool]): if True shows called args and kwargs,
             skips if False, and follows outcome if None.
             default is None
@@ -220,17 +228,22 @@ def workers(self, pattern=None, negate=False, stats=True):
     """Filters known workers and prints their current status.
     
     Args:
+        Filter args:
+
         pattern (Optional[str]): a pattern to filter workers
             ex.: '^dispatch|^email' to filter names starting with those
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
         negate (bool): if True, finds tasks that do not match criteria
+
+        Display args:
+
         stats (bool): if True shows worker stats
     """
 
 
 def task(self, task_uuid):
-    """Shows one specific task.
+    """Finds one specific task.
 
     Args:
         task_uuid (str): the task id
@@ -238,8 +251,7 @@ def task(self, task_uuid):
 
 
 def seen_tasks(self):
-    """Shows a list of task types seen."""
-
+    """Shows a list of seen task types."""
 
 def reset(self):
     """Resets all captured tasks."""
@@ -248,12 +260,8 @@ def reset(self):
 
 ## Hints
 
-- write a small [celery router](http://docs.celeryproject.org/en/latest/userguide/routing.html#routers) and in there generate dynamic routing keys, based on the actual arguments of the async call in place.
-That way, you'll be able to filter tasks based on any of those constraints, like an id of an entity.
-- if you're using [django](https://www.djangoproject.com/) and [django-extensions](https://github.com/django-extensions/django-extensions), put in your settings a `SHELL_PLUS_POST_IMPORT` to auto import this!
-Just create a module to initialize a `clearlycli` instance and you're good to go, the shell_plus will have it always available!
-Now you have a tool always ready to be used, without importing or creating anything, to actually see what's going on in your tasks, even in production :)
-(soon there will be a command line to get even easier to this)
+- write a small [celery router](http://docs.celeryproject.org/en/latest/userguide/routing.html#routers) and generate dynamic routing keys, based on the actual arguments of the async call in place. That way, you'll be able to filter tasks based on any of those, like an id of an entity. The args and kwargs are not used in the filtering.
+- if you're using [django](https://www.djangoproject.com/) and [django-extensions](https://github.com/django-extensions/django-extensions), put in your settings a `SHELL_PLUS_POST_IMPORT` to auto import `clearly`! Just create a module to initialize a `clearlycli` instance for the django `shell_plus` and you're good to go. It's really nice to have a tool always ready to be used, without importing or creating anything, to actually see what's going on in your tasks, even in production :)
 - the more you filter, the less you'll have to analyze, so find the best combination for you debugging needs. A busy system can have thousands of tasks per minute.
 
 
@@ -279,4 +287,9 @@ Now you have a tool always ready to be used, without importing or creating anyth
 ## License
 This software is licensed under the MIT License. See the LICENSE file in the top distribution directory for the full license text.
 
-## Thank you.
+
+## Nice huh?
+
+Thanks for your interest!
+
+I wish you have fun using this tool! :)
