@@ -19,7 +19,8 @@ except ImportError:  # pragma: no cover
     # noinspection PyCompatibility,PyUnresolvedReferences
     from Queue import Queue, Empty
 
-CAPTURE_PARAMS_OP = operator.attrgetter('pattern', 'negate')
+PATTERN_PARAMS_OP = operator.attrgetter('pattern', 'negate')
+WORKER_HOSTNAME_OP = operator.attrgetter('hostname')
 
 
 class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
@@ -52,8 +53,8 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 
         """
         print('request:', request)
-        tasks_pattern, tasks_negate = CAPTURE_PARAMS_OP(request.tasks_capture)
-        workers_pattern, workers_negate = CAPTURE_PARAMS_OP(request.workers_capture)
+        tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_capture)
+        workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_capture)
 
         with self.dispatcher.streaming_client(tasks_pattern, tasks_negate,
                                               workers_pattern, workers_negate) as q:  # type: Queue
@@ -92,35 +93,40 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         return key, klass(**data)
 
     def filter_tasks(self, request, context):
-        """Filter task by matching a pattern and a state."""
-        tasks_pattern, tasks_negate = CAPTURE_PARAMS_OP(request.tasks_filter)
+        """Filter tasks by matching patterns to name, routing key and state."""
+        tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_filter)
         state_pattern = request.state_pattern
         limit, reverse = request.limit, request.reverse
 
-        # pattern filter condition
-        pregex = re.compile(tasks_pattern)
-        pcondition = lambda task: accepts(pregex, tasks_negate, task.name, task.routing_key)
+        pregex = re.compile(tasks_pattern)  # pattern filter condition
+        sregex = re.compile(state_pattern)  # state filter condition
 
-        # state filter condition
-        sregex = re.compile(state_pattern)
-        scondition = lambda task: accepts(sregex, tasks_negate, task.state)
+        def pcondition(task):
+            return accepts(pregex, tasks_negate, task.name, task.routing_key)
 
-        found_tasks = (task for _, task in self.listener.memory.itertasks()
+        def scondition(task):
+            return accepts(sregex, tasks_negate, task.state)
+
+        found_tasks = (task for _, task in
+                       self.listener.memory.tasks_by_time(limit=limit or None,
+                                                          reverse=reverse)
                        if pcondition(task) and scondition(task))
         for task in found_tasks:
             yield ClearlyServer._event_to_pb(task)[1]
 
     def filter_workers(self, request, context):
         """Filter task by matching a pattern and a state."""
-        workers_pattern, workers_negate = CAPTURE_PARAMS_OP(request.workers_filter)
+        workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_filter)
 
-        # hostname filter condition
-        hregex = re.compile(workers_pattern)
-        hcondition = lambda worker: accepts(hregex, workers_negate, worker.hostname)  # pragma: no branch
+        hregex = re.compile(workers_pattern)  # hostname filter condition
 
-        op = operator.attrgetter('hostname')
-        found_workers = (worker for worker in sorted(self.listener.memory.workers, key=op)
-                         if hcondition)
+        def hcondition(worker):
+            return accepts(hregex, workers_negate, worker.hostname)  # pragma: no branch
+
+        found_workers = (worker for worker in
+                         sorted(self.listener.memory.workers.values(),
+                                key=WORKER_HOSTNAME_OP)
+                         if hcondition(worker))
         for worker in found_workers:
             yield ClearlyServer._event_to_pb(worker)[1]
 
