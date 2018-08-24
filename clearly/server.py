@@ -95,6 +95,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         """Filter task by matching a pattern and a state."""
         tasks_pattern, tasks_negate = CAPTURE_PARAMS_OP(request.tasks_filter)
         state_pattern = request.state_pattern
+        limit, reverse = request.limit, request.reverse
 
         # pattern filter condition
         pregex = re.compile(tasks_pattern)

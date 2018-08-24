@@ -78,6 +78,8 @@ message CaptureRequest {
 message FilterTasksRequest {
     PatternFilter tasks_filter = 1;
     string state_pattern = 2;
+    int32 limit = 3;
+    bool reverse = 4;
 }
 
 message FilterWorkersRequest {

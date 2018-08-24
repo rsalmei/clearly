@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='protos/clearly.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x14protos/clearly.proto\"\xc3\x01\n\x0bTaskMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0brouting_key\x18\x02 \x01(\t\x12\x0c\n\x04uuid\x18\x03 \x01(\t\x12\x0f\n\x07retries\x18\x04 \x01(\x05\x12\x0c\n\x04\x61rgs\x18\x05 \x01(\t\x12\x0e\n\x06kwargs\x18\x06 \x01(\t\x12\x0e\n\x06result\x18\x07 \x01(\t\x12\x11\n\ttraceback\x18\x08 \x01(\t\x12\x11\n\ttimestamp\x18\t \x01(\x02\x12\r\n\x05state\x18\n \x01(\t\x12\x0f\n\x07\x63reated\x18\x0b \x01(\x08\"\xd9\x01\n\rWorkerMessage\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x0b\n\x03pid\x18\x02 \x01(\x05\x12\x0e\n\x06sw_sys\x18\x03 \x01(\t\x12\x10\n\x08sw_ident\x18\x04 \x01(\t\x12\x0e\n\x06sw_ver\x18\x05 \x01(\t\x12\x0f\n\x07loadavg\x18\x06 \x03(\x02\x12\x11\n\tprocessed\x18\x07 \x01(\x05\x12\r\n\x05\x61live\x18\x08 \x01(\x08\x12\x0c\n\x04\x66req\x18\t \x01(\x02\x12\x16\n\x0elast_heartbeat\x18\n \x01(\x02\x12\r\n\x05state\x18\x0b \x01(\t\x12\x0f\n\x07\x63reated\x18\x0c \x01(\x08\"_\n\x14RealtimeEventMessage\x12\x1c\n\x04task\x18\x01 \x01(\x0b\x32\x0c.TaskMessageH\x00\x12 \n\x06worker\x18\x02 \x01(\x0b\x32\x0e.WorkerMessageH\x00\x42\x07\n\x05\x65vent\"&\n\x10SeenTasksMessage\x12\x12\n\ntask_types\x18\x01 \x03(\t\"_\n\x0cStatsMessage\x12\x12\n\ntask_count\x18\x01 \x01(\x05\x12\x13\n\x0b\x65vent_count\x18\x02 \x01(\x05\x12\x11\n\tlen_tasks\x18\x03 \x01(\x05\x12\x13\n\x0blen_workers\x18\x04 \x01(\x05\"0\n\rPatternFilter\x12\x0f\n\x07pattern\x18\x01 \x01(\t\x12\x0e\n\x06negate\x18\x02 \x01(\x08\"`\n\x0e\x43\x61ptureRequest\x12%\n\rtasks_capture\x18\x01 \x01(\x0b\x32\x0e.PatternFilter\x12\'\n\x0fworkers_capture\x18\x02 \x01(\x0b\x32\x0e.PatternFilter\"Q\n\x12\x46ilterTasksRequest\x12$\n\x0ctasks_filter\x18\x01 \x01(\x0b\x32\x0e.PatternFilter\x12\x15\n\rstate_pattern\x18\x02 \x01(\t\">\n\x14\x46ilterWorkersRequest\x12&\n\x0eworkers_filter\x18\x01 \x01(\x0b\x32\x0e.PatternFilter\"$\n\x0f\x46indTaskRequest\x12\x11\n\ttask_uuid\x18\x01 \x01(\t\"\x07\n\x05\x45mpty2\xd6\x02\n\rClearlyServer\x12<\n\x10\x63\x61pture_realtime\x12\x0f.CaptureRequest\x1a\x15.RealtimeEventMessage0\x01\x12\x33\n\x0c\x66ilter_tasks\x12\x13.FilterTasksRequest\x1a\x0c.TaskMessage0\x01\x12\x39\n\x0e\x66ilter_workers\x12\x15.FilterWorkersRequest\x1a\x0e.WorkerMessage0\x01\x12+\n\tfind_task\x12\x10.FindTaskRequest\x1a\x0c.TaskMessage\x12\'\n\nseen_tasks\x12\x06.Empty\x1a\x11.SeenTasksMessage\x12\x1d\n\x0breset_tasks\x12\x06.Empty\x1a\x06.Empty\x12\"\n\tget_stats\x12\x06.Empty\x1a\r.StatsMessageb\x06proto3')
+  serialized_pb=_b('\n\x14protos/clearly.proto\"\xc3\x01\n\x0bTaskMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0brouting_key\x18\x02 \x01(\t\x12\x0c\n\x04uuid\x18\x03 \x01(\t\x12\x0f\n\x07retries\x18\x04 \x01(\x05\x12\x0c\n\x04\x61rgs\x18\x05 \x01(\t\x12\x0e\n\x06kwargs\x18\x06 \x01(\t\x12\x0e\n\x06result\x18\x07 \x01(\t\x12\x11\n\ttraceback\x18\x08 \x01(\t\x12\x11\n\ttimestamp\x18\t \x01(\x01\x12\r\n\x05state\x18\n \x01(\t\x12\x0f\n\x07\x63reated\x18\x0b \x01(\x08\"\xd9\x01\n\rWorkerMessage\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x0b\n\x03pid\x18\x02 \x01(\x05\x12\x0e\n\x06sw_sys\x18\x03 \x01(\t\x12\x10\n\x08sw_ident\x18\x04 \x01(\t\x12\x0e\n\x06sw_ver\x18\x05 \x01(\t\x12\x0f\n\x07loadavg\x18\x06 \x03(\x01\x12\x11\n\tprocessed\x18\x07 \x01(\x05\x12\r\n\x05\x61live\x18\x08 \x01(\x08\x12\x0c\n\x04\x66req\x18\t \x01(\x02\x12\x16\n\x0elast_heartbeat\x18\n \x01(\x01\x12\r\n\x05state\x18\x0b \x01(\t\x12\x0f\n\x07\x63reated\x18\x0c \x01(\x08\"_\n\x14RealtimeEventMessage\x12\x1c\n\x04task\x18\x01 \x01(\x0b\x32\x0c.TaskMessageH\x00\x12 \n\x06worker\x18\x02 \x01(\x0b\x32\x0e.WorkerMessageH\x00\x42\x07\n\x05\x65vent\"&\n\x10SeenTasksMessage\x12\x12\n\ntask_types\x18\x01 \x03(\t\"_\n\x0cStatsMessage\x12\x12\n\ntask_count\x18\x01 \x01(\x05\x12\x13\n\x0b\x65vent_count\x18\x02 \x01(\x05\x12\x11\n\tlen_tasks\x18\x03 \x01(\x05\x12\x13\n\x0blen_workers\x18\x04 \x01(\x05\"0\n\rPatternFilter\x12\x0f\n\x07pattern\x18\x01 \x01(\t\x12\x0e\n\x06negate\x18\x02 \x01(\x08\"`\n\x0e\x43\x61ptureRequest\x12%\n\rtasks_capture\x18\x01 \x01(\x0b\x32\x0e.PatternFilter\x12\'\n\x0fworkers_capture\x18\x02 \x01(\x0b\x32\x0e.PatternFilter\"q\n\x12\x46ilterTasksRequest\x12$\n\x0ctasks_filter\x18\x01 \x01(\x0b\x32\x0e.PatternFilter\x12\x15\n\rstate_pattern\x18\x02 \x01(\t\x12\r\n\x05limit\x18\x03 \x01(\x05\x12\x0f\n\x07reverse\x18\x04 \x01(\x08\">\n\x14\x46ilterWorkersRequest\x12&\n\x0eworkers_filter\x18\x01 \x01(\x0b\x32\x0e.PatternFilter\"$\n\x0f\x46indTaskRequest\x12\x11\n\ttask_uuid\x18\x01 \x01(\t\"\x07\n\x05\x45mpty2\xd6\x02\n\rClearlyServer\x12<\n\x10\x63\x61pture_realtime\x12\x0f.CaptureRequest\x1a\x15.RealtimeEventMessage0\x01\x12\x33\n\x0c\x66ilter_tasks\x12\x13.FilterTasksRequest\x1a\x0c.TaskMessage0\x01\x12\x39\n\x0e\x66ilter_workers\x12\x15.FilterWorkersRequest\x1a\x0e.WorkerMessage0\x01\x12+\n\tfind_task\x12\x10.FindTaskRequest\x1a\x0c.TaskMessage\x12\'\n\nseen_tasks\x12\x06.Empty\x1a\x11.SeenTasksMessage\x12\x1d\n\x0breset_tasks\x12\x06.Empty\x1a\x06.Empty\x12\"\n\tget_stats\x12\x06.Empty\x1a\r.StatsMessageb\x06proto3')
 )
 
 
@@ -90,7 +90,7 @@ _TASKMESSAGE = _descriptor.Descriptor(
       options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='timestamp', full_name='TaskMessage.timestamp', index=8,
-      number=9, type=2, cpp_type=6, label=1,
+      number=9, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -170,7 +170,7 @@ _WORKERMESSAGE = _descriptor.Descriptor(
       options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='loadavg', full_name='WorkerMessage.loadavg', index=5,
-      number=6, type=2, cpp_type=6, label=3,
+      number=6, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -198,7 +198,7 @@ _WORKERMESSAGE = _descriptor.Descriptor(
       options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='last_heartbeat', full_name='WorkerMessage.last_heartbeat', index=9,
-      number=10, type=2, cpp_type=6, label=1,
+      number=10, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -455,6 +455,20 @@ _FILTERTASKSREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='limit', full_name='FilterTasksRequest.limit', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reverse', full_name='FilterTasksRequest.reverse', index=3,
+      number=4, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -468,7 +482,7 @@ _FILTERTASKSREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=824,
-  serialized_end=905,
+  serialized_end=937,
 )
 
 
@@ -498,8 +512,8 @@ _FILTERWORKERSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=907,
-  serialized_end=969,
+  serialized_start=939,
+  serialized_end=1001,
 )
 
 
@@ -529,8 +543,8 @@ _FINDTASKREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=971,
-  serialized_end=1007,
+  serialized_start=1003,
+  serialized_end=1039,
 )
 
 
@@ -553,8 +567,8 @@ _EMPTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1009,
-  serialized_end=1016,
+  serialized_start=1041,
+  serialized_end=1048,
 )
 
 _REALTIMEEVENTMESSAGE.fields_by_name['task'].message_type = _TASKMESSAGE
@@ -667,8 +681,8 @@ _CLEARLYSERVER = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   options=None,
-  serialized_start=1019,
-  serialized_end=1361,
+  serialized_start=1051,
+  serialized_end=1393,
   methods=[
   _descriptor.MethodDescriptor(
     name='capture_realtime',

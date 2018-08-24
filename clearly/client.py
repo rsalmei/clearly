@@ -100,7 +100,7 @@ class ClearlyClient(object):
               '\ttasks', Colors.RED(stats.len_tasks),
               '\tworkers', Colors.RED(stats.len_workers))
 
-    def tasks(self, pattern=None, negate=False, state=None,
+    def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
               params=None, success=False, error=True):
         """Filters stored tasks and prints their current status.
         There are a few params with different defaults from the equivalent
@@ -114,6 +114,9 @@ class ClearlyClient(object):
                       or even '123456' to filter that exact number anywhere.
             negate (bool): if True, finds tasks that do not match criteria
             state (Optional[str]): a state to filter tasks
+            limit (int): the maximum number of tasks to fetch
+                if None or 0, fetches all.
+            reverse (bool): if True (default), shows the most recent first
             params (Optional[bool]): if True shows called args and kwargs,
                 skips if False, and follows outcome if None.
                 default is None
@@ -124,7 +127,7 @@ class ClearlyClient(object):
         """
         request = clearly_pb2.FilterTasksRequest(
             tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
-            state_pattern=state or '.',
+            state_pattern=state or '.', limit=limit, reverse=reverse
         )
         for task in self.stub.filter_tasks(request):
             ClearlyClient._display_task(task, params, success, error)
