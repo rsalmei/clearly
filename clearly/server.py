@@ -1,9 +1,10 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
 import operator
-
 import re
+
 from celery.events.state import Task, Worker
 
 from .event_core.event_listener import EventListener
@@ -18,6 +19,8 @@ try:
 except ImportError:  # pragma: no cover
     # noinspection PyCompatibility,PyUnresolvedReferences
     from Queue import Queue, Empty
+
+logger = logging.getLogger('clearly.server')
 
 PATTERN_PARAMS_OP = operator.attrgetter('pattern', 'negate')
 WORKER_HOSTNAME_OP = operator.attrgetter('hostname')
@@ -39,6 +42,8 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
             listener (EventListener): the object that listens and keeps celery events
             dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
         """
+        logger.info('Creating %s', ClearlyServer.__name__)
+
         self.listener = listener
         self.dispatcher = dispatcher
 
@@ -52,7 +57,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         Returns:
 
         """
-        print('request:', request)
+        _log_request(request, context)
         tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_capture)
         workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_capture)
 
@@ -94,6 +99,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 
     def filter_tasks(self, request, context):
         """Filter tasks by matching patterns to name, routing key and state."""
+        _log_request(request, context)
         tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_filter)
         state_pattern = request.state_pattern
         limit, reverse = request.limit, request.reverse
@@ -116,6 +122,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 
     def filter_workers(self, request, context):
         """Filter workers by matching a pattern to hostname."""
+        _log_request(request, context)
         workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_filter)
 
         hregex = re.compile(workers_pattern)  # hostname filter condition
@@ -132,6 +139,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 
     def find_task(self, request, context):
         """Finds one specific task."""
+        _log_request(request, context)
         task = self.listener.memory.tasks.get(request.task_uuid)
         if not task:
             return clearly_pb2.TaskMessage()
@@ -139,17 +147,20 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 
     def seen_tasks(self, request, context):
         """Returns all seen task types."""
+        _log_request(request, context)
         result = clearly_pb2.SeenTasksMessage()
         result.task_types.extend(self.listener.memory.task_types())
         return result
 
     def reset_tasks(self, request, context):
         """Resets all captured tasks."""
+        _log_request(request, context)
         self.listener.memory.clear_tasks()
         return clearly_pb2.Empty()
 
     def get_stats(self, request, context):
         """Returns the server statistics."""
+        _log_request(request, context)
         m = self.listener.memory
         return clearly_pb2.StatsMessage(
             task_count=m.task_count,
@@ -157,3 +168,8 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
             len_tasks=len(m.tasks),
             len_workers=len(m.workers)
         )
+
+
+def _log_request(request, context):  # pragma: no cover
+    text = ' '.join(part.strip() for part in repr(request).split('\n'))
+    logger.debug('%s', text)

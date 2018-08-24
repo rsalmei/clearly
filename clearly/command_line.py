@@ -1,3 +1,4 @@
+import logging
 # noinspection PyCompatibility
 from concurrent import futures
 
@@ -9,6 +10,7 @@ from .event_core.event_listener import EventListener
 from .event_core.streaming_dispatcher import StreamingDispatcher
 from .protos import clearly_pb2_grpc
 from .server import ClearlyServer
+from .utils.colors import Colors
 
 try:
     # noinspection PyCompatibility
@@ -17,13 +19,17 @@ except ImportError:  # pragma: no cover
     # noinspection PyCompatibility,PyUnresolvedReferences
     from Queue import Queue, Empty
 
+logger = logging.getLogger('clearly.command_line')
+
 
 @click.group()
 @click.version_option()
-@click.option('--debug/--no-debug', help='Enables debug logging', default=False)
+@click.option('--debug', help='Enables debug logging', is_flag=True)
 def clearly(debug):
-    pass
     """Clearly command line tools."""
+    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s') + Colors.BLUE(' %(levelname)s') + ' %(message)s'
+    logging.basicConfig(level=logging.WARNING, format=f)
+    logging.getLogger('clearly').setLevel(logging.DEBUG if debug else logging.INFO)
 
 
 @clearly.command()
@@ -53,9 +59,13 @@ ONE_DAY_IN_SECONDS = 24 * 60 * 60
 
 
 def _serve(instance, port):
+    logger.info('Initiating gRPC server: port=%d', port)
+
     gserver = grpc.server(futures.ThreadPoolExecutor())
     clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, gserver)
     gserver.add_insecure_port('[::]:{}'.format(port))
+
+    logger.info('gRPC server ok')
     gserver.start()
 
     import time

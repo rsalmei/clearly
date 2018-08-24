@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
 import signal
 import threading
 
@@ -19,6 +20,8 @@ try:
 except ImportError:  # pragma: no cover
     # noinspection PyUnresolvedReferences,PyCompatibility
     from Queue import Queue
+
+logger = logging.getLogger('clearly.core.event_listener')
 
 
 class EventListener(object):
@@ -46,6 +49,10 @@ class EventListener(object):
         self._queue_output = queue_output
 
         self._use_result_backend = not isinstance(app.backend, DisabledBackend)
+
+        logger.info('Creating %s: max_tasks=%d; max_workers=%d; using_result_backend=%s',
+                    EventListener.__name__, max_tasks_in_memory, max_workers_in_memory,
+                    self._use_result_backend)
 
         # events handling: storage and filling missing states.
         self.memory = State(
@@ -85,15 +92,13 @@ class EventListener(object):
         if not self._listener_thread:
             return
 
-        print('Stopping listener')
+        logger.info('Stopping listener')
         self._celery_receiver.should_stop = True
         self._listener_thread.join()
         self._listener_thread = self._celery_receiver = None
 
     def __run_listener(self):  # pragma: no cover
-        import sys
-        print('Starting listener', threading.current_thread())
-        sys.stdout.flush()
+        logger.info('Starting listener: %s', threading.current_thread())
 
         with self._app.connection() as connection:
             self._celery_receiver = self._app.events.Receiver(
@@ -103,8 +108,7 @@ class EventListener(object):
             self._wait_event.set()
             self._celery_receiver.capture(limit=None, timeout=None, wakeup=True)
 
-        print('Listener stopped', threading.current_thread())
-        sys.stdout.flush()
+        logger.info('Listener stopped: %s', threading.current_thread())
 
     def _process_event(self, event):
         event_type = event['type']
@@ -113,7 +117,7 @@ class EventListener(object):
         elif event_type.startswith('worker'):
             data = self._process_worker_event(event)
         else:
-            print('unknown event:', event)
+            logger.warning('unknown event: %s', event)
             return
 
         self._queue_output.put(data)

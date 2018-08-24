@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
 import operator
 import re
 import signal
@@ -18,6 +19,8 @@ try:
 except ImportError:  # pragma: no cover
     # noinspection PyUnresolvedReferences,PyCompatibility
     from Queue import Queue, Empty
+
+logger = logging.getLogger('clearly.core.streaming_dispatcher')
 
 CapturingClient = namedtuple('CapturingClient', 'queue task_regex task_negate worker_regex worker_negate')
 TASK_OP = operator.attrgetter('queue', 'task_regex', 'task_negate')
@@ -42,6 +45,8 @@ class StreamingDispatcher(object):
         Args:
             queue_input (Queue): to receive from event listener
         """
+        logger.info('Creating %s', StreamingDispatcher.__name__)
+
         self.queue_input = queue_input
         self.observers = []  # should not need any lock, thanks to GIL
         self.task_states = setup_task_states()  # type: ExpectedStateHandler
@@ -74,7 +79,7 @@ class StreamingDispatcher(object):
         if not self.dispatcher_thread:
             return
 
-        print('Stopping dispatcher')
+        logger.info('Stopping dispatcher')
         self.running = False  # graceful shutdown
         self.dispatcher_thread.join()
         self.dispatcher_thread = None
@@ -104,9 +109,7 @@ class StreamingDispatcher(object):
         self.observers.remove(cc)
 
     def __run_dispatcher(self):  # pragma: no cover
-        import sys
-        print('Starting dispatcher', threading.current_thread())
-        sys.stdout.flush()
+        logger.info('Starting dispatcher: %s', threading.current_thread())
 
         while self.running:
             try:
@@ -116,8 +119,7 @@ class StreamingDispatcher(object):
 
             self._dispatch(event_data)
 
-        print('Dispatcher stopped', threading.current_thread())
-        sys.stdout.flush()
+        logger.info('Dispatcher stopped: %s', threading.current_thread())
 
     def _dispatch(self, event_data):
         if isinstance(event_data, TaskData):
