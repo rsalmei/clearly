@@ -4,8 +4,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import signal
 import threading
 
-# noinspection PyPep8Naming
-from celery import Celery, __version__ as CELERY_VERSION, states
+from celery import Celery, states
 from celery.backends.base import DisabledBackend
 from celery.events import EventReceiver
 from celery.events.state import State
@@ -20,23 +19,6 @@ try:
 except ImportError:  # pragma: no cover
     # noinspection PyUnresolvedReferences,PyCompatibility
     from Queue import Queue
-
-
-
-def compile_task_result4(result):
-    # celery 4 sends results converted as strings, sometimes truncated (...)
-    safe_compile_text(result, raises=True)
-    # if compilable, returns the same, as the clients will be able to too.
-    return result
-
-
-def compile_task_result3(result):
-    # celery 3 tasks' results are converted twice.
-    compatible = safe_compile_text(result, raises=True)
-    # compile with `raises`, to detect truncated results.
-    safe_compile_text(compatible, raises=True)
-    # if compilable, returns the same, as the clients will be able to too.
-    return compatible
 
 
 class EventListener(object):
@@ -143,7 +125,7 @@ class EventListener(object):
         if task.state == states.SUCCESS:
             try:
                 # verify if the celery task result is truncated.
-                task.result = EventListener.compile_task_result(task.result)
+                task.result = EventListener.compile_task_result(task)
             except SyntaxError:
                 # use result backend as fallback if allowed and available.
                 if self._use_result_backend:  # pragma: no cover
@@ -157,7 +139,14 @@ class EventListener(object):
         (worker, _), _ = self.memory.event(event)
         return immutable_worker(worker, worker.status_string, pre_state, created)
 
-    if CELERY_VERSION >= '4':  # pragma: no cover
-        compile_task_result = staticmethod(compile_task_result4)
-    else:  # pragma: no cover
-        compile_task_result = staticmethod(compile_task_result3)
+    @staticmethod
+    def compile_task_result(task):
+        result = task.result
+        # celery 4 sends results converted as strings, sometimes truncated (...)
+        if task.worker.sw_ver < '4':
+            # celery 3 tasks' results are converted twice.
+            result = safe_compile_text(result, raises=True)
+        # compile with `raises`, to detect truncated results.
+        safe_compile_text(result, raises=True)
+        # if compilable, returns the same, as the clients will be able to too.
+        return result
