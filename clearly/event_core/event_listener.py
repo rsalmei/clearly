@@ -1,7 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
-import logging
 import signal
 import threading
 
@@ -10,8 +9,6 @@ from celery import Celery, __version__ as CELERY_VERSION, states
 from celery.backends.base import DisabledBackend
 from celery.events import EventReceiver
 from celery.events.state import State
-# noinspection PyPackageRequirements
-from kombu import log as kombu_log
 
 from .events import immutable_task, immutable_worker
 from ..safe_compiler import safe_compile_text
@@ -24,7 +21,6 @@ except ImportError:  # pragma: no cover
     # noinspection PyUnresolvedReferences,PyCompatibility
     from Queue import Queue
 
-kombu_log.get_logger('').setLevel(logging.ERROR)
 
 
 def compile_task_result4(result):
