@@ -80,7 +80,7 @@ def test_listener_process_task(bool1, bool2, task_state_type, listener):
         listener._process_task_event(dict(uuid='uuid'))
 
     if task_state_type == states.SUCCESS:
-        ctr.assert_called_once_with('ok')
+        ctr.assert_called_once_with(task)
         if bool2:
             listener._app.AsyncResult.assert_called_once_with('uuid')
     it.assert_called_once_with(task, task_state_type, 'pre_state' if bool1 else states.PENDING, not bool1)
@@ -102,14 +102,18 @@ def test_listener_process_worker(bool1, listener):
     it.assert_called_once_with(worker, 'state', 'pre_state' if bool1 else worker_states.OFFLINE, not bool1)
 
 
-@pytest.mark.parametrize('compile_fn, num_calls, expected', [
-    (event_listener.compile_task_result3, 2, 'a'),
-    (event_listener.compile_task_result4, 1, 'x'),
+@pytest.mark.parametrize('worker_version, num_calls, expected', [
+    ('3.nice', 2, 'a'),
+    ('4.cool', 1, 'x'),
 ])
-def test_listener_celery_result_compiler(compile_fn, num_calls, expected):
+def test_listener_celery_result_compiler(worker_version, num_calls, expected):
+    task = mock.Mock()
+    task.result = 'x'
+    task.worker.sw_ver = worker_version
+
     with mock.patch('clearly.event_core.event_listener.safe_compile_text') as msc:
         msc.side_effect = ('a', 'b')
-        result = compile_fn('x')
+        result = EventListener.compile_task_result(task)
 
     assert msc.call_count == num_calls
     assert result == expected
