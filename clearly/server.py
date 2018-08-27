@@ -5,6 +5,7 @@ import logging
 import operator
 import re
 
+from about_time import about_time
 from celery.events.state import Task, Worker
 
 from .event_core.event_listener import EventListener
@@ -117,7 +118,12 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                        self.listener.memory.tasks_by_time(limit=limit or None,
                                                           reverse=reverse)
                        if pcondition(task) and scondition(task))
-        for task in found_tasks:
+
+        def callback(t):
+            logger.debug('%s iterated %d tasks in %s (%s)', self.filter_tasks.__name__,
+                         t.count, t.duration_human, t.throughput_human)
+
+        for task in about_time(callback, found_tasks):
             yield ClearlyServer._event_to_pb(task)[1]
 
     def filter_workers(self, request, context):
@@ -134,7 +140,12 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                          sorted(self.listener.memory.workers.values(),
                                 key=WORKER_HOSTNAME_OP)
                          if hcondition(worker))
-        for worker in found_workers:
+
+        def callback(t):
+            logger.debug('%s iterated %d workers in %s (%s)', self.filter_workers.__name__,
+                         t.count, t.duration_human, t.throughput_human)
+
+        for worker in about_time(callback, found_workers):
             yield ClearlyServer._event_to_pb(worker)[1]
 
     def find_task(self, request, context):
@@ -171,5 +182,6 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 
 
 def _log_request(request, context):  # pragma: no cover
-    text = ' '.join(part.strip() for part in repr(request).split('\n'))
-    logger.debug('%s', text)
+    req_name = request.DESCRIPTOR.full_name
+    req_text = ' '.join(part.strip() for part in filter(None, str(request).split('\n')))
+    logger.debug('%s { %s }', req_name, req_text)
