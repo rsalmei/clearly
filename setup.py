@@ -15,6 +15,7 @@ install_requires = [
     'grpcio',
     'protobuf',
     'click',
+    'about-time',
 ]
 if sys.version_info[0] == 2:
     install_requires.append('futures')
