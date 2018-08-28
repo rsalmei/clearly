@@ -7,7 +7,6 @@ from celery import states
 from celery.events.state import Task, Worker
 from mock import DEFAULT, PropertyMock
 
-from clearly.event_core import event_listener
 from clearly.event_core.event_listener import EventListener
 from clearly.utils import worker_states
 
@@ -22,9 +21,10 @@ except ImportError:  # pragma: no cover
 @pytest.fixture
 def listener():
     with mock.patch('threading.Thread'), \
-         mock.patch('threading.Event'):
+         mock.patch('threading.Event'), \
+         mock.patch('clearly.event_core.event_listener.Celery'):
         # noinspection PyTypeChecker
-        yield EventListener(mock.Mock(), Queue())
+        yield EventListener('', Queue())
 
 
 @pytest.fixture(params=(False, True))

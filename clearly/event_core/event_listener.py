@@ -6,7 +6,6 @@ import signal
 import threading
 
 from celery import Celery, states
-from celery.backends.base import DisabledBackend
 from celery.events import EventReceiver
 from celery.events.state import State
 
@@ -30,29 +29,33 @@ class EventListener(object):
     Server object, to capture events and handle tasks and workers.
 
     Attributes:
-        app (Celery): a configured celery app instance
-        queue_output (Queue): to send to streaming dispatcher
+        _app (Celery): a configured celery app instance
+        _queue_output (Queue): to send to streaming dispatcher
         memory (State): LRU storage object to keep tasks and workers
         _use_result_backend (bool): if True, there's a result backend to fetch results from
     """
 
-    def __init__(self, app, queue_output, max_tasks_in_memory=None, max_workers_in_memory=None):
+    def __init__(self, broker, queue_output, backend=None,
+                 max_tasks_in_memory=None, max_workers_in_memory=None):
         """Constructs an event listener instance.
 
         Args:
-            app (Celery): a configured celery app instance
+            broker (str): the broker being used by the celery system.
             queue_output (Queue): to send to streaming dispatcher.
+            backend (str): the result backend being used by the celery system.
             max_tasks_in_memory (int): max tasks stored
             max_workers_in_memory (int): max workers stored
         """
-        self._app = app
+        self._app = Celery(broker=broker, backend=backend)
         self._queue_output = queue_output
 
-        self._use_result_backend = not isinstance(app.backend, DisabledBackend)
+        from celery.backends.base import DisabledBackend
+        self._use_result_backend = not isinstance(self._app.backend, DisabledBackend)
 
-        logger.info('Creating %s: max_tasks=%d; max_workers=%d; using_result_backend=%s',
-                    EventListener.__name__, max_tasks_in_memory, max_workers_in_memory,
-                    self._use_result_backend)
+        logger.info('Creating %s: max_tasks=%d; max_workers=%d',
+                    EventListener.__name__, max_tasks_in_memory, max_workers_in_memory)
+        logger.info('Celery broker=%s; backend=%s; using_result_backend=%s',
+                    broker, backend, self._use_result_backend)
 
         # events handling: storage and filling missing states.
         self.memory = State(
