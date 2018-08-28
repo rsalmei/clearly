@@ -1,4 +1,8 @@
 from clearly.client import ClearlyClient
+from clearly.server import start_server
+
+# uncomment to test internal server
+# server = start_server('amqp://localhost', blocking=False)
 
 cli = ClearlyClient()
 
