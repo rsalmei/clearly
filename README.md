@@ -108,12 +108,25 @@ $ clearly server <broker_url> [--backend backend_url] [--port 12223]
 Use `clearly --help` and `clearly server --help` for more options.
 
 
+#### Can't/won't install the server yet?
+
+Clearly Client used to be started with no dependencies, which made you lose all tasks being run when you weren't seeing them. But to test, it was nice to be able to use it quickly, just to assert something or trial before committing.
+
+Just do:
+
+```python
+>>> from clearly.server import start_server
+>>> server = start_server('broker_url', blocking=False)
+```
+
+
 ### start the client ([i]python)
 
 ```python
 >>> from clearly.client import ClearlyClient
 >>> clearlycli = ClearlyClient(host='hostname', port=12223)
 ```
+
 
 ### grab them
 
