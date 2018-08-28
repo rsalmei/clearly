@@ -3,8 +3,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
 import operator
-import re
+from concurrent import futures
 
+import grpc
+import re
 from about_time import about_time
 from celery.events.state import Task, Worker
 
@@ -12,6 +14,7 @@ from .event_core.event_listener import EventListener
 from .event_core.events import TaskData, WorkerData
 from .event_core.streaming_dispatcher import StreamingDispatcher
 from .protos import clearly_pb2, clearly_pb2_grpc
+from .utils.colors import Colors
 from .utils.data import accepts
 
 try:
@@ -20,6 +23,8 @@ try:
 except ImportError:  # pragma: no cover
     # noinspection PyCompatibility,PyUnresolvedReferences
     from Queue import Queue, Empty
+
+ONE_DAY_IN_SECONDS = 24 * 60 * 60
 
 logger = logging.getLogger('clearly.server')
 
@@ -185,3 +190,45 @@ def _log_request(request, context):  # pragma: no cover
     req_name = request.DESCRIPTOR.full_name
     req_text = ' '.join(part.strip() for part in filter(None, str(request).split('\n')))
     logger.debug('%s { %s }', req_name, req_text)
+
+
+def _setup_logging(debug):  # pragma: no cover
+    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s') + Colors.BLUE(' %(levelname)s') + ' %(message)s'
+    logging.basicConfig(level=logging.WARNING, format=f)
+    logging.getLogger('clearly').setLevel(logging.DEBUG if debug else logging.INFO)
+
+
+def start_server(broker, backend=None, port=12223,
+                 max_tasks=10000, max_workers=100,
+                 blocking=True, debug=False):  # pragma: no cover
+    """Starts a Clearly Server programmatically."""
+    _setup_logging(debug)
+
+    queue_listener_dispatcher = Queue()
+    listener = EventListener(broker, queue_listener_dispatcher, backend=backend,
+                             max_tasks_in_memory=max_tasks,
+                             max_workers_in_memory=max_workers)
+    dispatcher = StreamingDispatcher(queue_listener_dispatcher)
+    clearlysrv = ClearlyServer(listener, dispatcher)
+    return _serve(clearlysrv, port, blocking)
+
+
+def _serve(instance, port, blocking):  # pragma: no cover
+    logger.info('Initiating gRPC server: port=%d', port)
+
+    gserver = grpc.server(futures.ThreadPoolExecutor())
+    clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, gserver)
+    gserver.add_insecure_port('[::]:{}'.format(port))
+
+    logger.info('gRPC server ok')
+    gserver.start()
+
+    if not blocking:
+        return gserver
+
+    import time
+    try:
+        while True:
+            time.sleep(ONE_DAY_IN_SECONDS)
+    except KeyboardInterrupt:
+        gserver.stop(None)
