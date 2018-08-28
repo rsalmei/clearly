@@ -298,6 +298,7 @@ def reset(self):
 
 
 ## Changelog highlights:
+- 0.6.0: supports again standalone mode, in addition to client/server mode
 - 0.5.0: independent client and server, connected by gRPC (supports a server with multiple clients)
 - 0.4.2: last version with client and server combined
 - 0.4.0: supports both py2.7 and py3.4+
