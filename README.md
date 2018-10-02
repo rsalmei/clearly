@@ -9,7 +9,7 @@
 # clearly :)
 ## Clear and accurate real-time monitor for celery
 
-Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [flower]([flower](https://github.com/mher/flower)? You may really like **Clearly**!
+Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [flower](https://github.com/mher/flower)? You'll probably like **Clearly**!
 
 `Clearly` is a real-time monitor for your celery tasks and workers!
 
@@ -88,7 +88,7 @@ Finally there's the new `ClearlyServer`, a gRPC server in a `ThreadPoolExecutor`
 
 ## Get `clearly`
 
-Just do in python env:
+Just do in your python env:
 
 ```bash
 $ pip install clearly
@@ -110,14 +110,14 @@ Use `clearly --help` and `clearly server --help` for more options.
 
 #### Can't/won't install the server yet?
 
-Clearly Client used to be started with no dependencies, which made you lose all tasks being run when you weren't seeing them. But to test, it was nice to be able to use it quickly, just to assert something or trial before committing.
-
-Just do:
+_Clearly Client_ used to be started without any server, which was convenient, but made you lose all tasks' history when you close it. If you'd like to use it quickly like that, be it to just assert something or to trial the software before committing, just do this:
 
 ```python
 >>> from clearly.server import start_server
->>> server = start_server('broker_url', blocking=False)
+>>> server = start_server('your_broker_url', blocking=False)
 ```
+
+Then you'll be able to use the client as below, pointing it to `localhost`!
 
 
 ### start the client ([i]python)
