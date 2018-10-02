@@ -15,7 +15,7 @@ Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [
 
 While I do like flower, to me it's not been totally up to the task (pun intended :)).
 Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once, syntax coloring, and complete, whole, thorough, comprehensive results!
-And flower needs page refreshes, filters only one task at a time, displays results as plain strings as well as truncates them...
+And flower needs page refreshes, filters only one task at a time, displays results as plain strings, and even truncates them... :(
 
 Ok, `clearly` does provide all that!  
 It is actually real-time, has multiple simultaneous filters, an advanced syntax coloring system, complete non-truncated results, and it's fast! :)
