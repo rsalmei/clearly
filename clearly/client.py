@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 from datetime import datetime
 
 import grpc
+from about_time import about_time
 from celery import states
 
 from .code_highlighter import create_traceback_highlighter, typed_code
@@ -17,6 +18,13 @@ HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = Colors.DIM(':)')
 DIM_NONE = Colors.DIM(Colors.CYAN('None'))
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
+
+
+def _fetched_callback(t):  # pragma: no cover
+    print('{} {} in {} ({})'.format(
+        Colors.DIM('fetched:'), Colors.BOLD(t.count),
+        Colors.GREEN(t.duration_human), Colors.GREEN(t.throughput_human)
+    ))
 
 
 class ClearlyClient(object):
@@ -74,8 +82,10 @@ class ClearlyClient(object):
                 default is False
         """
         request = clearly_pb2.CaptureRequest(
-            tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
-            workers_capture=clearly_pb2.PatternFilter(pattern=workers or '.', negate=negate_workers),
+            tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.',
+                                                    negate=negate),
+            workers_capture=clearly_pb2.PatternFilter(pattern=workers or '.',
+                                                      negate=negate_workers),
         )
         try:
             for realtime in self._stub.capture_realtime(request):
@@ -139,13 +149,13 @@ class ClearlyClient(object):
                 default is True, as you're monitoring to find errors, right?
         """
         request = clearly_pb2.FilterTasksRequest(
-            tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
+            tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
+                                                   negate=negate),
             state_pattern=state or '.', limit=limit, reverse=reverse
         )
-        i = -1
-        for i, task in enumerate(self._stub.filter_tasks(request)):
+
+        for task in about_time(_fetched_callback, self._stub.filter_tasks(request)):
             ClearlyClient._display_task(task, params, success, error)
-        print(Colors.DIM('fetched:'), Colors.BOLD(i + 1))
 
     def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
@@ -164,12 +174,12 @@ class ClearlyClient(object):
             stats (bool): if True shows worker stats
         """
         request = clearly_pb2.FilterWorkersRequest(
-            workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
+            workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
+                                                     negate=negate),
         )
-        i = -1
-        for i, worker in enumerate(self._stub.filter_workers(request)):
+
+        for worker in about_time(_fetched_callback, self._stub.filter_workers(request)):
             ClearlyClient._display_worker(worker, stats)
-        print(Colors.DIM('fetched:'), Colors.BOLD(i + 1))
 
     def task(self, task_uuid):
         """Finds one specific task.
@@ -213,7 +223,9 @@ class ClearlyClient(object):
                       or (task.state == states.SUCCESS and success)
 
         first_seen = bool(params) and task.created
-        result = params is not False and (task.state in states.READY_STATES) and show_result
+        result = params is not False \
+                 and (task.state in states.READY_STATES) \
+                 and show_result
         if first_seen or result:
             print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.args),

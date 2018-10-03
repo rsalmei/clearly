@@ -3,10 +3,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
 import operator
+import re
 from concurrent import futures
 
 import grpc
-import re
 from about_time import about_time
 from celery.events.state import Task, Worker
 
@@ -200,7 +200,7 @@ def _setup_logging(debug):  # pragma: no cover
 
 def start_server(broker, backend=None, port=12223,
                  max_tasks=10000, max_workers=100,
-                 blocking=True, debug=False):  # pragma: no cover
+                 blocking=False, debug=False):  # pragma: no cover
     """Starts a Clearly Server programmatically."""
     _setup_logging(debug)
 
