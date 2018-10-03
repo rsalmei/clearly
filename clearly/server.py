@@ -76,7 +76,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                     continue
 
                 key, obj = ClearlyServer._event_to_pb(event_data)
-                yield clearly_pb2.RealtimeEventMessage(**{key: obj})
+                yield clearly_pb2.RealtimeEventMessage(**{str(key): obj})  # str() for py2
 
     @staticmethod
     def _event_to_pb(event):

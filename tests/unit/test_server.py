@@ -9,13 +9,14 @@ from mock import mock
 
 from clearly.event_core.events import TaskData, WorkerData
 from clearly.protos import clearly_pb2
+from clearly.protos.clearly_pb2 import RealtimeEventMessage, TaskMessage
 from clearly.server import ClearlyServer
 
 
 @pytest.fixture
 def mocked_server():
     # noinspection PyTypeChecker
-    yield ClearlyServer(mock.Mock(), mock.Mock())
+    yield ClearlyServer(mock.Mock(), mock.MagicMock())
 
 
 def test_server_capture_realtime(mocked_server):
@@ -23,23 +24,19 @@ def test_server_capture_realtime(mocked_server):
         tasks_capture=clearly_pb2.PatternFilter(pattern='tp', negate=True),
         workers_capture=clearly_pb2.PatternFilter(pattern='wp', negate=False),
     )
-    msc = mocked_server.dispatcher.streaming_client
-    msc.return_value.__enter__ = mock.Mock()
-    msc.return_value.__exit__ = mock.Mock()
     event = 'event'
+    msc = mocked_server.dispatcher.streaming_client
     msc.return_value.__enter__.return_value.get.return_value = event
+    msc.return_value.__exit__.return_value = None  # this makes the context manager not suppress exception!
 
-    with mock.patch('clearly.server.ClearlyServer._event_to_pb') as mepb, \
-            mock.patch('clearly.protos.clearly_pb2.RealtimeEventMessage') as mrte:
-        mepb.return_value = 'asd', 35
-        mrte.return_value = 'ok'
+    with mock.patch('clearly.server.ClearlyServer._event_to_pb') as mepb:
+        mepb.return_value = 'task', TaskMessage()
         gen = mocked_server.capture_realtime(request, None)
         result = next(gen)
 
     msc.assert_called_once_with('tp', True, 'wp', False)
     mepb.assert_called_once_with(event)
-    mrte.assert_called_once_with(asd=35)
-    assert result == 'ok'
+    assert result == RealtimeEventMessage(task=TaskMessage())
 
 
 T_DATA_PB = dict(name='name', routing_key='routing_key', uuid='uuid', retries=5,
