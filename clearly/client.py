@@ -74,8 +74,10 @@ class ClearlyClient(object):
                 default is False
         """
         request = clearly_pb2.CaptureRequest(
-            tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
-            workers_capture=clearly_pb2.PatternFilter(pattern=workers or '.', negate=negate_workers),
+            tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.',
+                                                    negate=negate),
+            workers_capture=clearly_pb2.PatternFilter(pattern=workers or '.',
+                                                      negate=negate_workers),
         )
         try:
             for realtime in self._stub.capture_realtime(request):
@@ -139,7 +141,8 @@ class ClearlyClient(object):
                 default is True, as you're monitoring to find errors, right?
         """
         request = clearly_pb2.FilterTasksRequest(
-            tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
+            tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
+                                                   negate=negate),
             state_pattern=state or '.', limit=limit, reverse=reverse
         )
         i = -1
@@ -164,7 +167,8 @@ class ClearlyClient(object):
             stats (bool): if True shows worker stats
         """
         request = clearly_pb2.FilterWorkersRequest(
-            workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.', negate=negate),
+            workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
+                                                     negate=negate),
         )
         i = -1
         for i, worker in enumerate(self._stub.filter_workers(request)):
@@ -213,7 +217,9 @@ class ClearlyClient(object):
                       or (task.state == states.SUCCESS and success)
 
         first_seen = bool(params) and task.created
-        result = params is not False and (task.state in states.READY_STATES) and show_result
+        result = params is not False \
+                 and (task.state in states.READY_STATES) \
+                 and show_result
         if first_seen or result:
             print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.args),
