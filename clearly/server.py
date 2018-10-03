@@ -200,7 +200,7 @@ def _setup_logging(debug):  # pragma: no cover
 
 def start_server(broker, backend=None, port=12223,
                  max_tasks=10000, max_workers=100,
-                 blocking=True, debug=False):  # pragma: no cover
+                 blocking=False, debug=False):  # pragma: no cover
     """Starts a Clearly Server programmatically."""
     _setup_logging(debug)
 

@@ -114,7 +114,7 @@ _Clearly Client_ used to be started without any server, which was convenient, bu
 
 ```python
 >>> from clearly.server import start_server
->>> server = start_server('your_broker_url', blocking=False)
+>>> server = start_server('your_broker_url')
 ```
 
 Then you'll be able to use the client as below, pointing it to `localhost`!
