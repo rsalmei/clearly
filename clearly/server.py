@@ -3,10 +3,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
 import operator
+import re
 from concurrent import futures
 
 import grpc
-import re
 from about_time import about_time
 from celery.events.state import Task, Worker
 
