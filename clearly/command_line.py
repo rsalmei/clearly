@@ -28,5 +28,5 @@ def server(**kwargs):
 
         BROKER: The broker being used by celery, like "amqp://localhost".
     """
-    start_server(**{k: v for k, v in kwargs.items() if v},
-                 blocking=True)
+    start_server(blocking=True,
+                 **{k: v for k, v in kwargs.items() if v})
