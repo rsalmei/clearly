@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+about-time = "*"
+celery = "*"
+click = ">=7.0"
+grpcio = "*"
+protobuf = "*"
+pytz = "*"
+six = "==1.11.0"
+Pygments = "*"
+"clearly" = {editable = true, path = "."}
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"
