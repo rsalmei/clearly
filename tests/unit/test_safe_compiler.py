@@ -22,8 +22,8 @@ from clearly.safe_compiler import CallDescriptor, safe_compile_text
     ('"a\\na"', 'a\na'),
     ('"a\\\na"', 'a\\x0aa'),
     ('"a\\\\na"', 'a\\na'),
-    ('"\j"', '\j'),
-    ('"\\j"', '\j'),
+    ('"\r"', '\r'),
+    ('"\\r"', '\r'),
     ('"\a\n\r\t"', '\a\n\r\t'),
 
     # simple tuples
