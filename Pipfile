@@ -13,8 +13,19 @@ pytz = "*"
 six = "==1.11.0"
 Pygments = "*"
 "clearly" = {editable = true, path = "."}
+futures = {version = "*", markers = "python_version < '3.0'"}
 
 [dev-packages]
+mock = "*"
+pytest = "*"
+pathlib2 = {version = "*", markers = "python_version < '3.0'"}
+funcsigs = {version ="*", markers = "python_version < '3.0'"}
+scandir = {version ="*", markers = "python_version < '3.0'"}
+pytest-cache = "*"
+pytest-cov = "*"
+pytest-sugar = "*"
+pytest-watch = "*"
+pytest-xdist = "*"
 
 [requires]
 python_version = "3.7"
