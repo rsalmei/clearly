@@ -25,7 +25,7 @@ class ExpectedStateHandler(object):
 
     def states_through(self, pre, post):
         if pre == post:
-            raise StopIteration
+            return
 
         pointer = self.expected_path
         expected = pre
