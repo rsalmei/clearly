@@ -12,8 +12,8 @@ from clearly.server import ClearlyServer
 
 @pytest.fixture
 def mocked_server():
-    # noinspection PyTypeChecker
-    yield ClearlyServer(mock.Mock(), mock.MagicMock())
+    with mock.patch('clearly.server._log_request'):
+        yield ClearlyServer(mock.Mock(), mock.MagicMock())
 
 
 def test_server_capture_realtime(mocked_server):
