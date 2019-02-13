@@ -159,7 +159,7 @@ def test_server_seen_tasks(mocked_server):
 def test_server_reset_tasks(mocked_server):
     mocked_server.reset_tasks(clearly_pb2.Empty(), None)
 
-    mocked_server.listener.memory.clear_tasks.assert_called_once()
+    mocked_server.listener.memory.clear_tasks.assert_called_once_with()
 
 
 def test_server_get_stats(mocked_server):
