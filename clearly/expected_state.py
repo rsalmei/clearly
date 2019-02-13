@@ -75,15 +75,15 @@ class ExpectedPath(object):
 
 
 def setup_task_states():
-    expected_path = ExpectedPath(states.PENDING)
-    return_path = expected_path.to(states.RECEIVED)
+    expected_path = ExpectedPath(task_states.PENDING)
+    return_path = expected_path.to(task_states.RECEIVED)
     # noinspection PyTypeChecker
-    return_path.to(states.STARTED) \
-        .to((states.SUCCESS,
-             states.FAILURE,
-             states.REJECTED,
-             states.REVOKED,),
-            states.RETRY) \
+    return_path.to(task_states.STARTED) \
+        .to((task_states.SUCCESS,
+             task_states.FAILURE,
+             task_states.REJECTED,
+             task_states.REVOKED,),
+            task_states.RETRY) \
         .to(return_path)
 
     return ExpectedStateHandler(expected_path)
