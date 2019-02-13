@@ -1,6 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import logging
 import operator
 import re
@@ -8,19 +5,13 @@ import signal
 import threading
 from collections import namedtuple
 from contextlib import contextmanager
+from queue import Empty, Queue
 
 from .events import TaskData
 from ..expected_state import ExpectedStateHandler, setup_task_states, setup_worker_states
 from ..utils.data import accepts
 
-try:
-    # noinspection PyCompatibility
-    from queue import Queue, Empty
-except ImportError:  # pragma: no cover
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue, Empty
-
-logger = logging.getLogger('clearly.core.streaming_dispatcher')
+logger = logging.getLogger(__name__)
 
 CapturingClient = namedtuple('CapturingClient', 'queue task_regex task_negate worker_regex worker_negate')
 TASK_OP = operator.attrgetter('queue', 'task_regex', 'task_negate')

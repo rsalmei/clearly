@@ -1,26 +1,14 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
-import six
 from pygments import highlight
 from pygments.formatters.terminal256 import Terminal256Formatter
 from pygments.lexers.python import Python3TracebackLexer
 
 from .safe_compiler import CallDescriptor
 from .utils.colors import Colors
-from .utils.text import force_text
 
 SEPARATOR = Colors.RED(', ')
 KWARGS_SEPARATOR = Colors.RED('=')
 DICT_SEPARATOR = Colors.RED(': ')
 NONE = Colors.CYAN('None')
-
-try:
-    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
-    unicode
-except NameError:  # pragma: no cover
-    def unicode(x):
-        return str(x)
 
 
 def typed_code(p, wrap=True):
@@ -30,8 +18,7 @@ def typed_code(p, wrap=True):
     if isinstance(p, bool):
         return Colors.CYAN(str(p))
 
-    if isinstance(p, six.string_types):
-        p = force_text(p)
+    if isinstance(p, str):
         if "'" in p and '"' not in p:
             escape = '"'
         else:
@@ -39,7 +26,7 @@ def typed_code(p, wrap=True):
             p = p.replace("'", "\\'")
         return Colors.YELLOW('{c}{p}{c}'.format(p=p, c=escape))
 
-    if isinstance(p, six.integer_types + (float,)):
+    if isinstance(p, (int, float, complex)):
         return Colors.GREEN(str(p))
 
     if isinstance(p, CallDescriptor):
@@ -48,14 +35,14 @@ def typed_code(p, wrap=True):
             if p.args:
                 func_args += SEPARATOR
             func_args += typed_code(p.kwargs, wrap=False)
-        return '{}({})'.format(force_text(p.name), func_args)
+        return '{}({})'.format(p.name, func_args)
 
     if isinstance(p, list):
         f = '[{}]' if wrap else '{}'
         return f.format(SEPARATOR.join(typed_code(x) for x in p))
 
     if isinstance(p, set):
-        return '{{{}}}'.format(typed_code(sorted(p, key=lambda x: unicode(x)), wrap=False))
+        return '{{{}}}'.format(typed_code(sorted(p, key=lambda x: str(x)), wrap=False))
 
     if isinstance(p, tuple):
         if wrap:
@@ -82,7 +69,7 @@ def typed_code(p, wrap=True):
             SEPARATOR.join('{}{}{}'.format(key(k), sep, typed_code(v))
                            for k, v in p.items()))
 
-    return force_text(repr(p))
+    return repr(p)
 
 
 def create_traceback_highlighter():

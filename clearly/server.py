@@ -1,10 +1,8 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import logging
 import operator
 import re
 from concurrent import futures
+from queue import Empty, Queue
 
 import grpc
 from about_time import about_time
@@ -16,13 +14,6 @@ from .event_core.streaming_dispatcher import StreamingDispatcher
 from .protos import clearly_pb2, clearly_pb2_grpc
 from .utils.colors import Colors
 from .utils.data import accepts
-
-try:
-    # noinspection PyCompatibility
-    from queue import Queue, Empty
-except ImportError:  # pragma: no cover
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from Queue import Queue, Empty
 
 ONE_DAY_IN_SECONDS = 24 * 60 * 60
 
@@ -76,7 +67,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                     continue
 
                 key, obj = ClearlyServer._event_to_pb(event_data)
-                yield clearly_pb2.RealtimeEventMessage(**{str(key): obj})  # str() for py2
+                yield clearly_pb2.RealtimeEventMessage(**{key: obj})
 
     @staticmethod
     def _event_to_pb(event):
@@ -97,7 +88,8 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         else:
             raise ValueError('unknown event')
         keys = klass.DESCRIPTOR.fields_by_name.keys()
-        data = {str(k): v for k, v in  # str() for py2
+        # noinspection PyProtectedMember
+        data = {k: v for k, v in
                 getattr(event, '_asdict',  # internal TaskData and WorkerData
                         lambda: {f: getattr(event, f) for f in event._fields})  # celery Task and Worker
                 ().items() if k in keys}
@@ -189,7 +181,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 def _log_request(request, context):  # pragma: no cover
     req_name = request.DESCRIPTOR.full_name
     req_text = ' '.join(part.strip() for part in filter(None, str(request).split('\n')))
-    logger.debug('%s { %s }', req_name, req_text)
+    logger.debug('[%s] %s { %s }', context.peer(), req_name, req_text)
 
 
 def _setup_logging(debug):  # pragma: no cover

@@ -1,9 +1,7 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import logging
 import signal
 import threading
+from queue import Queue
 
 from celery import Celery, states
 from celery.events import EventReceiver
@@ -13,14 +11,7 @@ from .events import immutable_task, immutable_worker
 from ..safe_compiler import safe_compile_text
 from ..utils import worker_states
 
-try:
-    # noinspection PyCompatibility
-    from queue import Queue
-except ImportError:  # pragma: no cover
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue
-
-logger = logging.getLogger('clearly.core.event_listener')
+logger = logging.getLogger(__name__)
 
 
 class EventListener(object):

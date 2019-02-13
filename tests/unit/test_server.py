@@ -1,11 +1,8 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import copy
+from unittest import mock
 
 import pytest
 from celery.events.state import Task, Worker
-from mock import mock
 
 from clearly.event_core.events import TaskData, WorkerData
 from clearly.protos import clearly_pb2
@@ -15,8 +12,8 @@ from clearly.server import ClearlyServer
 
 @pytest.fixture
 def mocked_server():
-    # noinspection PyTypeChecker
-    yield ClearlyServer(mock.Mock(), mock.MagicMock())
+    with mock.patch('clearly.server._log_request'):
+        yield ClearlyServer(mock.Mock(), mock.MagicMock())
 
 
 def test_server_capture_realtime(mocked_server):
@@ -51,6 +48,7 @@ W_DATA = copy.copy(W_DATA_PB)
 W_DATA.update(state='state', pre_state='other', created=False, alive=True, last_heartbeat=1)  # miss you py3.5
 
 
+# noinspection PyProtectedMember
 @pytest.mark.parametrize('event, key, data', [
     (TaskData(**T_DATA), 'task', T_DATA_PB),
     (Task(**T_DATA_PB), 'task', T_DATA_PB),
@@ -64,6 +62,7 @@ def test_server_event_to_pb_valid(event, key, data, mocked_server):
                for k, v in data.items())
 
 
+# noinspection PyProtectedMember
 @pytest.mark.parametrize('event, key', [
     (1, ValueError),
     ('wrong', ValueError),
@@ -160,7 +159,7 @@ def test_server_seen_tasks(mocked_server):
 def test_server_reset_tasks(mocked_server):
     mocked_server.reset_tasks(clearly_pb2.Empty(), None)
 
-    mocked_server.listener.memory.clear_tasks.assert_called_once()
+    assert mocked_server.listener.memory.clear_tasks.call_count == 1
 
 
 def test_server_get_stats(mocked_server):

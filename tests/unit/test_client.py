@@ -1,23 +1,13 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import re
+from unittest import mock
 
 import pytest
 from celery import states
-from mock import mock
 
 from clearly.client import ClearlyClient
 from clearly.protos import clearly_pb2
 from clearly.utils import worker_states
 from clearly.utils.colors import strip_colors
-
-try:
-    # noinspection PyCompatibility
-    from queue import Queue
-except ImportError:  # pragma: no cover
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue
 
 
 @pytest.fixture
@@ -64,11 +54,13 @@ def worker_state_type(request):
     yield request.param
 
 
+# noinspection PyProtectedMember
 def test_client_reset(mocked_client):
     mocked_client.reset()
-    mocked_client._stub.reset_tasks.assert_called_once()
+    assert mocked_client._stub.reset_tasks.call_count == 1
 
 
+# noinspection PyProtectedMember
 def test_client_seen_tasks_do_print(mocked_client, capsys):
     inner_tasks = ['app{i}.task{i}'.format(i=i) for i in range(3)]
     tasks = clearly_pb2.SeenTasksMessage()
@@ -79,6 +71,7 @@ def test_client_seen_tasks_do_print(mocked_client, capsys):
     assert all(any(re.search(re.escape(t), x) for x in generated) for t in inner_tasks)
 
 
+# noinspection PyProtectedMember
 def test_client_capture_task(tristate, bool1, bool2, mocked_client_display):
     task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
                                    args='args', kwargs='kwargs', result='result', traceback='traceback',
@@ -88,12 +81,14 @@ def test_client_capture_task(tristate, bool1, bool2, mocked_client_display):
     mocked_client_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
 
 
+# noinspection PyProtectedMember
 def test_client_capture_ignore_unknown(mocked_client_display):
     mocked_client_display._stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(),)
     mocked_client_display.capture()
     mocked_client_display._display_task.assert_not_called()
 
 
+# noinspection PyProtectedMember
 def test_client_capture_worker(bool1, mocked_client_display):
     worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
                                        sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
@@ -103,6 +98,7 @@ def test_client_capture_worker(bool1, mocked_client_display):
     mocked_client_display._display_worker.assert_called_once_with(worker, bool1)
 
 
+# noinspection PyProtectedMember
 def test_client_stats_do_print(mocked_client, capsys):
     data = dict(task_count=1234, event_count=5678, len_tasks=2244, len_workers=333)
     mocked_client._stub.get_stats.return_value = clearly_pb2.StatsMessage(**data)
@@ -111,6 +107,7 @@ def test_client_stats_do_print(mocked_client, capsys):
     assert all(re.search(str(x), generated) for x in data.values())
 
 
+# noinspection PyProtectedMember
 def test_client_tasks(tristate, bool1, bool2, mocked_client_display):
     task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
                                    args='args', kwargs='kwargs', result='result', traceback='traceback',
@@ -120,6 +117,7 @@ def test_client_tasks(tristate, bool1, bool2, mocked_client_display):
     mocked_client_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
 
 
+# noinspection PyProtectedMember
 def test_client_workers(bool1, mocked_client_display):
     worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
                                        sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
@@ -129,6 +127,7 @@ def test_client_workers(bool1, mocked_client_display):
     mocked_client_display._display_worker.assert_called_once_with(worker, bool1)
 
 
+# noinspection PyProtectedMember
 def test_client_task(bool1, mocked_client_display):
     task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
                                    args='args', kwargs='kwargs', result='result', traceback='traceback',
@@ -151,6 +150,7 @@ def task_result(request):
     yield request.param
 
 
+# noinspection PyProtectedMember
 def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
                              task_state_type, task_tb, mocked_client, capsys):
     task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
@@ -175,7 +175,7 @@ def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
 
     # params
     first_seen = bool(tristate) and task.created
-    result = tristate != False and (task.state in states.READY_STATES) and show_result
+    result = tristate is not False and (task.state in states.READY_STATES) and show_result
     tristate = first_seen or result
     assert tristate == (task.args in generated)
     assert tristate == (task.kwargs in generated)
@@ -190,6 +190,7 @@ def worker_heartbeat(request):
     yield request.param
 
 
+# noinspection PyProtectedMember
 def test_client_display_worker(bool1, bool2, worker_state_type, worker_heartbeat,
                                mocked_client, capsys):
     worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
@@ -214,11 +215,13 @@ def test_client_display_worker(bool1, bool2, worker_state_type, worker_heartbeat
     assert (bool1 and bool2) == ('heartbeat:' in generated)
 
 
+# noinspection PyProtectedMember
 def test_client_task_state(task_state_type, mocked_client):
     result = mocked_client._task_state(task_state_type)
     assert task_state_type in result
 
 
+# noinspection PyProtectedMember
 def test_client_worker_state(worker_state_type, mocked_client):
     result = mocked_client._worker_state(worker_state_type)
     assert worker_state_type in result

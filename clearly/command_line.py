@@ -4,7 +4,7 @@ import click
 
 from clearly.server import start_server
 
-logger = logging.getLogger('clearly.command_line')
+logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -28,5 +28,5 @@ def server(**kwargs):
 
         BROKER: The broker being used by celery, like "amqp://localhost".
     """
-    start_server(blocking=True,
-                 **{k: v for k, v in kwargs.items() if v})
+    start_server(**{k: v for k, v in kwargs.items() if v},
+                 blocking=True)

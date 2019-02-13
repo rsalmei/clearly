@@ -1,15 +1,13 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function, unicode_literals
 
-import sys
 from distutils.core import setup
 
 from setuptools import find_packages
 
 import clearly
 
-install_requires = [
-    'six',
+INSTALL_REQUIRES = [
     'celery>=3.1',
     'pygments',
     'grpcio',
@@ -17,8 +15,6 @@ install_requires = [
     'click',
     'about-time',
 ]
-if sys.version_info[0] == 2:
-    install_requires.append('futures')
 
 
 def get_readme():
@@ -55,8 +51,6 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         # 'Programming Language :: Python :: 3.2',
         # 'Programming Language :: Python :: 3.3',
@@ -67,8 +61,8 @@ setup(
     ],
     keywords='celery task queue job flower monitoring distributed asynchronous'.split(),
     packages=find_packages(),
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4, <4',
-    install_requires=install_requires,
+    python_requires='>=3.5, <4',
+    install_requires=INSTALL_REQUIRES,
     entry_points={
         'console_scripts': [
             'clearly=clearly.command_line:clearly',
