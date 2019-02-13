@@ -152,10 +152,12 @@ But if you'd like to use it quickly like that, be it to just assert something or
 ![very amazed](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_cool.png)
 
 
-### note
-
-Any way you capture them, `clearly` server is always storing the same complete data about the tasks. The `params` (and other arguments) are only display related, for you to see the events the way you want, both in capture and stored modes.
-(The default is to show `error`s, as they are much more likely to get your interest).
+> Note:
+>
+> Any way you capture them, remember that `clearly` server is always storing the same *complete data* about all tasks. The `params` (and other related arguments) only configure how the system will display the tasks' events for you, not how the server will capture them. These arguments apply for both real-time capturing and already stored tasks.
+> The defaults are:
+>   - `params = None`, to show tasks' params as requested by `success` and `error`;
+>   - to not show `success`es results, and to show `error`s, as they are much more likely to get your interest.
 
 
 ### stop capturing and analyze
@@ -177,7 +179,7 @@ def capture(self, pattern=None, negate=False, workers=None, negate_workers=False
     same time.
 
     This runs in the foreground, so you can see in real-time exactly what your
-    celery workers are doing.
+    clients and celery workers are doing.
     Press CTRL+C at any time to stop it.
 
     Args:
@@ -191,12 +193,13 @@ def capture(self, pattern=None, negate=False, workers=None, negate_workers=False
         workers (Optional[str]): a pattern to filter workers to capture.
             ex.: 'service|priority' to filter names containing that
         negate_workers (bool): if True, finds workers that do not match criteria.
-        params (Optional[bool]): if True shows args and kwargs in first/last state,
-            doesn't show if False, and follows the successes and errors if None.
-            default is None
 
         Display args:
 
+        params (Optional[bool]): if True shows args and kwargs in the first and
+            last seen states, if False never shows, and if None follows the
+            success and error arguments.
+            default is None
         success (bool): if True shows successful tasks' results.
             default is False
         error (bool): if True shows failed and retried tasks' tracebacks.
@@ -219,29 +222,31 @@ def stats(self):
 
 def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
           params=None, success=False, error=True):
-    """Filters stored tasks and prints their current status.
+    """Filters stored tasks and displays their current statuses.
 
-    Note that, in the server, to be able to list the tasks sorted chronologically,
-    they are retrieved from the LRU heap instead of the dict storage, so the total
-    number of tasks fetched may be different than the server `max_tasks` setting.
+    Note that, to be able to list the tasks sorted chronologically, celery retrieves
+    tasks from the LRU event heap instead of the dict storage, so the total number
+    of tasks fetched may be different than the server `max_tasks` setting. For
+    instance, the `limit` field refers to max events searched, not max tasks.
 
     Args:
         Filter args:
 
         pattern (Optional[str]): a pattern to filter tasks
-            ex.: '^dispatch|^email' to filter names starting with those
+            ex.: '^dispatch|^email' to filter names starting with that
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
         negate (bool): if True, finds tasks that do not match criteria
-        state (Optional[str]): a state to filter tasks
-        limit (int): the maximum number of tasks to fetch
+        state (Optional[str]): a celery task state to filter
+        limit (int): the maximum number of events to fetch
             if None or 0, fetches all.
         reverse (bool): if True (default), shows the most recent first
 
         Display args:
 
-        params (Optional[bool]): if True shows called args and kwargs,
-            skips if False, and follows outcome if None.
+        params (Optional[bool]): if True shows args and kwargs in the first and
+            last seen states, if False never shows, and if None follows the
+            success and error arguments.
             default is None
         success (bool): if True shows successful tasks' results
             default is False
@@ -257,7 +262,7 @@ def workers(self, pattern=None, negate=False, stats=True):
         Filter args:
 
         pattern (Optional[str]): a pattern to filter workers
-            ex.: '^dispatch|^email' to filter names starting with those
+            ex.: '^dispatch|^email' to filter names starting with that
                   or 'dispatch.*123456' to filter that exact name and number
                   or even '123456' to filter that exact number anywhere.
         negate (bool): if True, finds tasks that do not match criteria

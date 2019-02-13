@@ -45,7 +45,7 @@ class ClearlyClient(object):
         same time.
 
         This runs in the foreground, so you can see in real-time exactly what your
-        celery workers are doing.
+        clients and celery workers are doing.
         Press CTRL+C at any time to stop it.
 
         Args:
@@ -59,12 +59,13 @@ class ClearlyClient(object):
             workers (Optional[str]): a pattern to filter workers to capture.
                 ex.: 'service|priority' to filter names containing that
             negate_workers (bool): if True, finds workers that do not match criteria.
-            params (Optional[bool]): if True shows args and kwargs in first/last state,
-                doesn't show if False, and follows the successes and errors if None.
-                default is None
 
             Display args:
 
+            params (Optional[bool]): if True shows args and kwargs in the first and
+                last seen states, if False never shows, and if None follows the
+                success and error arguments.
+                default is None
             success (bool): if True shows successful tasks' results.
                 default is False
             error (bool): if True shows failed and retried tasks' tracebacks.
@@ -116,7 +117,7 @@ class ClearlyClient(object):
 
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
               params=None, success=False, error=True):
-        """Filters stored tasks and prints their current status.
+        """Filters stored tasks and displays their current statuses.
 
         Note that, to be able to list the tasks sorted chronologically, celery retrieves
         tasks from the LRU event heap instead of the dict storage, so the total number
@@ -127,19 +128,20 @@ class ClearlyClient(object):
             Filter args:
 
             pattern (Optional[str]): a pattern to filter tasks
-                ex.: '^dispatch|^email' to filter names starting with those
+                ex.: '^dispatch|^email' to filter names starting with that
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
             negate (bool): if True, finds tasks that do not match criteria
-            state (Optional[str]): a state to filter tasks
-            limit (int): the maximum number of events to fetch tasks from
+            state (Optional[str]): a celery task state to filter
+            limit (int): the maximum number of events to fetch
                 if None or 0, fetches all.
             reverse (bool): if True (default), shows the most recent first
 
             Display args:
 
-            params (Optional[bool]): if True shows called args and kwargs,
-                skips if False, and follows outcome if None.
+            params (Optional[bool]): if True shows args and kwargs in the first and
+                last seen states, if False never shows, and if None follows the
+                success and error arguments.
                 default is None
             success (bool): if True shows successful tasks' results
                 default is False
@@ -162,7 +164,7 @@ class ClearlyClient(object):
             Filter args:
 
             pattern (Optional[str]): a pattern to filter workers
-                ex.: '^dispatch|^email' to filter names starting with those
+                ex.: '^dispatch|^email' to filter names starting with that
                       or 'dispatch.*123456' to filter that exact name and number
                       or even '123456' to filter that exact number anywhere.
             negate (bool): if True, finds tasks that do not match criteria
