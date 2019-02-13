@@ -181,7 +181,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 def _log_request(request, context):  # pragma: no cover
     req_name = request.DESCRIPTOR.full_name
     req_text = ' '.join(part.strip() for part in filter(None, str(request).split('\n')))
-    logger.debug('%s [%s] { %s }', req_name, context, req_text)
+    logger.debug('[%s] %s { %s }', context.peer(), req_name, req_text)
 
 
 def _setup_logging(debug):  # pragma: no cover
