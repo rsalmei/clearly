@@ -1,4 +1,5 @@
 import pytest
+# noinspection PyProtectedMember
 from celery.states import FAILURE, PENDING, RECEIVED, REJECTED, RETRY, REVOKED, STARTED, SUCCESS
 
 from clearly.expected_state import setup_task_states, setup_worker_states

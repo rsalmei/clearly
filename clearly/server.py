@@ -88,6 +88,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         else:
             raise ValueError('unknown event')
         keys = klass.DESCRIPTOR.fields_by_name.keys()
+        # noinspection PyProtectedMember
         data = {k: v for k, v in
                 getattr(event, '_asdict',  # internal TaskData and WorkerData
                         lambda: {f: getattr(event, f) for f in event._fields})  # celery Task and Worker
@@ -180,7 +181,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 def _log_request(request, context):  # pragma: no cover
     req_name = request.DESCRIPTOR.full_name
     req_text = ' '.join(part.strip() for part in filter(None, str(request).split('\n')))
-    logger.debug('%s { %s }', req_name, req_text)
+    logger.debug('%s [%s] { %s }', req_name, context, req_text)
 
 
 def _setup_logging(debug):  # pragma: no cover

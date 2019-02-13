@@ -48,6 +48,7 @@ def test_listener_process_event(raw_event, listener):
     with mock.patch.multiple(listener,
                              _process_task_event=DEFAULT,
                              _process_worker_event=DEFAULT) as mtw:
+        # noinspection PyProtectedMember
         listener._process_event(raw_event)
         name, _, _ = raw_event['type'].partition('-')
         m = dict(task=mtw['_process_task_event'],
@@ -69,11 +70,13 @@ def test_listener_process_task(bool1, bool2, task_state_type, listener):
         if bool2:
             ctr.side_effect = SyntaxError
 
+        # noinspection PyProtectedMember
         listener._process_task_event(dict(uuid='uuid'))
 
     if task_state_type == states.SUCCESS:
         ctr.assert_called_once_with(task)
         if bool2:
+            # noinspection PyProtectedMember
             listener._app.AsyncResult.assert_called_once_with('uuid')
     it.assert_called_once_with(task, task_state_type, 'pre_state' if bool1 else states.PENDING, not bool1)
 
@@ -89,6 +92,7 @@ def test_listener_process_worker(bool1, listener):
 
         with mock.patch('celery.events.state.Worker.status_string', new_callable=PropertyMock) as wss:
             wss.side_effect = (('pre_state',) if bool1 else ()) + ('state',)
+            # noinspection PyProtectedMember
             listener._process_worker_event(dict(hostname='hostname'))
 
     it.assert_called_once_with(worker, 'state', 'pre_state' if bool1 else worker_states.OFFLINE, not bool1)

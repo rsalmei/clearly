@@ -54,6 +54,7 @@ def test_dispatcher_dispatch(event_data, path, change, accepts_params, bool1, di
         gs.return_value = (change,)
         acc.return_value = bool1
 
+        # noinspection PyProtectedMember
         dispatcher._dispatch(event_data)
 
     acc.assert_called_once_with(*accepts_params)

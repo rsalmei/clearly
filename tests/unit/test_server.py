@@ -48,6 +48,7 @@ W_DATA = copy.copy(W_DATA_PB)
 W_DATA.update(state='state', pre_state='other', created=False, alive=True, last_heartbeat=1)  # miss you py3.5
 
 
+# noinspection PyProtectedMember
 @pytest.mark.parametrize('event, key, data', [
     (TaskData(**T_DATA), 'task', T_DATA_PB),
     (Task(**T_DATA_PB), 'task', T_DATA_PB),
@@ -61,6 +62,7 @@ def test_server_event_to_pb_valid(event, key, data, mocked_server):
                for k, v in data.items())
 
 
+# noinspection PyProtectedMember
 @pytest.mark.parametrize('event, key', [
     (1, ValueError),
     ('wrong', ValueError),
