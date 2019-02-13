@@ -57,7 +57,7 @@ def worker_state_type(request):
 # noinspection PyProtectedMember
 def test_client_reset(mocked_client):
     mocked_client.reset()
-    mocked_client._stub.reset_tasks.assert_called_once_with()
+    assert mocked_client._stub.reset_tasks.call_count == 1
 
 
 # noinspection PyProtectedMember
