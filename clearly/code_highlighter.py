@@ -8,7 +8,6 @@ from pygments.lexers.python import Python3TracebackLexer
 
 from .safe_compiler import CallDescriptor
 from .utils.colors import Colors
-from .utils.text import force_text
 
 SEPARATOR = Colors.RED(', ')
 KWARGS_SEPARATOR = Colors.RED('=')
@@ -31,7 +30,6 @@ def typed_code(p, wrap=True):
         return Colors.CYAN(str(p))
 
     if isinstance(p, six.string_types):
-        p = force_text(p)
         if "'" in p and '"' not in p:
             escape = '"'
         else:
@@ -48,7 +46,7 @@ def typed_code(p, wrap=True):
             if p.args:
                 func_args += SEPARATOR
             func_args += typed_code(p.kwargs, wrap=False)
-        return '{}({})'.format(force_text(p.name), func_args)
+        return '{}({})'.format(p.name, func_args)
 
     if isinstance(p, list):
         f = '[{}]' if wrap else '{}'
@@ -82,7 +80,7 @@ def typed_code(p, wrap=True):
             SEPARATOR.join('{}{}{}'.format(key(k), sep, typed_code(v))
                            for k, v in p.items()))
 
-    return force_text(repr(p))
+    return repr(p)
 
 
 def create_traceback_highlighter():
