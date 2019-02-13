@@ -11,7 +11,7 @@ from .events import immutable_task, immutable_worker
 from ..safe_compiler import safe_compile_text
 from ..utils import worker_states
 
-logger = logging.getLogger('clearly.core.event_listener')
+logger = logging.getLogger(__name__)
 
 
 class EventListener(object):

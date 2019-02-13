@@ -11,8 +11,7 @@ from .events import TaskData
 from ..expected_state import ExpectedStateHandler, setup_task_states, setup_worker_states
 from ..utils.data import accepts
 
-
-logger = logging.getLogger('clearly.core.streaming_dispatcher')
+logger = logging.getLogger(__name__)
 
 CapturingClient = namedtuple('CapturingClient', 'queue task_regex task_negate worker_regex worker_negate')
 TASK_OP = operator.attrgetter('queue', 'task_regex', 'task_negate')

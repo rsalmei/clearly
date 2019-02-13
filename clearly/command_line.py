@@ -4,7 +4,7 @@ import click
 
 from clearly.server import start_server
 
-logger = logging.getLogger('clearly.command_line')
+logger = logging.getLogger(__name__)
 
 
 @click.group()
