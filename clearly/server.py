@@ -67,7 +67,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                     continue
 
                 key, obj = ClearlyServer._event_to_pb(event_data)
-                yield clearly_pb2.RealtimeEventMessage(**{str(key): obj})  # str() for py2
+                yield clearly_pb2.RealtimeEventMessage(**{key: obj})
 
     @staticmethod
     def _event_to_pb(event):
@@ -88,7 +88,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         else:
             raise ValueError('unknown event')
         keys = klass.DESCRIPTOR.fields_by_name.keys()
-        data = {str(k): v for k, v in  # str() for py2
+        data = {k: v for k, v in
                 getattr(event, '_asdict',  # internal TaskData and WorkerData
                         lambda: {f: getattr(event, f) for f in event._fields})  # celery Task and Worker
                 ().items() if k in keys}
