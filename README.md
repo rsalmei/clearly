@@ -328,7 +328,7 @@ To use in your python 2.7 system, please use version 0.6.4 as in:
 $ pip install clearly==0.6.4
 ```
 
-Please do mind that gRPC and Python itself have a very annoying bug in this case: you can't cancel _Clearly Client_'s `capture` method (more specifically any streaming methods) with CTRL+C, so you must kill the process itself with CTRL+\. For more details on this nasty bug:
+Please do mind that gRPC and Python itself have a very annoying bug in this case: you can't cancel _Clearly Client_'s `capture` method (more specifically any streaming methods) with CTRL+C, so you must kill the process itself with CTRL+\\. For more details on this nasty bug:
 - https://github.com/grpc/grpc/issues/3820
 - https://github.com/grpc/grpc/issues/6999
 - https://bugs.python.org/issue8844
