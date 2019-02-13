@@ -42,7 +42,8 @@ and you're good to go!
 Highlights:
 - compatible with any version of celery, from 3.1 to 4.2+
 - a result backend is not mandatory (but used if available)
-- `clearly` supports both python 2.7 and python 3.5+ :)
+- `clearly` supports python 3.5+ :)
+(there's a version that still supports 2.7, see at the end)
 
 
 ## How `clearly` works
@@ -108,23 +109,24 @@ $ clearly server <broker_url> [--backend backend_url] [--port 12223]
 Use `clearly --help` and `clearly server --help` for more options.
 
 
-#### Can't/won't install the server yet?
+#### Can't install the server yet?
 
-_Clearly Client_ used to be started without any server, which was convenient, but made you lose all tasks' history when you close it. If you'd like to use it quickly like that, be it to just assert something or to trial the software before committing, just do this:
+_Clearly Client_ used to not need any server, which was convenient but made you lose all tasks' history once it is closed, and stresses way more the broker, as it has to send all events to all _Clearly Client_ s.
+But if you'd like to use it quickly like that, be it to just assert something or to trial the framework before committing, just do:
 
 ```python
 >>> from clearly.server import start_server
->>> server = start_server('your_broker_url')
+>>> server = start_server('<broker_url>')
 ```
 
-Then you'll be able to use the client as below, pointing it to `localhost`!
+Then you can simply start the client like: `clearlycli = ClearlyClient()`
 
 
 ### start the client ([i]python)
 
 ```python
 >>> from clearly.client import ClearlyClient
->>> clearlycli = ClearlyClient(host='hostname', port=12223)
+>>> clearlycli = ClearlyClient(host='<clearly_hostname>', port=12223)
 ```
 
 
@@ -293,11 +295,14 @@ def reset(self):
 
 - ~~support python 3 (not actually tested yet, soon);~~
 - ~~split `Clearly` client and server, to allow a always-on server to run, and multiple clients connect;~~
-- include a script mode, to call right from the shell;
+- ~~remove python 2 support~~
+- include a script mode, to call it right from the shell;
 - any other ideas welcome!
 
 
 ## Changelog highlights:
+- 0.7.0: code cleanup, to support only Python 3
+- 0.6.4: last version to support Python 2.7
 - 0.6.0: supports again standalone mode, in addition to client/server mode
 - 0.5.0: independent client and server, connected by gRPC (supports a server with multiple clients)
 - 0.4.2: last version with client and server combined
@@ -309,11 +314,26 @@ def reset(self):
 - 0.1.4: last version that doesn't use events
 
 
+### Python 2 is retiring
+That's why the support has been removed. For more details see https://pythonclock.org
+
+To use in your python 2.7 system, please use version 0.6.4 as in:
+
+```bash
+$ pip install clearly==0.6.4
+```
+
+Please do mind that gRPC and Python itself have a very annoying bug in this case: you can't cancel _Clearly Client_'s `capture` method (more specifically any streaming methods) with CTRL+C, so you must kill the process itself with CTRL+\. For more details on this nasty bug:
+- https://github.com/grpc/grpc/issues/3820
+- https://github.com/grpc/grpc/issues/6999
+- https://bugs.python.org/issue8844
+
+
 ## License
 This software is licensed under the MIT License. See the LICENSE file in the top distribution directory for the full license text.
 
 
-## Nice huh?
+## Did you like it?
 
 Thanks for your interest!
 
