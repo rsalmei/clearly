@@ -1,11 +1,8 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import copy
+from unittest import mock
 
 import pytest
 from celery.events.state import Task, Worker
-from mock import mock
 
 from clearly.event_core.events import TaskData, WorkerData
 from clearly.protos import clearly_pb2

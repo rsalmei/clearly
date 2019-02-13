@@ -1,7 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
-import six
 from pygments import highlight
 from pygments.formatters.terminal256 import Terminal256Formatter
 from pygments.lexers.python import Python3TracebackLexer
@@ -13,13 +9,6 @@ SEPARATOR = Colors.RED(', ')
 KWARGS_SEPARATOR = Colors.RED('=')
 DICT_SEPARATOR = Colors.RED(': ')
 NONE = Colors.CYAN('None')
-
-try:
-    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
-    unicode
-except NameError:  # pragma: no cover
-    def unicode(x):
-        return str(x)
 
 
 def typed_code(p, wrap=True):

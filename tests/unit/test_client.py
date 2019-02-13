@@ -1,23 +1,13 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import re
+from unittest import mock
 
 import pytest
 from celery import states
-from mock import mock
 
 from clearly.client import ClearlyClient
 from clearly.protos import clearly_pb2
 from clearly.utils import worker_states
 from clearly.utils.colors import strip_colors
-
-try:
-    # noinspection PyCompatibility
-    from queue import Queue
-except ImportError:  # pragma: no cover
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue
 
 
 @pytest.fixture

@@ -1,20 +1,11 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import re
+from queue import Queue
+from unittest import mock
 
-import mock
 import pytest
 
 from clearly.event_core.events import TaskData, WorkerData
 from clearly.event_core.streaming_dispatcher import CapturingClient, StreamingDispatcher
-
-try:
-    # noinspection PyCompatibility
-    from queue import Queue, Empty
-except ImportError:  # pragma: no cover
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue, Empty
 
 
 @pytest.fixture

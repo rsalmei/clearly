@@ -1,10 +1,8 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import logging
 import operator
 import re
 from concurrent import futures
+from queue import Empty, Queue
 
 import grpc
 from about_time import about_time
@@ -16,13 +14,6 @@ from .event_core.streaming_dispatcher import StreamingDispatcher
 from .protos import clearly_pb2, clearly_pb2_grpc
 from .utils.colors import Colors
 from .utils.data import accepts
-
-try:
-    # noinspection PyCompatibility
-    from queue import Queue, Empty
-except ImportError:  # pragma: no cover
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from Queue import Queue, Empty
 
 ONE_DAY_IN_SECONDS = 24 * 60 * 60
 

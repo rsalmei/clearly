@@ -1,21 +1,13 @@
-# coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
+from queue import Queue
+from unittest import mock
+from unittest.mock import DEFAULT, PropertyMock
 
-import mock
 import pytest
 from celery import states
 from celery.events.state import Task, Worker
-from mock import DEFAULT, PropertyMock
 
 from clearly.event_core.event_listener import EventListener
 from clearly.utils import worker_states
-
-try:
-    # noinspection PyCompatibility
-    from queue import Queue, Empty
-except ImportError:  # pragma: no cover
-    # noinspection PyUnresolvedReferences,PyCompatibility
-    from Queue import Queue, Empty
 
 
 @pytest.fixture
