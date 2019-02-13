@@ -17,12 +17,6 @@ DIM_NONE = Colors.DIM(Colors.CYAN('None'))
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
 
 
-def _fetched_callback(t):  # pragma: no cover
-    print('{} {} in {} ({})'.format(
-        Colors.DIM('fetched:'), Colors.BOLD(t.count),
-        Colors.GREEN(t.duration_human), Colors.GREEN(t.throughput_human)
-    ))
-
 
 class ClearlyClient(object):
     """Simple and real-time monitor for celery.
@@ -113,6 +107,13 @@ class ClearlyClient(object):
               '\ttasks', Colors.RED(stats.len_tasks),
               '\tworkers', Colors.RED(stats.len_workers))
 
+    @staticmethod
+    def _fetched_callback(t):  # pragma: no cover
+        print('{} {} in {} ({})'.format(
+            Colors.DIM('fetched:'), Colors.BOLD(t.count),
+            Colors.GREEN(t.duration_human), Colors.GREEN(t.throughput_human)
+        ))
+
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
               params=None, success=False, error=True):
         """Filters stored tasks and prints their current status.
@@ -151,7 +152,7 @@ class ClearlyClient(object):
             state_pattern=state or '.', limit=limit, reverse=reverse
         )
 
-        for task in about_time(_fetched_callback, self._stub.filter_tasks(request)):
+        for task in about_time(ClearlyClient._fetched_callback, self._stub.filter_tasks(request)):
             ClearlyClient._display_task(task, params, success, error)
 
     def workers(self, pattern=None, negate=False, stats=True):
@@ -175,7 +176,7 @@ class ClearlyClient(object):
                                                      negate=negate),
         )
 
-        for worker in about_time(_fetched_callback, self._stub.filter_workers(request)):
+        for worker in about_time(ClearlyClient._fetched_callback, self._stub.filter_workers(request)):
             ClearlyClient._display_worker(worker, stats)
 
     def task(self, task_uuid):
