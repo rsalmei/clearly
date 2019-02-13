@@ -109,17 +109,17 @@ $ clearly server <broker_url> [--backend backend_url] [--port 12223]
 Use `clearly --help` and `clearly server --help` for more options.
 
 
-#### Can't install the server yet?
-
-_Clearly Client_ used to not need any server, which was convenient but made you lose all tasks' history once it is closed, and stresses way more the broker, as it has to send all events to all _Clearly Client_ s.
+> Can't install the server yet?
+>
+> _Clearly Client_ used to not need any server, which was convenient but made you lose all tasks' history once it is closed, and stresses way more the broker, as it has to send all events to all _Clearly Client_ s.
 But if you'd like to use it quickly like that, be it to just assert something or to trial the framework before committing, just do:
-
-```python
->>> from clearly.server import start_server
->>> server = start_server('<broker_url>')
-```
-
-Then you can simply start the client like: `clearlycli = ClearlyClient()`
+>
+> ```python
+> >>> from clearly.server import start_server
+> >>> server = start_server('<broker_url>')
+> ```
+>
+> Then you can simply start the client like: `clearlycli = ClearlyClient()`
 
 
 ### start the client ([i]python)
