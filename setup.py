@@ -1,20 +1,22 @@
 # coding=utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
+import os
 from distutils.core import setup
 
 from setuptools import find_packages
 
 import clearly
 
-INSTALL_REQUIRES = [
-    'celery>=3.1',
-    'pygments',
-    'grpcio',
-    'protobuf',
-    'click',
-    'about-time',
-]
+
+def fetch_requirements(name):
+    path = os.path.join('.', 'requirements', name + '.txt')
+    with open(path) as f:
+        return [x.strip() for x in f.readlines()]
+
+
+INSTALL_REQUIRES = fetch_requirements('install')
+EXTRAS_REQUIRE = {
+    x: fetch_requirements(x) for x in ('test', 'dev', 'ci')
+}
 
 
 def get_readme():
@@ -63,6 +65,7 @@ setup(
     packages=find_packages(),
     python_requires='>=3.5, <4',
     install_requires=INSTALL_REQUIRES,
+    extras_require=EXTRAS_REQUIRE,
     entry_points={
         'console_scripts': [
             'clearly=clearly.command_line:clearly',

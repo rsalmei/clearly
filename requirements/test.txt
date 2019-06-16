@@ -1,6 +1,4 @@
 pytest
-pytest-cache
 pytest-cov
 pytest-sugar
 pytest-watch
-pytest-xdist
