@@ -1,18 +1,19 @@
 # coding=utf-8
+import os
 from distutils.core import setup
 
 from setuptools import find_packages
 
 import clearly
 
-INSTALL_REQUIRES = [
-    'celery>=3.1',
-    'pygments',
-    'grpcio',
-    'protobuf',
-    'click',
-    'about-time',
-]
+
+def fetch_requirements(name):
+    path = os.path.join('.', 'requirements', name + '.txt')
+    with open(path) as f:
+        return [x.strip() for x in f.readlines()]
+
+
+INSTALL_REQUIRES = fetch_requirements('install')
 
 
 def get_readme():
