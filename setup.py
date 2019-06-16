@@ -14,6 +14,9 @@ def fetch_requirements(name):
 
 
 INSTALL_REQUIRES = fetch_requirements('install')
+EXTRAS_REQUIRE = {
+    x: fetch_requirements(x) for x in ('test', 'dev', 'ci')
+}
 
 
 def get_readme():
@@ -62,6 +65,7 @@ setup(
     packages=find_packages(),
     python_requires='>=3.5, <4',
     install_requires=INSTALL_REQUIRES,
+    extras_require=EXTRAS_REQUIRE,
     entry_points={
         'console_scripts': [
             'clearly=clearly.command_line:clearly',
