@@ -322,7 +322,7 @@ def reset(self):
 ### Python 2 is retiring
 That's why the support has been removed. For more details see https://pythonclock.org
 
-To use in your python 2.7 system, please use version 0.6.4 as in:
+To use in your python 2.7 projects, please use version 0.6.4 as in:
 
 ```bash
 $ pip install clearly==0.6.4
@@ -333,6 +333,11 @@ Please do mind that gRPC and Python itself have a very annoying bug in this case
 - https://github.com/grpc/grpc/issues/6999
 - https://bugs.python.org/issue8844
 
+You could also use 0.4.2, to get rid of the aforementioned bug, even if older:
+
+```bash
+$ pip install clearly==0.4.2
+```
 
 ## License
 This software is licensed under the MIT License. See the LICENSE file in the top distribution directory for the full license text.
