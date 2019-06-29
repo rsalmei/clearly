@@ -89,7 +89,7 @@ Finally there's the new `ClearlyServer`, a gRPC server in a `ThreadPoolExecutor`
 
 ## Get `clearly`
 
-Just do in your python env:
+Just do in your shell:
 
 ```bash
 $ pip install clearly
