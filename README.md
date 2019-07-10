@@ -46,6 +46,27 @@ Highlights:
 (there's a version that still supports 2.7, see at the end)
 
 
+## Features
+
+`clearly` enables you to:
+- Be informed of any and all tasks being triggered and running and failing, in real-time;
+- Know the workers available and be notified immediately if any goes down or up;
+- Filter the async tasks any way you want, real-time and finished alike;
+- Inspect the actual parameters the tasks were called with;
+- See and analyze the outcome of these tasks, such as success results or fail tracebacks;
+- _Clearly_ see all types and representations of the parameters/outcomes of the tasks with an advanced printing system and syntax highlighting;
+- Analyze stats of your system.
+
+
+## Get `clearly`
+
+Just do in your shell:
+
+```bash
+$ pip install clearly
+```
+
+
 ## How `clearly` works
 
 `Clearly` is composed of a server and a client.
@@ -73,27 +94,6 @@ The software architecture is quite different now, since 0.5. It has a threaded `
 Then there's the `StreamingDispatcher`, another threaded processor, that maintains interested parties and shares events with them. For each new event, it tests whether a connected client would like to see it, and if yes it generates the missing gaps in states and sends them to a client specific Queue.
 
 Finally there's the new `ClearlyServer`, a gRPC server in a `ThreadPoolExecutor`, that accepts connections and handles to: the streaming dispatcher if a real-time capture was requested, or to the listener memory for already persisted events. And of course there is the new `ClearlyClient`, which does not use threads anymore or any server resources like the broker or celery app, instead it uses a stub to connect to the server host:port via gRPC.
-
-
-## Features
-
-`clearly` enables you to:
-- Be informed of any and all tasks being triggered and running and failing, in real-time;
-- Know the workers available and be notified immediately if any goes down or up;
-- Filter the async tasks any way you want, real-time and finished alike;
-- Inspect the actual parameters the tasks were called with;
-- See and analyze the outcome of these tasks, such as success results or fail tracebacks;
-- _Clearly_ see all types and representations of the parameters/outcomes of the tasks with an advanced printing system and syntax highlighting;
-- Analyze stats of your system.
-
-
-## Get `clearly`
-
-Just do in your shell:
-
-```bash
-$ pip install clearly
-```
 
 
 ## How to use
