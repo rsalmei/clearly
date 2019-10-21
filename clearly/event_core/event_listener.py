@@ -1,17 +1,42 @@
 import logging
 import signal
 import threading
+from itertools import islice
 from queue import Queue
 
+import celery
 from celery import Celery, states
 from celery.events import EventReceiver
-from celery.events.state import State
+from celery.events.state import State as CeleryState
 
 from .events import immutable_task, immutable_worker
 from ..safe_compiler import safe_compile_text
 from ..utils import worker_states
 
 logger = logging.getLogger(__name__)
+
+
+if celery.VERSION.major < 4:
+    class State(CeleryState):
+        def tasks_by_time(self, limit=None, reverse=True):
+            """Generator yielding tasks ordered by time.
+            Yields:
+                Tuples of ``(uuid, Task)``.
+            """
+            _heap = self._taskheap
+            if reverse:
+                _heap = reversed(_heap)
+
+            seen = set()
+            for evtup in islice(_heap, 0, limit):
+                task = evtup[3]()
+                if task is not None:
+                    uuid = task.uuid
+                    if uuid not in seen:
+                        yield uuid, task
+                        seen.add(uuid)
+else:
+    State = CeleryState
 
 
 class EventListener(object):
