@@ -7,26 +7,22 @@
 
 
 # clearly :)
-## Clear and accurate real-time monitor for celery
+## Clearly see and debug your celery pool in real time!
 
-Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [flower](https://github.com/mher/flower)? You'll probably like **Clearly**!
+Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [flower](https://github.com/mher/flower)? You'll probably like **Clearly**! 👍
 
-`Clearly` is a real-time monitor for your celery tasks and workers!
+`Clearly` is a real time monitor for your celery tasks and workers!
 
-While I do like flower, to me it's not been totally up to the task (pun intended :)).
-Why is that? I'd like _actual_ real-time monitoring, filter multiple tasks at once, syntax coloring, and complete, whole, thorough, comprehensive results!
-And flower needs page refreshes, filters only one task at a time, displays results as plain strings, and even truncates them... :(
+While I do like flower, to me it's not been totally up to the task (pun intended :).
 
-Ok, `clearly` does provide all that!  
-It is actually real-time, has multiple simultaneous filters, an advanced syntax coloring system, complete non-truncated results, and it's fast! :)
-It's great to actually _see_ what's going on in your celery workers, all in real-time! So it's great for inspecting, debugging, and demonstrating your company async-superpowers (put `clearly` on a big TV)!
+Why is that? I'd like _actual_ real time monitoring, filter multiple task types at once, syntax coloring, and complete, whole, thorough, comprehensive results!
 
-`Clearly` has an outer process server, and the clients connect to it via gRPC.
-This makes `clearly` quite complete, and could even substitute flower entirely for monitoring needs.
+And guess what, `clearly` does provide all that! (and flower needs page refreshes, filters only one task type at a time, displays results as plain strings and on top of that also truncates them... :()
 
-It's only missing a Docker image for simple deploying now.
-And a command line to call the client directly from the shell!
-(spoilers :))
+`Clearly` is actually real time, has multiple simultaneous filters, an advanced syntax coloring system, complete non-truncated results, shows parameters and results just as ipython would, and it's fast! :)
+It's great to actually _see_ what's going on in your celery workers, and all in real time! So it's very nice for inspecting, debugging, and demonstrating your company async-superpowers (put `clearly` on a big TV showing all tasks of your production environment)!
+
+`Clearly` is composed of an outer process server, which collects events from the celery pool, and a client, which you use to choose and filter what you want to see. They communicate with each other via gRPC.
 
 See what `clearly` looks like:
 ![very cool](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_highlights.png)
@@ -35,7 +31,7 @@ See what `clearly` looks like:
 ## Requirements
 
 To use `clearly`, you just have to:
-- enable *Events* (`celery worker -E`)
+- enable *Events* in your celery workers (`celery worker -E`)
 
 and you're good to go!
 
@@ -43,97 +39,75 @@ Highlights:
 - compatible with any version of celery, from 3.1 to 4.2+
 - a result backend is not mandatory (but used if available)
 - `clearly` supports python 3.5+ :)
-(there's a version that still supports 2.7, see at the end)
+(there's a version that still supports 2.7, see at the end of the page)
 
 
 ## Features
 
 `clearly` enables you to:
-- Be informed of any and all tasks being triggered and running and failing, in real-time;
+- Be informed of any and all tasks beign handled, regardless of running, failing or just enqueued, in real time;
+    - if you enable `task_send_sent_event` in your software, you can track tasks even before they’re consumed by a worker!
 - Know the workers available and be notified immediately if any goes down or up;
-- Filter the async tasks any way you want, real-time and finished alike;
+- Filter the async tasks any way you want, both in real time and finished ones;
 - Inspect the actual parameters the tasks were called with;
 - See and analyze the outcome of these tasks, such as success results or fail tracebacks;
-- _Clearly_ see all types and representations of the parameters/outcomes of the tasks with an advanced printing system and syntax highlighting;
+- _Clearly_ see all types and representations of the parameters/outcomes of the tasks with an advanced display system with syntax highlighting;
 - Analyze stats of your system.
 
 
 ## Get `clearly`
 
-Just do in your shell:
+First install in your venv:
 
 ```bash
 $ pip install clearly
 ```
 
-
-## How `clearly` works
-
-`Clearly` is composed of a server and a client.
-The server creates a background thread with a celery events receiver, which captures events from all publishers and all workers connected, dynamically updating states.
-It also has another thread to handle connected clients, dispatching events in real-time to interested parties.
-The client(s) can also filter stored tasks and workers, find a specific task uuid, or get brief statistics about the server.
-
-The events are processed in the server, and missing or out of order ones are dynamically generated, so you never see a STARTED task before it being RECEIVED, which would be weird. In a real-time system this is important, as it's not just displaying the current state.
-
-The parameters of the tasks are dynamically (and safely) compiled into an _Abstract Syntax Tree_, and beautifully syntax colored, while completed tasks get their results directly from the result backend if available, to overcome the problem of truncated results.
-All async workers' life cycles are also processed and displayed on screen (beautifully syntax colored too, of course).
-All tasks triggered show up immediately on screen, and you start seeing what the workers are doing with them in real-time!
-
-At any moment, you can CTRL+C out of the capturing client, and rest assured that there's a server out there, which continues to gather all updates seamlessly.
-
-The memory consumption, although very optimized, must of course be limited. By default it stores 10,000 tasks and 100 workers at a time. You can increase them (or decrease) if you want.
+That package contains both the server and the client, so you should install it in both machines.
 
 
-### Architecture history
-
-`Clearly` has started as a fully contained tool, one that you just start anywhere and see events. The client has always connected directly to the broker, but it had two stages: one where it extracted events manually, and another with an actual event receiver from celery.
-
-The software architecture is quite different now, since 0.5. It has a threaded `EventListener` that captures raw celery events, storing them in the default LRU memory, and converting to an immutable format before passing up to the next phase via a Queue.
-
-Then there's the `StreamingDispatcher`, another threaded processor, that maintains interested parties and shares events with them. For each new event, it tests whether a connected client would like to see it, and if yes it generates the missing gaps in states and sends them to a client specific Queue.
-
-Finally there's the new `ClearlyServer`, a gRPC server in a `ThreadPoolExecutor`, that accepts connections and handles to: the streaming dispatcher if a real-time capture was requested, or to the listener memory for already persisted events. And of course there is the new `ClearlyClient`, which does not use threads anymore or any server resources like the broker or celery app, instead it uses a stub to connect to the server host:port via gRPC.
-
-
-## How to use
-
-### start the server
-
-Basically just do:
+### Start the server
 
 ```bash
 $ clearly server <broker_url> [--backend backend_url] [--port 12223]
 ```
 
-Use `clearly --help` and `clearly server --help` for more options.
+Use `clearly server --help` for more details.
 
+<details>
+<summary>Just a quickie debug?</summary>
 
-> Can't install the server yet?
->
-> _Clearly Client_ used to not need any server, which was convenient but made you lose all tasks' history once it is closed, and stresses way more the broker, as it has to send all events to all _Clearly Client_ s.
-But if you'd like to use it quickly like that, be it to just assert something or to trial the framework before committing, just do:
+> _Clearly Client_ used to not need any server, which was convenient but made you lose all tasks' history once it is closed, and stresses the broker way more, as it must repeat all events to all connected clients.
+But if you'd like to use it quickly like that, be it to just assert something or to trial the framework before committing, you still can! Just start the server in-process:
 >
 > ```python
-> >>> from clearly.server import start_server
-> >>> server = start_server('<broker_url>')
+> from clearly.server import start_server
+> server = start_server('<broker_url>')
 > ```
 >
-> Then you can simply start the client like: `clearlycli = ClearlyClient()`
+> Then you can simply start the client without arguments: `clearlycli = ClearlyClient()`
+</details>
 
 
-### start the client ([i]python)
+### Start the client (any REPL like ipython)
 
 ```python
->>> from clearly.client import ClearlyClient
->>> clearlycli = ClearlyClient(host='<clearly_hostname>', port=12223)
+from clearly.client import ClearlyClient
+clearlycli = ClearlyClient(host='<clearly_server>', port=<12223>)
 ```
+
+That's it, you're good to go!
+
+
+## How to use
+
+So, you are ready to see tasks popping up in your screen faster than you can see?
 
 
 ### grab them
 
 ```python
->>> clearlycli.capture()
+clearlycli.capture()
 ```
 
 
@@ -144,7 +118,7 @@ But if you'd like to use it quickly like that, be it to just assert something or
 ### you can also grab like
 
 ```python
->>> clearlycli.capture(params=True)
+clearlycli.capture(params=True)
 ```
 
 
@@ -154,10 +128,7 @@ But if you'd like to use it quickly like that, be it to just assert something or
 
 > Note:
 >
-> Any way you capture them, remember that `clearly` server is always storing the same *complete data* about all tasks. The `params` (and other related arguments) only configure how the system will display the tasks' events for you, not how the server will capture them. These arguments apply for both real-time capturing and already stored tasks.
-> The defaults are:
->   - `params = None`, to show tasks' params as requested by `success` and `error`;
->   - to not show `success`es results, and to show `error`s, as they are much more likely to get your interest.
+> Any way you capture them, remember that `clearly` server is always storing the same **complete data** about all tasks. The `params` (and other related arguments) only configure how the client system will display the tasks for you. These arguments apply for both real time capturing and past, persisted tasks.
 
 
 ### stop capturing and analyze
@@ -168,17 +139,54 @@ But if you'd like to use it quickly like that, be it to just assert something or
 ![useful overview](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_brief.png)
 
 
+## How `clearly` works
+
+`Clearly` **server** creates a background thread with an events receiver, which captures them in real time directly from the broker, and dynamically updates their task's states.
+It also has another thread to handle connected clients, dispatching events in real time to interested parties.
+
+`Clearly` **client** can filter cached and real time tasks and workers, by type, routing key or task uuid, and get brief statistics about the `clearly` server.
+
+The events may (and will) come in a chaotic order, so the server dynamically generates missing and ignores late ones, so you never see a STARTED task before it being RECEIVED, which would be weird. In a real time system this is very important, it's not about displaying the incoming state, but the inferred **current** state.
+
+The parameters of the tasks are dynamically and safely compiled into an AST (_Abstract Syntax Tree_), and beautifully syntax colored. Completed tasks get their results directly from the result backend if available, to overcome the problem of truncated results (the broker messages have a size limit).
+
+All async workers' life cycles are also processed and displayed, beautifully syntax colored too.
+If you enable `task_send_sent_event`, all tasks triggered show up immediately on screen (it's quite nice!), and you start seeing what the workers are doing with them in real time!
+
+At any moment, you can CTRL+C out of the capturing client, and rest assured the server continues to gather all updates seamlessly.
+
+The memory consumption for server cached tasks, although very optimized, must of course be limited. By default it stores 10,000 tasks and 100 workers at a time, and is configurable:
+
+```bash
+  -t, --max_tasks INTEGER    Maximum number of tasks in memory
+  -w, --max_workers INTEGER  Maximum number of workers in memory
+```
+
+
+### Architecture history
+
+`Clearly` has started as a fully contained tool, one that you just start in a python REPL and filter tasks! It had connected directly to the broker, which had several shortcomings like stressing the broker (repeating **all events** to all connected `clearly`s), and losing all history whenever it is closed.
+
+The architecture at that time had had two stages: one where it extracted events manually (which was hard, error prone and not forward compatible), and another with an event receiver directly from celery.
+
+Nowadays, that event receiver is still here, but software architecture is quite different. Since version 0.5, it runs in a threaded `EventListener` processor, that captures raw celery events and updates their tasks in an LRU cache.
+
+There's also a `StreamingDispatcher`, another threaded processor that maintains interested remote parties connected and shares task updates with them. For each new update, it tests whether each connected client would like to receive it, generating the missing states if they will (so it seems the events were perfectly ordered to the user).
+
+Finally the `ClearlyServer` that encloses both, a gRPC server in a `ThreadPoolExecutor`, that accepts connections and handles to the streaming dispatcher (if a real time task capture was requested), or to the cache in event listener (for past tasks). And of course there's the `ClearlyClient`, which does not use any threads anymore and is totally broker and celery agnostic, relying only on the server via gRPC.
+
+
 ## API Reference
 
 ```python
 def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
             params=None, success=False, error=True, stats=False):
-    """Starts capturing selected events in real-time. You can filter exactly what
+    """Starts capturing selected events in real time. You can filter exactly what
     you want to see, as the Clearly Server handles all tasks and workers updates
     being sent to celery. Several clients can see different sets of events at the
     same time.
 
-    This runs in the foreground, so you can see in real-time exactly what your
+    This runs in the foreground, so you can see in real time exactly what your
     clients and celery workers are doing.
     Press CTRL+C at any time to stop it.
 
@@ -289,19 +297,20 @@ def reset(self):
 ```
 
 
-## Hints
+## Hints to extract the most of it
 
-- write a small [celery router](http://docs.celeryproject.org/en/latest/userguide/routing.html#routers) and generate dynamic routing keys, based on the actual arguments of the async call in place. That way, you'll be able to filter tasks based on any of those, like an id of an entity. The args and kwargs are not used in the filtering.
+- write a small [celery router](http://docs.celeryproject.org/en/latest/userguide/routing.html#routers) and generate dynamic routing keys, based on the actual arguments of the async call in place! That way, you'll be able to filter tasks based on any of those, like an id of an entity. Remember the args and kwargs are not used in the filtering.
 - if you're using [django](https://www.djangoproject.com/) and [django-extensions](https://github.com/django-extensions/django-extensions), put in your settings a `SHELL_PLUS_POST_IMPORT` to auto import `clearly`! Just create a module to initialize a `clearlycli` instance for the django `shell_plus` and you're good to go. It's really nice to have a tool always ready to be used, without importing or creating anything, to actually see what's going on in your tasks, even in production :)
-- the more you filter, the less you'll have to analyze, so find the best combination for you debugging needs. A busy system can have thousands of tasks per minute.
+- the more you filter, the less you'll have to analyze, so find the best combination for your debugging needs. A busy system can have thousands of tasks per minute, filter wisely.
 
 
 ## To do
 
-- ~~support python 3 (not actually tested yet, soon);~~
-- ~~split `Clearly` client and server, to allow a always-on server to run, and multiple clients connect;~~
+- ~~support python 3;~~
+- ~~split `Clearly` client and server, to allow an always-on server to run, with multiple clients connecting, without any of the shortcomings;~~
 - ~~remove python 2 support~~
-- include a script mode, to call it right from the shell;
+- dockerize the server, to make its deploy way easier;
+- include a script mode on client, to be able to call it right from the shell;
 - any other ideas welcome!
 
 
@@ -319,25 +328,22 @@ def reset(self):
 - 0.1.4: last version that doesn't use events
 
 
-### Python 2 is retiring
+### Python 2 has retired
 That's why the support has been removed. For more details see https://pythonclock.org
 
-To use in your python 2.7 projects, please use version 0.6.4 as in:
-
-```bash
-$ pip install clearly==0.6.4
-```
-
-Please do mind that gRPC and Python itself have a very annoying bug in this case: you can't cancel _Clearly Client_'s `capture` method (more specifically any streaming methods) with CTRL+C, so you must kill the process itself with CTRL+\\. For more details on this nasty bug:
-- https://github.com/grpc/grpc/issues/3820
-- https://github.com/grpc/grpc/issues/6999
-- https://bugs.python.org/issue8844
-
-You could also use 0.4.2, to get rid of the aforementioned bug, even if older:
+To use in your python 2.7 projects, please use version 0.4.2 as in:
 
 ```bash
 $ pip install clearly==0.4.2
 ```
+
+This version is prior to the server split, so it connects directly to the broker, but works like a charm!
+
+You could also use 0.6.4, which is newer, but please do mind that gRPC and Python itself have a very annoying bug in this case: you can't CTRL+C out of `clearly` client's `capture` method (or any streaming methods), so you have to kill the process itself when needed with CTRL+\\. For more details on this nasty bug:
+- https://github.com/grpc/grpc/issues/3820
+- https://github.com/grpc/grpc/issues/6999
+- https://bugs.python.org/issue8844
+
 
 ## License
 This software is licensed under the MIT License. See the LICENSE file in the top distribution directory for the full license text.
@@ -345,6 +351,8 @@ This software is licensed under the MIT License. See the LICENSE file in the top
 
 ## Did you like it?
 
-Thanks for your interest!
+Thank you for your interest!
+
+I've put much ❤️ and effort into this.
 
 I wish you have fun using this tool! :)
