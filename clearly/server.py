@@ -90,8 +90,10 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         keys = klass.DESCRIPTOR.fields_by_name.keys()
         # noinspection PyProtectedMember
         data = {k: v for k, v in
-                getattr(event, '_asdict',  # internal TaskData and WorkerData
-                        lambda: {f: getattr(event, f) for f in event._fields})  # celery Task and Worker
+                getattr(
+                    event, '_asdict',  # internal TaskData and WorkerData
+                    lambda: {f: getattr(event, f) for f in event._fields}  # celery Task and Worker
+                )
                 ().items() if k in keys}
         return key, klass(**data)
 
@@ -183,7 +185,8 @@ def _log_request(request, context):  # pragma: no cover
 
 
 def _setup_logging(debug):  # pragma: no cover
-    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s') + Colors.BLUE(' %(levelname)s') + ' %(message)s'
+    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s')\
+        + Colors.BLUE(' %(levelname)s') + ' %(message)s'
     logging.basicConfig(level=logging.WARNING, format=f)
     logging.getLogger('clearly').setLevel(logging.DEBUG if debug else logging.INFO)
 
