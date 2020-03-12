@@ -17,7 +17,6 @@ DIM_NONE = Colors.DIM(Colors.CYAN('None'))
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
 
 
-
 class ClearlyClient(object):
     """Simple and real-time monitor for celery.
     Client object, to display and manage server captured tasks and workers.
@@ -109,10 +108,10 @@ class ClearlyClient(object):
               '\tworkers', Colors.RED(stats.len_workers))
 
     @staticmethod
-    def _fetched_callback(t):  # pragma: no cover
+    def _fetched_callback(at):  # pragma: no cover
         print('{} {} in {} ({})'.format(
-            Colors.DIM('fetched:'), Colors.BOLD(t.count),
-            Colors.GREEN(t.duration_human), Colors.GREEN(t.throughput_human)
+            Colors.DIM('fetched:'), Colors.BOLD(at.count),
+            Colors.GREEN(at.duration_human), Colors.GREEN(at.throughput_human)
         ))
 
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
@@ -154,8 +153,10 @@ class ClearlyClient(object):
             state_pattern=state or '.', limit=limit, reverse=reverse
         )
 
-        for task in about_time(ClearlyClient._fetched_callback, self._stub.filter_tasks(request)):
+        at = about_time(self._stub.filter_tasks(request))
+        for task in at:
             ClearlyClient._display_task(task, params, success, error)
+        ClearlyClient._fetched_callback(at)
 
     def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
@@ -178,8 +179,10 @@ class ClearlyClient(object):
                                                      negate=negate),
         )
 
-        for worker in about_time(ClearlyClient._fetched_callback, self._stub.filter_workers(request)):
+        at = about_time(self._stub.filter_workers(request))
+        for worker in at:
             ClearlyClient._display_worker(worker, stats)
+        ClearlyClient._fetched_callback(at)
 
     def task(self, task_uuid):
         """Finds one specific task.
@@ -220,12 +223,12 @@ class ClearlyClient(object):
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
         show_result = (task.state in states.EXCEPTION_STATES and error) \
-                      or (task.state == states.SUCCESS and success)
+            or (task.state == states.SUCCESS and success)
 
         first_seen = bool(params) and task.created
         result = params is not False \
-                 and (task.state in states.READY_STATES) \
-                 and show_result
+            and (task.state in states.READY_STATES) \
+            and show_result
         if first_seen or result:
             print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.args),

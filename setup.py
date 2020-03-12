@@ -27,7 +27,7 @@ def get_readme():
 setup(
     name='clearly',
     version=clearly.__version__,
-    description='Simple and accurate real-time monitor for celery',
+    description='Clearly see and debug your celery pool in real time!',
     long_description=get_readme(),
     long_description_content_type='text/markdown',
     url='https://github.com/rsalmei/clearly',

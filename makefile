@@ -1,4 +1,4 @@
-.PHONY: clean build protos
+.PHONY: all install clean build release protos test ptw
 
 # grpc related
 SRC = clearly

@@ -3,4 +3,4 @@ pygments
 grpcio
 protobuf
 click
-about-time
+about-time~=3.0
