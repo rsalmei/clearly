@@ -109,10 +109,10 @@ class ClearlyClient(object):
               '\tworkers', Colors.RED(stats.len_workers))
 
     @staticmethod
-    def _fetched_callback(t):  # pragma: no cover
+    def _fetched_callback(at):  # pragma: no cover
         print('{} {} in {} ({})'.format(
-            Colors.DIM('fetched:'), Colors.BOLD(t.count),
-            Colors.GREEN(t.duration_human), Colors.GREEN(t.throughput_human)
+            Colors.DIM('fetched:'), Colors.BOLD(at.count),
+            Colors.GREEN(at.duration_human), Colors.GREEN(at.throughput_human)
         ))
 
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
@@ -154,8 +154,10 @@ class ClearlyClient(object):
             state_pattern=state or '.', limit=limit, reverse=reverse
         )
 
-        for task in about_time(ClearlyClient._fetched_callback, self._stub.filter_tasks(request)):
+        at = about_time(self._stub.filter_tasks(request))
+        for task in at:
             ClearlyClient._display_task(task, params, success, error)
+        ClearlyClient._fetched_callback(at)
 
     def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
@@ -178,8 +180,10 @@ class ClearlyClient(object):
                                                      negate=negate),
         )
 
-        for worker in about_time(ClearlyClient._fetched_callback, self._stub.filter_workers(request)):
+        at = about_time(self._stub.filter_workers(request))
+        for worker in at:
             ClearlyClient._display_worker(worker, stats)
+        ClearlyClient._fetched_callback(at)
 
     def task(self, task_uuid):
         """Finds one specific task.

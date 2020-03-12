@@ -116,12 +116,11 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                                                           reverse=reverse)
                        if pcondition(task) and scondition(task))
 
-        def callback(t):
-            logger.debug('%s iterated %d tasks in %s (%s)', self.filter_tasks.__name__,
-                         t.count, t.duration_human, t.throughput_human)
-
-        for task in about_time(callback, found_tasks):
+        at = about_time(found_tasks)
+        for task in at:
             yield ClearlyServer._event_to_pb(task)[1]
+        logger.debug('%s iterated %d tasks in %s (%s)', self.filter_tasks.__name__,
+                     at.count, at.duration_human, at.throughput_human)
 
     def filter_workers(self, request, context):
         """Filter workers by matching a pattern to hostname."""
@@ -138,12 +137,11 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                                 key=WORKER_HOSTNAME_OP)
                          if hcondition(worker))
 
-        def callback(t):
-            logger.debug('%s iterated %d workers in %s (%s)', self.filter_workers.__name__,
-                         t.count, t.duration_human, t.throughput_human)
-
-        for worker in about_time(callback, found_workers):
+        at = about_time(found_workers)
+        for worker in at:
             yield ClearlyServer._event_to_pb(worker)[1]
+        logger.debug('%s iterated %d workers in %s (%s)', self.filter_workers.__name__,
+                     at.count, at.duration_human, at.throughput_human)
 
     def find_task(self, request, context):
         """Finds one specific task."""
