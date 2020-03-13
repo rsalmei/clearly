@@ -15,8 +15,6 @@ from .protos import clearly_pb2, clearly_pb2_grpc
 from .utils.colors import Colors
 from .utils.data import accepts
 
-ONE_DAY_IN_SECONDS = 24 * 60 * 60
-
 logger = logging.getLogger('clearly.server')
 
 PATTERN_PARAMS_OP = operator.attrgetter('pattern', 'negate')
@@ -185,7 +183,7 @@ def _log_request(request, context):  # pragma: no cover
 
 
 def _setup_logging(debug):  # pragma: no cover
-    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s')\
+    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s') \
         + Colors.BLUE(' %(levelname)s') + ' %(message)s'
     logging.basicConfig(level=logging.WARNING, format=f)
     logging.getLogger('clearly').setLevel(logging.DEBUG if debug else logging.INFO)
@@ -219,9 +217,10 @@ def _serve(instance, port, blocking):  # pragma: no cover
     if not blocking:
         return gserver
 
+    one_day_in_seconds = 24 * 60 * 60
     import time
     try:
         while True:
-            time.sleep(ONE_DAY_IN_SECONDS)
+            time.sleep(one_day_in_seconds)
     except KeyboardInterrupt:
         gserver.stop(None)

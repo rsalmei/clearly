@@ -17,7 +17,7 @@ def clearly():
 @clearly.command()
 @click.argument('broker')
 @click.option('--backend', '-b',
-              help='Enables fetching task results from the result backend, like "redis://localhost"')
+              help='Fetches task results from the result backend, like "redis://localhost"')
 @click.option('--port', '-p', type=int, help='Listen port for Clearly Server')
 @click.option('--max_tasks', '-t', type=int, help='Maximum number of tasks in memory')
 @click.option('--max_workers', '-w', type=int, help='Maximum number of workers in memory')

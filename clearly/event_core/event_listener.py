@@ -2,6 +2,7 @@ import logging
 import signal
 import threading
 from queue import Queue
+from typing import Optional
 
 from celery import Celery, states
 from celery.events import EventReceiver
@@ -55,8 +56,8 @@ class EventListener(object):
         )  # type: State
 
         # running engine (should be asyncio in the future)
-        self._listener_thread = None  # type:threading.Thread
-        self._celery_receiver = None  # type:EventReceiver
+        self._listener_thread = None  # type:Optional[threading.Thread]
+        self._celery_receiver = None  # type:Optional[EventReceiver]
 
         # concurrency control
         self._wait_event = threading.Event()

@@ -1,6 +1,6 @@
 from pygments import highlight
 from pygments.formatters.terminal256 import Terminal256Formatter
-from pygments.lexers.python import Python3TracebackLexer
+from pygments.lexers.python import PythonTracebackLexer
 
 from .safe_compiler import CallDescriptor
 from .utils.colors import Colors
@@ -73,7 +73,7 @@ def typed_code(p, wrap=True):
 
 
 def create_traceback_highlighter():
-    lexer = Python3TracebackLexer()
+    lexer = PythonTracebackLexer()
     formatter = Terminal256Formatter(style='native')
 
     def inner(tb):
