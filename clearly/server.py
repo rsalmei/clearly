@@ -185,7 +185,7 @@ def _log_request(request, context):  # pragma: no cover
 
 
 def _setup_logging(debug):  # pragma: no cover
-    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s')\
+    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s') \
         + Colors.BLUE(' %(levelname)s') + ' %(message)s'
     logging.basicConfig(level=logging.WARNING, format=f)
     logging.getLogger('clearly').setLevel(logging.DEBUG if debug else logging.INFO)

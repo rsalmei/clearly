@@ -64,7 +64,8 @@ from clearly.utils.colors import strip_colors
     # complex structures
     ((1, (2, True, {5, 4}), ['ba', 'b'], {1: 2}), "(1, (2, True, {4, 5}), ['ba', 'b'], {1: 2})"),
     ([1, (2, 3), {'ok': True}], "[1, (2, 3), {'ok': True}]"),
-    (OrderedDict((((1, 2), ['a', 'b']), (True, {5, 6, 7}))), "{(1, 2): ['a', 'b'], True: {5, 6, 7}}"),
+    (OrderedDict((((1, 2), ['a', 'b']), (True, {5, 6, 7}))),
+     "{(1, 2): ['a', 'b'], True: {5, 6, 7}}"),
 
     # repr fallback
     (datetime(2018, 1, 1), 'datetime.datetime(2018, 1, 1, 0, 0)'),
@@ -74,7 +75,8 @@ from clearly.utils.colors import strip_colors
     (CallDescriptor('rogerio', None, None), 'rogerio()'),
     (CallDescriptor('datetime', (2018, 1, 1), None), 'datetime(2018, 1, 1)'),
     (CallDescriptor('datetime.timedelta', None, {'secs': 1}), 'datetime.timedelta(secs=1)'),
-    ((1, CallDescriptor('f', (1,), None), CallDescriptor('g', None, {'x': 2})), '(1, f(1), g(x=2))'),
+    ((1, CallDescriptor('f', (1,), None), CallDescriptor('g', None, {'x': 2})),
+     '(1, f(1), g(x=2))'),
     (['a', CallDescriptor('m.n', ('1',), None)], "['a', m.n('1')]"),
     ({True, CallDescriptor('f', (False,), None)}, '{f(False), True}'),
     ({None: CallDescriptor('f', None, {'param': None})}, '{None: f(param=None)}'),

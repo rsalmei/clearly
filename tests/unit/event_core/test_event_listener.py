@@ -63,7 +63,9 @@ def test_listener_process_task(bool1, bool2, task_state_type, listener):
     with mock.patch.object(listener.memory.tasks, 'get') as tg, \
             mock.patch.object(listener.memory, 'event') as mev, \
             mock.patch('clearly.event_core.event_listener.immutable_task') as it, \
-            mock.patch('clearly.event_core.event_listener.EventListener.compile_task_result') as ctr:
+            mock.patch(
+                'clearly.event_core.event_listener.EventListener.compile_task_result'
+            ) as ctr:
         tg.return_value = Task('uuid', state='pre_state') if bool1 else None
         task = Task('uuid', state=task_state_type, result='ok')
         mev.return_value = (task, ''), ''
@@ -78,7 +80,8 @@ def test_listener_process_task(bool1, bool2, task_state_type, listener):
         if bool2:
             # noinspection PyProtectedMember
             listener._app.AsyncResult.assert_called_once_with('uuid')
-    it.assert_called_once_with(task, task_state_type, 'pre_state' if bool1 else states.PENDING, not bool1)
+    it.assert_called_once_with(task, task_state_type, 'pre_state' if bool1 else states.PENDING,
+                               not bool1)
 
 
 def test_listener_process_worker(bool1, listener):
@@ -90,12 +93,14 @@ def test_listener_process_worker(bool1, listener):
         worker = Worker('hostname')
         mev.return_value = (worker, ''), ''
 
-        with mock.patch('celery.events.state.Worker.status_string', new_callable=PropertyMock) as wss:
+        with mock.patch('celery.events.state.Worker.status_string',
+                        new_callable=PropertyMock) as wss:
             wss.side_effect = (('pre_state',) if bool1 else ()) + ('state',)
             # noinspection PyProtectedMember
             listener._process_worker_event(dict(hostname='hostname'))
 
-    it.assert_called_once_with(worker, 'state', 'pre_state' if bool1 else worker_states.OFFLINE, not bool1)
+    it.assert_called_once_with(worker, 'state', 'pre_state' if bool1 else worker_states.OFFLINE,
+                               not bool1)
 
 
 @pytest.mark.parametrize('worker_version, num_calls, expected', [

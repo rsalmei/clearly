@@ -52,7 +52,7 @@ def safe_compile_text(txt, raises=False):
                 params = args[0] if node.args else ()
                 return tuple(params) if name == 'tuple' else \
                     list(params) if name == 'list' else \
-                        set(params)
+                    set(params)
             kwargs = OrderedDict((k.arg, _convert(k.value))
                                  for k in node.keywords)
             if name == 'dict':

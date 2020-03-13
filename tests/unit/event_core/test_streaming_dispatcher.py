@@ -41,7 +41,8 @@ def test_dispatcher_new_streaming_client(dispatcher, bool1, bool2):
      'task_states', dict(uuid='roger'), ('task_regexp', 35, 'name', 'routing_key')),
     (WorkerData(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
                 sw_ver='sw_ver', loadavg='loadavg', processed='processed',
-                alive=True, freq=5, last_heartbeat=1, state='state', pre_state='other', created=False),
+                alive=True, freq=5, last_heartbeat=1, state='state', pre_state='other',
+                created=False),
      'worker_states', dict(pid=6700), ('worker_regexp', 47, 'hostname')),
 ])
 def test_dispatcher_dispatch(event_data, path, change, accepts_params, bool1, dispatcher):
@@ -49,8 +50,9 @@ def test_dispatcher_dispatch(event_data, path, change, accepts_params, bool1, di
     cc = CapturingClient(q, 'task_regexp', 35, 'worker_regexp', 47)
     dispatcher.observers.append(cc)
 
-    with mock.patch('clearly.event_core.streaming_dispatcher.StreamingDispatcher.generate_states') as gs, \
-            mock.patch('clearly.event_core.streaming_dispatcher.accepts') as acc:
+    with mock.patch(
+            'clearly.event_core.streaming_dispatcher.StreamingDispatcher.generate_states'
+    ) as gs, mock.patch('clearly.event_core.streaming_dispatcher.accepts') as acc:
         gs.return_value = (change,)
         acc.return_value = bool1
 
@@ -67,9 +69,9 @@ def test_dispatcher_dispatch(event_data, path, change, accepts_params, bool1, di
 
 
 def test_dispatcher_generate_states(bool1, dispatcher):
-    event_data = TaskData(created=bool1, name='name', routing_key='routing_key', uuid='uuid', retries=5,
-                          args='args', kwargs='kwargs', result='result', traceback='traceback',
-                          timestamp=123.1, state='state', pre_state='other')
+    event_data = TaskData(created=bool1, name='name', routing_key='routing_key', uuid='uuid',
+                          retries=5, args='args', kwargs='kwargs', result='result',
+                          traceback='traceback', timestamp=123.1, state='state', pre_state='other')
     with mock.patch.object(dispatcher.task_states, 'states_through') as st:
         st.return_value = ('middle',)
         gen = StreamingDispatcher.generate_states(event_data, dispatcher.task_states)

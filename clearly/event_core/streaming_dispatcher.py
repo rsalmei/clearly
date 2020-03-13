@@ -6,6 +6,7 @@ import threading
 from collections import namedtuple
 from contextlib import contextmanager
 from queue import Empty, Queue
+from typing import Optional
 
 from .events import TaskData
 from ..expected_state import ExpectedStateHandler, setup_task_states, setup_worker_states
@@ -13,7 +14,8 @@ from ..utils.data import accepts
 
 logger = logging.getLogger(__name__)
 
-CapturingClient = namedtuple('CapturingClient', 'queue task_regex task_negate worker_regex worker_negate')
+CapturingClient = namedtuple('CapturingClient',
+                             'queue task_regex task_negate worker_regex worker_negate')
 TASK_OP = operator.attrgetter('queue', 'task_regex', 'task_negate')
 WORKER_OP = operator.attrgetter('queue', 'worker_regex', 'worker_negate')
 
@@ -44,7 +46,7 @@ class StreamingDispatcher(object):
         self.worker_states = setup_worker_states()  # type: ExpectedStateHandler
 
         # running engine (should be asyncio in the future)
-        self.dispatcher_thread = None  # type:threading.Thread
+        self.dispatcher_thread = None  # type:Optional[threading.Thread]
 
         # detect shutdown.
         def sigterm_handler(_signo, _stack_frame):  # pragma: no cover

@@ -18,7 +18,7 @@ def mocked_client():
 
 
 @pytest.fixture
-def mocked_client_display(mocked_client):
+def mocked_display(mocked_client):
     with mock.patch('clearly.client.ClearlyClient._display_task'), \
          mock.patch('clearly.client.ClearlyClient._display_worker'):
         yield mocked_client
@@ -72,30 +72,36 @@ def test_client_seen_tasks_do_print(mocked_client, capsys):
 
 
 # noinspection PyProtectedMember
-def test_client_capture_task(tristate, bool1, bool2, mocked_client_display):
-    task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
-                                   args='args', kwargs='kwargs', result='result', traceback='traceback',
-                                   timestamp=123.1, state='ANY', created=False)
-    mocked_client_display._stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(task=task),)
-    mocked_client_display.capture(params=tristate, success=bool1, error=bool2)
-    mocked_client_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
+def test_client_capture_task(tristate, bool1, bool2, mocked_display):
+    task = clearly_pb2.TaskMessage(
+        name='name', routing_key='routing_key', uuid='uuid', retries=2,
+        args='args', kwargs='kwargs', result='result', traceback='traceback',
+        timestamp=123.1, state='ANY', created=False,
+    )
+    mocked_display._stub.capture_realtime.return_value = \
+        (clearly_pb2.RealtimeEventMessage(task=task),)
+    mocked_display.capture(params=tristate, success=bool1, error=bool2)
+    mocked_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
 
 
 # noinspection PyProtectedMember
-def test_client_capture_ignore_unknown(mocked_client_display):
-    mocked_client_display._stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(),)
-    mocked_client_display.capture()
-    mocked_client_display._display_task.assert_not_called()
+def test_client_capture_ignore_unknown(mocked_display):
+    mocked_display._stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(),)
+    mocked_display.capture()
+    mocked_display._display_task.assert_not_called()
 
 
 # noinspection PyProtectedMember
-def test_client_capture_worker(bool1, mocked_client_display):
-    worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-                                       sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
-                                       alive=True, freq=5, last_heartbeat=234.2)
-    mocked_client_display._stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(worker=worker),)
-    mocked_client_display.capture(stats=bool1)
-    mocked_client_display._display_worker.assert_called_once_with(worker, bool1)
+def test_client_capture_worker(bool1, mocked_display):
+    worker = clearly_pb2.WorkerMessage(
+        hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
+        sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
+        alive=True, freq=5, last_heartbeat=234.2,
+    )
+    mocked_display._stub.capture_realtime.return_value = \
+        (clearly_pb2.RealtimeEventMessage(worker=worker),)
+    mocked_display.capture(stats=bool1)
+    mocked_display._display_worker.assert_called_once_with(worker, bool1)
 
 
 # noinspection PyProtectedMember
@@ -108,36 +114,42 @@ def test_client_stats_do_print(mocked_client, capsys):
 
 
 # noinspection PyProtectedMember
-def test_client_tasks(tristate, bool1, bool2, mocked_client_display):
-    task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
-                                   args='args', kwargs='kwargs', result='result', traceback='traceback',
-                                   timestamp=123.1, state='ANY', created=False)
-    mocked_client_display._stub.filter_tasks.return_value = (task,)
-    mocked_client_display.tasks(params=tristate, success=bool1, error=bool2)
-    mocked_client_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
+def test_client_tasks(tristate, bool1, bool2, mocked_display):
+    task = clearly_pb2.TaskMessage(
+        name='name', routing_key='routing_key', uuid='uuid', retries=2,
+        args='args', kwargs='kwargs', result='result', traceback='traceback',
+        timestamp=123.1, state='ANY', created=False,
+    )
+    mocked_display._stub.filter_tasks.return_value = (task,)
+    mocked_display.tasks(params=tristate, success=bool1, error=bool2)
+    mocked_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
 
 
 # noinspection PyProtectedMember
-def test_client_workers(bool1, mocked_client_display):
-    worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-                                       sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
-                                       alive=True, freq=5, last_heartbeat=234.2)
-    mocked_client_display._stub.filter_workers.return_value = (worker,)
-    mocked_client_display.workers(stats=bool1)
-    mocked_client_display._display_worker.assert_called_once_with(worker, bool1)
+def test_client_workers(bool1, mocked_display):
+    worker = clearly_pb2.WorkerMessage(
+        hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
+        sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
+        alive=True, freq=5, last_heartbeat=234.2,
+    )
+    mocked_display._stub.filter_workers.return_value = (worker,)
+    mocked_display.workers(stats=bool1)
+    mocked_display._display_worker.assert_called_once_with(worker, bool1)
 
 
 # noinspection PyProtectedMember
-def test_client_task(bool1, mocked_client_display):
-    task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
-                                   args='args', kwargs='kwargs', result='result', traceback='traceback',
-                                   timestamp=123.1, state='state', created=False)
-    mocked_client_display._stub.find_task.return_value = task if bool1 else clearly_pb2.TaskMessage()
-    mocked_client_display.task('uuid')
+def test_client_task(bool1, mocked_display):
+    task = clearly_pb2.TaskMessage(
+        name='name', routing_key='routing_key', uuid='uuid', retries=2,
+        args='args', kwargs='kwargs', result='result', traceback='traceback',
+        timestamp=123.1, state='state', created=False,
+    )
+    mocked_display._stub.find_task.return_value = task if bool1 else clearly_pb2.TaskMessage()
+    mocked_display.task('uuid')
     if bool1:
-        mocked_client_display._display_task.assert_called_once_with(task, True, True, True)
+        mocked_display._display_task.assert_called_once_with(task, True, True, True)
     else:
-        mocked_client_display._display_task.assert_not_called()
+        mocked_display._display_task.assert_not_called()
 
 
 @pytest.fixture(params=(None, 'traceback'))
@@ -153,9 +165,11 @@ def task_result(request):
 # noinspection PyProtectedMember
 def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
                              task_state_type, task_tb, mocked_client, capsys):
-    task = clearly_pb2.TaskMessage(name='name', routing_key='routing_key', uuid='uuid', retries=2,
-                                   args='args123', kwargs='kwargs', result=task_result, traceback=task_tb,
-                                   timestamp=123.1, state=task_state_type, created=bool3)
+    task = clearly_pb2.TaskMessage(
+        name='name', routing_key='routing_key', uuid='uuid', retries=2,
+        args='args123', kwargs='kwargs', result=task_result, traceback=task_tb,
+        timestamp=123.1, state=task_state_type, created=bool3,
+    )
 
     with mock.patch('clearly.client.ClearlyClient._task_state') as m_task_state:
         mocked_client._display_task(task, params=tristate, success=bool1, error=bool2)
@@ -171,7 +185,7 @@ def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
         m_task_state.assert_called_once_with(task.state)
 
     show_result = (task.state in states.EXCEPTION_STATES and bool2) \
-                  or (task.state == states.SUCCESS and bool1)
+        or (task.state == states.SUCCESS and bool1)
 
     # params
     first_seen = bool(tristate) and task.created
@@ -193,9 +207,11 @@ def worker_heartbeat(request):
 # noinspection PyProtectedMember
 def test_client_display_worker(bool1, bool2, worker_state_type, worker_heartbeat,
                                mocked_client, capsys):
-    worker = clearly_pb2.WorkerMessage(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-                                       sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, alive=bool2,
-                                       state=worker_state_type, freq=5, last_heartbeat=worker_heartbeat)
+    worker = clearly_pb2.WorkerMessage(
+        hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
+        sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, alive=bool2,
+        state=worker_state_type, freq=5, last_heartbeat=worker_heartbeat,
+    )
 
     with mock.patch('clearly.client.ClearlyClient._worker_state') as m_worker_state:
         mocked_client._display_worker(worker, stats=bool1)
