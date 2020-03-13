@@ -1,4 +1,3 @@
-import copy
 from unittest import mock
 
 import pytest
@@ -24,7 +23,9 @@ def test_server_capture_realtime(mocked_server):
     event = 'event'
     msc = mocked_server.dispatcher.streaming_client
     msc.return_value.__enter__.return_value.get.return_value = event
-    msc.return_value.__exit__.return_value = None  # this makes the context manager not suppress exception!
+
+    # this makes the context manager not suppress exceptions!
+    msc.return_value.__exit__.return_value = None
 
     with mock.patch('clearly.server.ClearlyServer._event_to_pb') as mepb:
         mepb.return_value = 'task', TaskMessage()
@@ -39,13 +40,14 @@ def test_server_capture_realtime(mocked_server):
 T_DATA_PB = dict(name='name', routing_key='routing_key', uuid='uuid', retries=5,
                  args='args', kwargs='kwargs', result='result', traceback='traceback',
                  timestamp=123, state='state')
-T_DATA = copy.copy(T_DATA_PB)
-T_DATA.update(pre_state='other', created=False)  # miss you py3.5
+T_DATA = dict(pre_state='other', created=False,
+              **T_DATA_PB)
+
 W_DATA_PB = dict(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
                  sw_ver='sw_ver', loadavg=[1, 2, 3], processed=789789,
                  freq=5)
-W_DATA = copy.copy(W_DATA_PB)
-W_DATA.update(state='state', pre_state='other', created=False, alive=True, last_heartbeat=1)  # miss you py3.5
+W_DATA = dict(state='state', pre_state='other', created=False, alive=True, last_heartbeat=1,
+              **W_DATA_PB)
 
 
 # noinspection PyProtectedMember
