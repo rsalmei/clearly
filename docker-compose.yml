@@ -1,0 +1,21 @@
+version: "3.0"
+
+services:
+    clearly_client:
+        build:
+            context: . 
+        image: jrabbit/clearly
+
+        command: pipenv run clearly client --host clearly_server
+        depends_on: 
+            - clearly_server
+        volumes:
+            - ".:/srv/src/clearly"
+
+    clearly_server:
+        image: jrabbit/clearly
+        command: pipenv run clearly server amqp://rabbit/
+        ports:
+            - "12223:12223"
+        depends_on: 
+            - rabbit

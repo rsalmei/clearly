@@ -6,13 +6,37 @@ from clearly.server import start_server
 
 logger = logging.getLogger(__name__)
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option()
 def clearly():
     """Clearly command line tools."""
     pass
 
+
+@clearly.group(invoke_without_command=True)
+@click.pass_context
+@click.option("--port", '-p', default=12223)
+@click.option("--host", default="localhost")
+def client(ctx, host, port):
+    from clearly.client import ClearlyClient
+    cli = ClearlyClient(host=host, port=port)
+    ctx.obj = dict()
+    ctx.obj["client-cli"] = cli
+    if ctx.invoked_subcommand is None:
+        cli.capture()
+
+@client.command()
+@click.pass_context
+def workers(ctx):
+    ctx.obj["client-cli"].workers()
+
+@client.command()
+@click.pass_context
+def capture(ctx):
+    ctx.obj["client-cli"].capture()
 
 @clearly.command()
 @click.argument('broker')
