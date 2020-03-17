@@ -84,48 +84,48 @@ That's it, you're good to go!
 
 
 <details>
-<summary>## Get `clearly` the pip way</summary>
+<summary>Or get `clearly` the pip way</summary>
 
-```bash
-$ pip install clearly
-```
-
-The `clearly` package contains both the server and the client, so you should install it in both machines.
-
-
-### Start the server
-
-```bash
-$ clearly server <broker_url> [--backend backend_url] [--port 12223]
-```
-
-Use `clearly server --help` for more details.
-
-<details>
-<summary>Just a quickie debug?</summary>
-
-> _Clearly Client_ used to not need any server, which was convenient but made you lose all tasks' history once it is closed, and stresses the broker way more, as it must repeat all events to all connected clients.
-But if you'd like to use it quickly like that, be it to just assert something or to trial the framework before committing, you still can! Just start the server in-process:
->
-> ```python
-> from clearly.server import start_server
-> server = start_server('<broker_url>')
+> ```bash
+> $ pip install clearly
 > ```
->
-> Then you can simply start the client without arguments: `clearlycli = ClearlyClient()`
-</details>
-
-
-### Start the client
-
-Enter any REPL like python or IPython:
-
-```python
-from clearly.client import ClearlyClient
-clearlycli = ClearlyClient(host='<clearly_server>', port=<12223>)
-```
-
-That's it, you're good to go!
+> 
+> The `clearly` package contains both the server and the client, so you should install it in both machines.
+> 
+> 
+> ### Start the server
+> 
+> ```bash
+> $ clearly server <broker_url> [--backend backend_url] [--port 12223]
+> ```
+> 
+> Use `clearly server --help` for more details.
+> 
+> <details>
+> <summary>Just a quickie debug?</summary>
+> 
+> > _Clearly Client_ used to not need any server, which was convenient but made you lose all tasks' history once it is closed, and stresses the broker way more, as it must repeat all events to all connected clients.
+> But if you'd like to use it quickly like that, be it to just assert something or to trial the framework before committing, you still can! Just start the server in-process:
+> >
+> > ```python
+> > from clearly.server import start_server
+> > server = start_server('<broker_url>')
+> > ```
+> >
+> > Then you can simply start the client without arguments: `clearlycli = ClearlyClient()`
+> </details>
+> 
+> 
+> ### Start the client
+> 
+> Enter any REPL like python or IPython:
+> 
+> ```python
+> from clearly.client import ClearlyClient
+> clearlycli = ClearlyClient(host='<clearly_server>', port=<12223>)
+> ```
+> 
+> That's it, you're good to go!
 </details>
 
 
