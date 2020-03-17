@@ -113,16 +113,12 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         pregex = re.compile(tasks_pattern)  # pattern filter condition
         sregex = re.compile(state_pattern)  # state filter condition
 
-        def pcondition(task):
-            return accepts(pregex, tasks_negate, task.name, task.routing_key)
-
-        def scondition(task):
-            return accepts(sregex, tasks_negate, task.state)
-
+        # generators are cool!
         found_tasks = (task for _, task in
                        self.listener.memory.tasks_by_time(limit=limit or None,
                                                           reverse=reverse)
-                       if pcondition(task) and scondition(task))
+                       if accepts(pregex, tasks_negate, task.name, task.routing_key)
+                       and accepts(sregex, tasks_negate, task.state))
 
         at = about_time(found_tasks)
         for task in at:
@@ -142,13 +138,11 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
 
         hregex = re.compile(workers_pattern)  # hostname filter condition
 
-        def hcondition(worker):
-            return accepts(hregex, workers_negate, worker.hostname)  # pragma: no branch
-
+        # generators are cool!
         found_workers = (worker for worker in
                          sorted(self.listener.memory.workers.values(),
                                 key=WORKER_HOSTNAME_OP)
-                         if hcondition(worker))
+                         if accepts(hregex, workers_negate, worker.hostname))
 
         at = about_time(found_workers)
         for worker in at:
