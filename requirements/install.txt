@@ -1,6 +1,7 @@
-celery>=3.1
+celery[redis,pymemcache,cassandra,arangodb,elasticsearch,riak,dynamodb,sqlalchemy,consul]>=3.1
 pygments
 grpcio
 protobuf
 click
 about-time~=3.0
+ipython
