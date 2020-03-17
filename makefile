@@ -47,7 +47,7 @@ release-python: build-python
 	twine upload dist/*
 
 release-docker: build-docker
-     echo $(IMAGE_BUILD) $(IMAGE_MINOR) $(IMAGE_MAJOR) $(IMAGE_LATEST) | xargs -n 1 docker push
+	echo $(IMAGE_BUILD) $(IMAGE_MINOR) $(IMAGE_MAJOR) $(IMAGE_LATEST) | xargs -n 1 docker push
 
 protos: clean-protos
 	$(PROTOC) --proto_path=$(SRC) --python_out=$(SRC) --grpc_python_out=$(SRC) $(PROTOS)/clearly.proto
