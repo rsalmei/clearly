@@ -70,7 +70,7 @@ class EventListener(object):
         self.__start()
 
     def __start(self):  # pragma: no cover
-        """Starts the real-time engine that captures events."""
+        """Starts the real time engine that captures events."""
 
         assert not self._listener_thread
 

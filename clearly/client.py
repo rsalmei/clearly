@@ -18,11 +18,12 @@ TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
 
 
 class ClearlyClient(object):
-    """Simple and real-time monitor for celery.
+    """Clearly see and debug your celery pool in real time!
     Client object, to display and manage server captured tasks and workers.
 
-        Attributes:
-            _stub: the server stub instance
+    Attributes:
+        _stub: the server stub instance
+
     """
 
     def __init__(self, host='localhost', port=12223):
@@ -31,8 +32,8 @@ class ClearlyClient(object):
         Args:
             host (str): the hostname of the server
             port (int): the port of the server
-        """
 
+        """
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self._stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
@@ -98,6 +99,7 @@ class ClearlyClient(object):
             Events processed: number of events captured and processed.
             Tasks stored: actual number of unique tasks processed.
             Workers stored: number of unique workers already seen.
+
         """
         stats = self._stub.get_stats(clearly_pb2.Empty())
         print(Colors.DIM('Processed:'),
@@ -146,6 +148,7 @@ class ClearlyClient(object):
                 default is False
             error (bool): if True shows failed and retried tasks' tracebacks.
                 default is True, as you're monitoring to find errors, right?
+
         """
         request = clearly_pb2.FilterTasksRequest(
             tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
@@ -173,6 +176,7 @@ class ClearlyClient(object):
             Display args:
 
             stats (bool): if True shows worker stats
+
         """
         request = clearly_pb2.FilterWorkersRequest(
             workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
@@ -189,6 +193,7 @@ class ClearlyClient(object):
 
         Args:
             task_uuid (str): the task id
+
         """
         request = clearly_pb2.FindTaskRequest(task_uuid=task_uuid)
         task = self._stub.find_task(request)

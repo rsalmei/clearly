@@ -27,7 +27,7 @@ class StreamingDispatcher(object):
     
     Attributes:
         queue_input (Queue): to receive from event listener
-        observers (list): currently connected clients, receiving real-time events
+        observers (list): currently connected clients, receiving real time events
         task_states (ExpectedStateHandler): object that fills missing tasks' states
         worker_states (ExpectedStateHandler): object that fills missing workers' states
     """
@@ -56,7 +56,7 @@ class StreamingDispatcher(object):
         self.__start()
 
     def __start(self):  # pragma: no cover
-        """Starts the real-time engine that captures tasks."""
+        """Starts the real time engine that captures tasks."""
 
         assert not self.dispatcher_thread
 
