@@ -184,12 +184,12 @@ def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
     else:
         m_task_state.assert_called_once_with(task.state)
 
-    show_result = (task.state in states.EXCEPTION_STATES and bool2) \
+    show_result = (task.state in states.PROPAGATE_STATES and bool2) \
         or (task.state == states.SUCCESS and bool1)
 
     # params
     first_seen = bool(tristate) and task.created
-    result = tristate is not False and (task.state in states.READY_STATES) and show_result
+    result = tristate is not False and show_result
     tristate = first_seen or result
     assert tristate == (task.args in generated)
     assert tristate == (task.kwargs in generated)
