@@ -47,9 +47,9 @@ class EventListener(object):
         from celery.backends.base import DisabledBackend
         self._use_result_backend = not isinstance(self._app.backend, DisabledBackend)
 
-        logger.info('Creating %s: max_tasks=%d; max_workers=%d',
-                    EventListener.__name__, max_tasks_in_memory, max_workers_in_memory)
-        logger.info('Celery broker=%s; backend=%s; using_result_backend=%s',
+        logger.info('Creating %s: max_tasks=%d; max_workers=%d\n'
+                    'Celery broker=%s; backend=%s; using_result_backend=%s',
+                    EventListener.__name__, max_tasks_in_memory, max_workers_in_memory,
                     broker, backend, self._use_result_backend)
 
         # events handling: storage and filling missing states.
