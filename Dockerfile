@@ -6,6 +6,8 @@ WORKDIR /usr/src/clearly
 COPY . .
 RUN pip install --no-cache-dir -e .
 
+ENV BROKER_CONNECT_TIMEOUT=5
+
 EXPOSE 12223
 
 ENTRYPOINT [ "clearly"]

@@ -1,4 +1,5 @@
 import logging
+import os
 import signal
 import threading
 from queue import Queue
@@ -13,6 +14,8 @@ from ..safe_compiler import safe_compile_text
 from ..utils import worker_states
 
 logger = logging.getLogger(__name__)
+
+BROKER_CONNECT_TIMEOUT = os.getenv('BROKER_CONNECT_TIMEOUT', 5)
 
 
 class EventListener(object):
@@ -78,7 +81,8 @@ class EventListener(object):
                                                  name='clearly-listener')
         self._listener_thread.daemon = True
         self._listener_thread.start()
-        self._wait_event.wait()
+        if not self._wait_event.wait(timeout=BROKER_CONNECT_TIMEOUT):
+            raise TimeoutError("Can't connect to broker.")
         self._wait_event.clear()
 
     def __stop(self):  # pragma: no cover
