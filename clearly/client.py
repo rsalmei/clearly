@@ -266,13 +266,11 @@ class ClearlyClient(object):
                   end=' ')
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
-        show_result = (task.state in states.EXCEPTION_STATES and error) \
+        show_result = (task.state in states.PROPAGATE_STATES and error) \
             or (task.state == states.SUCCESS and success)
 
         first_seen = bool(params) and task.created
-        result = params is not False \
-            and (task.state in states.READY_STATES) \
-            and show_result
+        result = params is not False and show_result
         if first_seen or result:
             print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.args),
