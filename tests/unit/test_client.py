@@ -104,6 +104,24 @@ def test_client_capture_worker(bool1, mocked_display):
     mocked_display._display_worker.assert_called_once_with(worker, bool1)
 
 
+def test_client_capture_tasks(mocked_client):
+    with mock.patch.object(mocked_client, 'capture') as mocked_capture:
+        mocked_client.capture_tasks()
+        mocked_capture.assert_called_once_with(
+            workers='.', negate_workers=True, stats=False,
+            pattern=mock.ANY, negate=mock.ANY, params=mock.ANY, success=mock.ANY, error=mock.ANY,
+        )
+
+
+def test_client_capture_workers(mocked_client):
+    with mock.patch.object(mocked_client, 'capture') as mocked_capture:
+        mocked_client.capture_workers()
+        mocked_capture.assert_called_once_with(
+            pattern='.', negate=True, params=False, success=False, error=False,
+            workers=mock.ANY, negate_workers=mock.ANY, stats=mock.ANY,
+        )
+
+
 # noinspection PyProtectedMember
 def test_client_stats_do_print(mocked_client, capsys):
     data = dict(task_count=1234, event_count=5678, len_tasks=2244, len_workers=333)
