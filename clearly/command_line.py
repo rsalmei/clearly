@@ -47,3 +47,26 @@ def server(**kwargs):
     from clearly.server import start_server
     start_server(**{k: v for k, v in kwargs.items() if v},
                  blocking=True)
+
+
+@clearly.command()
+@click.argument('host', type=str, required=False)
+@click.argument('port', type=int, required=False)
+def client(**kwargs):
+    """Starts a REPL shell, with a configured Clearly Client.
+
+    It can be found under the name `clearlycli`.
+
+        HOST: The host Clearly Server is running
+        PORT: The port Clearly Server is running
+    """
+    from clearly.client import ClearlyClient
+    clearlycli = ClearlyClient(**{k: v for k, v in kwargs.items() if v})
+
+    # the first option was bpython, but unfortunately it is broken...
+    # https://github.com/bpython/bpython/issues/758
+    # from bpython import embed
+    # embed(dict(clearlycli=clearlycli))
+
+    from IPython import embed
+    embed(using='', header='The clearly client is ready to use in `clearlycli`.')
