@@ -63,6 +63,7 @@ setup(
     ],
     keywords='celery task queue job flower monitoring distributed asynchronous'.split(),
     packages=find_packages(),
+    data_files=[('', ['LICENSE'])],
     python_requires='>=3.5, <4',
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
