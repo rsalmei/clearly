@@ -37,30 +37,26 @@ class ClearlyClient(object):
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self._stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
-    def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
-                params=None, success=False, error=True, stats=False):
-        """Starts capturing selected events in real-time. You can filter exactly what
-        you want to see, as the Clearly Server handles all tasks and workers updates
-        being sent to celery. Several clients can see different sets of events at the
-        same time.
+    def capture_tasks(self, pattern=None, negate=False, params=None, success=False, error=True):
+        """Starts capturing task events in real time, so you can instantly see exactly
+        what your publishers and workers are doing. Filter as much as you can to find
+        what you need, and don't worry as the Clearly Server will still seamlessly
+        handle all tasks updates.
 
-        This runs in the foreground, so you can see in real-time exactly what your
-        clients and celery workers are doing.
-        Press CTRL+C at any time to stop it.
+        This runs in the foreground. Press CTRL+C at any time to stop it.
 
         Args:
             Filter args:
+            ------------
 
-            pattern (Optional[str]): a pattern to filter tasks to capture.
-                ex.: '^dispatch|^email' to filter names starting with that
-                      or 'dispatch.*123456' to filter that exact name and number
-                      or even '123456' to filter that exact number anywhere.
-            negate (bool): if True, finds tasks that do not match criteria.
-            workers (Optional[str]): a pattern to filter workers to capture.
-                ex.: 'service|priority' to filter names containing that
-            negate_workers (bool): if True, finds workers that do not match criteria.
+            pattern (Optional[str]): a simple pattern to filter tasks by name.
+                ex.: 'email' to filter task names containing that word anywhere
+                     '^trigger|^email' to filter names starting with any of those words
+                     'trigger.*123456' to filter names with those words in that sequence
+            negate (bool): send True to filter tasks that do not match criteria.
 
             Display args:
+            -------------
 
             params (Optional[bool]): if True shows args and kwargs in the first and
                 last seen states, if False never shows, and if None follows the
@@ -70,8 +66,51 @@ class ClearlyClient(object):
                 default is False
             error (bool): if True shows failed and retried tasks' tracebacks.
                 default is True, as you're monitoring to find errors, right?
+
+        """
+        return self.capture(pattern=pattern, negate=negate, workers='.', negate_workers=True,
+                            params=params, success=success, error=error, stats=False)
+
+    def capture_workers(self, pattern=None, negate=False, stats=False):
+        """Starts capturing worker events in real time, so you can instantly see exactly
+        what your workers states are. Filter as much as you can to find
+        what you need, and don't worry as the Clearly Server will still seamlessly
+        handle all tasks and workers updates.
+
+        This runs in the foreground. Press CTRL+C at any time to stop it.
+
+        Args:
+            Filter args:
+            ------------
+
+            pattern (Optional[str]): a simple pattern to filter workers by name.
+                ex.: 'email' to filter worker names containing that word anywhere
+                     'service|priority' to filter names containing any of those words
+            negate (bool): send True to filter workers that do not match criteria.
+
+            Display args:
+            -------------
+
             stats (bool): if True shows complete workers' stats.
                 default is False
+
+        """
+        return self.capture(pattern='.', negate=True, workers=pattern, negate_workers=negate,
+                            params=False, success=False, error=False, stats=stats)
+
+    def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
+                params=None, success=False, error=True, stats=False):
+        """Starts capturing all events in real time, so you can instantly see exactly
+        what your publishers and workers are doing. Filter as much as you can to find
+        what you need, and don't worry as the Clearly Server will still seamlessly
+        handle all tasks and workers updates.
+
+        This runs in the foreground. Press CTRL+C at any time to stop it.
+
+        See Also:
+            capture_tasks()
+            capture_workers()
+
         """
         request = clearly_pb2.CaptureRequest(
             tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.',
