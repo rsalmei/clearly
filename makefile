@@ -8,6 +8,17 @@ PROTOS = $(SRC)/protos
 # coverage related
 COV = --cov=$(SRC) --cov-branch --cov-report=term-missing
 
+# docker related
+DOCKER_REPO   = rsalmei/clearly
+VERSION_BUILD = $(shell python -c "from clearly import __version__; print(__version__)")
+VERSION_MINOR = $(shell python -c "from clearly import __version__; print(__version__.rpartition('.')[0])")
+VERSION_MAJOR = $(shell python -c "from clearly import __version__; print(__version__.rpartition('.')[0].partition('.')[0])")
+IMAGE_BUILD = $(DOCKER_REPO):$(VERSION_BUILD)
+IMAGE_MINOR = $(DOCKER_REPO):$(VERSION_MINOR)
+IMAGE_MAJOR = $(DOCKER_REPO):$(VERSION_MAJOR)
+IMAGE_LATEST = $(DOCKER_REPO):latest
+
+
 all:
 	@grep -E "^\w+:" makefile | cut -d: -f1
 
@@ -22,12 +33,21 @@ clean-build:
 clean-pyc:
 	find . -type f -name *.pyc -delete
 
-build: clean
+build: build-python build-docker
+
+build-python: clean
 	python setup.py sdist bdist_wheel
 
-release: build
+build-docker:
+	docker build -t $(IMAGE_BUILD) -t $(IMAGE_MINOR) -t $(IMAGE_MAJOR) -t $(IMAGE_LATEST) .
+
+release: release-python release-docker
+
+release-python: build-python
 	twine upload dist/*
 
+release-docker: build-docker
+     echo $(IMAGE_BUILD) $(IMAGE_MINOR) $(IMAGE_MAJOR) $(IMAGE_LATEST) | xargs -n 1 docker push
 
 protos: clean-protos
 	$(PROTOC) --proto_path=$(SRC) --python_out=$(SRC) --grpc_python_out=$(SRC) $(PROTOS)/clearly.proto
