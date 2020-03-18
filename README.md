@@ -392,7 +392,8 @@ def reset():
 
 
 ## Changelog highlights:
-- 0.8.0: clearly is dockerized! both server and client are now available in rsalmei/clearly docker hub; include new `capture_tasks` and `capture_workers` methods; fix task result being displayed in RETRY state; detect and break if can't connect to the broker.
+- 0.8.1: keep un-truncate engine from breaking when very distant celery versions are used in publisher and server sides
+- 0.8.0: clearly is dockerized! both server and client are now available in rsalmei/clearly docker hub; include new `capture_tasks` and `capture_workers` methods; fix task result being displayed in RETRY state; detect and break if can't connect to the broker
 - 0.7.0: code cleanup, to support only Python 3
 - 0.6.4: last version to support Python 2.7
 - 0.6.0: supports again standalone mode, in addition to client/server mode
