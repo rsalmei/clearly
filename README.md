@@ -4,6 +4,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 [![PyPI status](https://img.shields.io/pypi/status/clearly.svg)](https://pypi.python.org/pypi/clearly/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 
 
 # clearly :)
