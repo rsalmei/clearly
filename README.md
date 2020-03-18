@@ -1,4 +1,5 @@
 [![Travis](https://img.shields.io/travis/rsalmei/clearly.svg)]()
+[![Coverage Status](https://coveralls.io/repos/github/rsalmei/clearly/badge.svg?branch=master)](https://coveralls.io/github/rsalmei/clearly?branch=master)
 [![codecov](https://codecov.io/gh/rsalmei/clearly/branch/master/graph/badge.svg)](https://codecov.io/gh/rsalmei/clearly)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/rsalmei/clearly/graphs/commit-activity)
 [![PyPI version](https://img.shields.io/pypi/v/clearly.svg)](https://pypi.python.org/pypi/clearly/)
