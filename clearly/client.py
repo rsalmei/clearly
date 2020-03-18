@@ -166,24 +166,26 @@ class ClearlyClient(object):
 
         Args:
             Filter args:
+            ------------
 
-            pattern (Optional[str]): a pattern to filter tasks
-                ex.: '^dispatch|^email' to filter names starting with that
-                      or 'dispatch.*123456' to filter that exact name and number
-                      or even '123456' to filter that exact number anywhere.
-            negate (bool): if True, finds tasks that do not match criteria
+            pattern (Optional[str]): a simple pattern to filter tasks by name.
+                ex.: 'email' to filter task names containing that word anywhere
+                     '^trigger|^email' to filter names starting with any of those words
+                     'trigger.*123456' to filter names with those words in that sequence
+            negate (bool): send True to filter tasks that do not match criteria.
             state (Optional[str]): a celery task state to filter
             limit (int): the maximum number of events to fetch
                 if None or 0, fetches all.
             reverse (bool): if True (default), shows the most recent first
 
             Display args:
+            -------------
 
             params (Optional[bool]): if True shows args and kwargs in the first and
                 last seen states, if False never shows, and if None follows the
                 success and error arguments.
                 default is None
-            success (bool): if True shows successful tasks' results
+            success (bool): if True shows successful tasks' results.
                 default is False
             error (bool): if True shows failed and retried tasks' tracebacks.
                 default is True, as you're monitoring to find errors, right?
@@ -205,16 +207,18 @@ class ClearlyClient(object):
         
         Args:
             Filter args:
+            ------------
 
-            pattern (Optional[str]): a pattern to filter workers
-                ex.: '^dispatch|^email' to filter names starting with that
-                      or 'dispatch.*123456' to filter that exact name and number
-                      or even '123456' to filter that exact number anywhere.
-            negate (bool): if True, finds tasks that do not match criteria
+            pattern (Optional[str]): a simple pattern to filter workers by name.
+                ex.: 'email' to filter worker names containing that word anywhere
+                     'service|priority' to filter names containing any of those words
+            negate (bool): send True to filter workers that do not match criteria.
 
             Display args:
+            -------------
 
-            stats (bool): if True shows worker stats
+            stats (bool): if True shows complete workers' stats.
+                default is False
 
         """
         request = clearly_pb2.FilterWorkersRequest(
