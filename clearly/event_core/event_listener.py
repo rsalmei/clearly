@@ -11,8 +11,11 @@ from celery.events.state import State
 from .events import immutable_task, immutable_worker
 from ..safe_compiler import safe_compile_text
 from ..utils import worker_states
+from ..utils.env_params import get_env_int
 
 logger = logging.getLogger(__name__)
+
+BROKER_CONNECT_TIMEOUT = get_env_int('BROKER_CONNECT_TIMEOUT', 5)
 
 
 class EventListener(object):
@@ -44,9 +47,9 @@ class EventListener(object):
         from celery.backends.base import DisabledBackend
         self._use_result_backend = not isinstance(self._app.backend, DisabledBackend)
 
-        logger.info('Creating %s: max_tasks=%d; max_workers=%d',
-                    EventListener.__name__, max_tasks_in_memory, max_workers_in_memory)
-        logger.info('Celery broker=%s; backend=%s; using_result_backend=%s',
+        logger.info('Creating %s: max_tasks=%d; max_workers=%d\n'
+                    'Celery broker=%s; backend=%s; using_result_backend=%s',
+                    EventListener.__name__, max_tasks_in_memory, max_workers_in_memory,
                     broker, backend, self._use_result_backend)
 
         # events handling: storage and filling missing states.
@@ -70,7 +73,7 @@ class EventListener(object):
         self.__start()
 
     def __start(self):  # pragma: no cover
-        """Starts the real-time engine that captures events."""
+        """Starts the real time engine that captures events."""
 
         assert not self._listener_thread
 
@@ -78,7 +81,8 @@ class EventListener(object):
                                                  name='clearly-listener')
         self._listener_thread.daemon = True
         self._listener_thread.start()
-        self._wait_event.wait()
+        if not self._wait_event.wait(timeout=BROKER_CONNECT_TIMEOUT):
+            raise TimeoutError("Can't connect to broker.")
         self._wait_event.clear()
 
     def __stop(self):  # pragma: no cover

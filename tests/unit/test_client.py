@@ -104,6 +104,24 @@ def test_client_capture_worker(bool1, mocked_display):
     mocked_display._display_worker.assert_called_once_with(worker, bool1)
 
 
+def test_client_capture_tasks(mocked_client):
+    with mock.patch.object(mocked_client, 'capture') as mocked_capture:
+        mocked_client.capture_tasks()
+        mocked_capture.assert_called_once_with(
+            workers='.', negate_workers=True, stats=False,
+            pattern=mock.ANY, negate=mock.ANY, params=mock.ANY, success=mock.ANY, error=mock.ANY,
+        )
+
+
+def test_client_capture_workers(mocked_client):
+    with mock.patch.object(mocked_client, 'capture') as mocked_capture:
+        mocked_client.capture_workers()
+        mocked_capture.assert_called_once_with(
+            pattern='.', negate=True, params=False, success=False, error=False,
+            workers=mock.ANY, negate_workers=mock.ANY, stats=mock.ANY,
+        )
+
+
 # noinspection PyProtectedMember
 def test_client_stats_do_print(mocked_client, capsys):
     data = dict(task_count=1234, event_count=5678, len_tasks=2244, len_workers=333)
@@ -184,12 +202,12 @@ def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
     else:
         m_task_state.assert_called_once_with(task.state)
 
-    show_result = (task.state in states.EXCEPTION_STATES and bool2) \
+    show_result = (task.state in states.PROPAGATE_STATES and bool2) \
         or (task.state == states.SUCCESS and bool1)
 
     # params
     first_seen = bool(tristate) and task.created
-    result = tristate is not False and (task.state in states.READY_STATES) and show_result
+    result = tristate is not False and show_result
     tristate = first_seen or result
     assert tristate == (task.args in generated)
     assert tristate == (task.kwargs in generated)

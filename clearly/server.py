@@ -22,12 +22,13 @@ WORKER_HOSTNAME_OP = operator.attrgetter('hostname')
 
 
 class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
-    """Simple and real-time monitor for celery.
+    """Simple and real time monitor for celery.
     Server object, to capture events and handle tasks and workers.
     
     Attributes:
         listener (EventListener): the object that listens and keeps celery events
         dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
+
     """
 
     def __init__(self, listener, dispatcher):
@@ -36,6 +37,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         Args:
             listener (EventListener): the object that listens and keeps celery events
             dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
+
         """
         logger.info('Creating %s', ClearlyServer.__name__)
 
@@ -49,7 +51,8 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
             request (clearly_pb2.CaptureRequest):
             context:
 
-        Returns:
+        Yields:
+            clearly_pb2.RealtimeEventMessage
 
         """
         _log_request(request, context)
@@ -76,7 +79,7 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
             event (Union[TaskData|Task|WorkerData|Worker]):
 
         Returns:
-            ProtoBuf object
+            Tuple[str, Union[clearly_pb2.TaskMessage, clearly_pb2.WorkerMessage]
 
         """
         if isinstance(event, (TaskData, Task)):
@@ -96,7 +99,12 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         return key, klass(**data)
 
     def filter_tasks(self, request, context):
-        """Filter tasks by matching patterns to name, routing key and state."""
+        """Filter tasks by matching patterns to name, routing key and state.
+
+        Yields:
+            clearly_pb2.TaskMessage
+
+        """
         _log_request(request, context)
         tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_filter)
         state_pattern = request.state_pattern
@@ -105,16 +113,12 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         pregex = re.compile(tasks_pattern)  # pattern filter condition
         sregex = re.compile(state_pattern)  # state filter condition
 
-        def pcondition(task):
-            return accepts(pregex, tasks_negate, task.name, task.routing_key)
-
-        def scondition(task):
-            return accepts(sregex, tasks_negate, task.state)
-
+        # generators are cool!
         found_tasks = (task for _, task in
                        self.listener.memory.tasks_by_time(limit=limit or None,
                                                           reverse=reverse)
-                       if pcondition(task) and scondition(task))
+                       if accepts(pregex, tasks_negate, task.name, task.routing_key)
+                       and accepts(sregex, tasks_negate, task.state))
 
         at = about_time(found_tasks)
         for task in at:
@@ -123,19 +127,22 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                      at.count, at.duration_human, at.throughput_human)
 
     def filter_workers(self, request, context):
-        """Filter workers by matching a pattern to hostname."""
+        """Filter workers by matching a pattern to hostname.
+
+        Yields:
+            clearly_pb2.WorkerMessage
+
+        """
         _log_request(request, context)
         workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_filter)
 
         hregex = re.compile(workers_pattern)  # hostname filter condition
 
-        def hcondition(worker):
-            return accepts(hregex, workers_negate, worker.hostname)  # pragma: no branch
-
+        # generators are cool!
         found_workers = (worker for worker in
                          sorted(self.listener.memory.workers.values(),
                                 key=WORKER_HOSTNAME_OP)
-                         if hcondition(worker))
+                         if accepts(hregex, workers_negate, worker.hostname))
 
         at = about_time(found_workers)
         for worker in at:
@@ -144,7 +151,12 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                      at.count, at.duration_human, at.throughput_human)
 
     def find_task(self, request, context):
-        """Finds one specific task."""
+        """Finds one specific task.
+
+        Returns:
+            clearly_pb2.TaskMessage
+
+        """
         _log_request(request, context)
         task = self.listener.memory.tasks.get(request.task_uuid)
         if not task:
@@ -152,7 +164,12 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         return ClearlyServer._event_to_pb(task)[1]
 
     def seen_tasks(self, request, context):
-        """Returns all seen task types."""
+        """Returns all seen task types.
+
+        Returns:
+            clearly_pb2.SeenTasksMessage
+
+        """
         _log_request(request, context)
         result = clearly_pb2.SeenTasksMessage()
         result.task_types.extend(self.listener.memory.task_types())
@@ -165,7 +182,12 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
         return clearly_pb2.Empty()
 
     def get_stats(self, request, context):
-        """Returns the server statistics."""
+        """Returns the server statistics.
+
+        Returns:
+            clearly_pb2.StatsMessage
+
+        """
         _log_request(request, context)
         m = self.listener.memory
         return clearly_pb2.StatsMessage(

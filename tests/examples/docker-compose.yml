@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  clearly-service:
+    image: rsalmei/clearly:latest
+    volumes:
+      - ../..:/usr/src/clearly
+      - ipythonhist:/root/.ipython/profile_default/
+
+  rabbithost:
+    image: rabbitmq:management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+  redishost:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+
+volumes:
+  ipythonhist:

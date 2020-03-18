@@ -8,7 +8,7 @@ class ExpectedStateHandler(object):
     the final state, as celery itself takes into account their precedence.
     Flower doesn't care either, as it shows a snapshot at that moment.
     
-    But for Clearly, which shows in real-time what is happening with the tasks,
+    But for Clearly, which shows in real time what is happening with the tasks,
     it was very odd to show one with a RETRY state, before it was even STARTED,
     or STARTED before being RECEIVED.
     This class fixes that, with a state machine of the expected states, which 
