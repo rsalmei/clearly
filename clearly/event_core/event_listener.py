@@ -132,7 +132,11 @@ class EventListener(object):
             except SyntaxError:
                 # use result backend as fallback if allowed and available.
                 if self._use_result_backend:  # pragma: no cover
-                    task.result = repr(self._app.AsyncResult(task.uuid).result)
+                    try:
+                        task.result = repr(self._app.AsyncResult(task.uuid).result)
+                    except:  # different versions of celery in clearly and publisher
+                        logger.exception('Failed to un-truncate task result %s from result_backend',
+                                         task.uuid)
         return immutable_task(task, task.state, pre_state, created)
 
     def _process_worker_event(self, event):
