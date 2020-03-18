@@ -211,7 +211,7 @@ Finally the `ClearlyServer` that encloses both, a gRPC server in a `ThreadPoolEx
 ## API Reference
 
 ```python
-def capture_tasks(self, pattern=None, negate=False, params=None, success=False, error=True):
+def capture_tasks(pattern=None, negate=False, params=None, success=False, error=True):
     """Starts capturing task events in real time, so you can instantly see exactly
     what your publishers and workers are doing. Filter as much as you can to find
     what you need, and don't worry as the Clearly Server will still seamlessly
@@ -245,7 +245,7 @@ def capture_tasks(self, pattern=None, negate=False, params=None, success=False, 
     return self.capture(pattern=pattern, negate=negate, workers='.', negate_workers=True,
                         params=params, success=success, error=error, stats=False)
 
-def capture_workers(self, pattern=None, negate=False, stats=False):
+def capture_workers(pattern=None, negate=False, stats=False):
     """Starts capturing worker events in real time, so you can instantly see exactly
     what your workers states are. Filter as much as you can to find
     what you need, and don't worry as the Clearly Server will still seamlessly
@@ -272,7 +272,7 @@ def capture_workers(self, pattern=None, negate=False, stats=False):
     return self.capture(pattern='.', negate=True, workers=pattern, negate_workers=negate,
                         params=False, success=False, error=False, stats=stats)
 
-def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
+def capture(pattern=None, negate=False, workers=None, negate_workers=False,
             params=None, success=False, error=True, stats=False):
     """Starts capturing all events in real time, so you can instantly see exactly
     what your publishers and workers are doing. Filter as much as you can to find
@@ -288,7 +288,7 @@ def capture(self, pattern=None, negate=False, workers=None, negate_workers=False
     """
 
 
-def stats(self):
+def stats():
     """Lists some metrics of the capturing system:
 
         Tasks processed: the total number of reentrant tasks processed,
@@ -299,7 +299,7 @@ def stats(self):
     """
 
 
-def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
+def tasks(pattern=None, negate=False, state=None, limit=None, reverse=True,
           params=None, success=False, error=True):
     """Filters stored tasks and displays their current statuses.
 
@@ -310,49 +310,55 @@ def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True
 
     Args:
         Filter args:
+        ------------
 
-        pattern (Optional[str]): a pattern to filter tasks
-            ex.: '^dispatch|^email' to filter names starting with that
-                  or 'dispatch.*123456' to filter that exact name and number
-                  or even '123456' to filter that exact number anywhere.
-        negate (bool): if True, finds tasks that do not match criteria
+        pattern (Optional[str]): a simple pattern to filter tasks by name.
+            ex.: 'email' to filter task names containing that word anywhere
+                 '^trigger|^email' to filter names starting with any of those words
+                 'trigger.*123456' to filter names with those words in that sequence
+        negate (bool): send True to filter tasks that do not match criteria.
         state (Optional[str]): a celery task state to filter
         limit (int): the maximum number of events to fetch
             if None or 0, fetches all.
         reverse (bool): if True (default), shows the most recent first
 
         Display args:
+        -------------
 
         params (Optional[bool]): if True shows args and kwargs in the first and
             last seen states, if False never shows, and if None follows the
             success and error arguments.
             default is None
-        success (bool): if True shows successful tasks' results
+        success (bool): if True shows successful tasks' results.
             default is False
         error (bool): if True shows failed and retried tasks' tracebacks.
             default is True, as you're monitoring to find errors, right?
+
     """
 
 
-def workers(self, pattern=None, negate=False, stats=True):
+def workers(pattern=None, negate=False, stats=True):
     """Filters known workers and prints their current status.
     
     Args:
         Filter args:
+        ------------
 
-        pattern (Optional[str]): a pattern to filter workers
-            ex.: '^dispatch|^email' to filter names starting with that
-                  or 'dispatch.*123456' to filter that exact name and number
-                  or even '123456' to filter that exact number anywhere.
-        negate (bool): if True, finds tasks that do not match criteria
+        pattern (Optional[str]): a simple pattern to filter workers by name.
+            ex.: 'email' to filter worker names containing that word anywhere
+                 'service|priority' to filter names containing any of those words
+        negate (bool): send True to filter workers that do not match criteria.
 
         Display args:
+        -------------
 
-        stats (bool): if True shows worker stats
+        stats (bool): if True shows complete workers' stats.
+            default is False
+
     """
 
 
-def task(self, task_uuid):
+def task(task_uuid):
     """Finds one specific task.
 
     Args:
@@ -360,10 +366,10 @@ def task(self, task_uuid):
     """
 
 
-def seen_tasks(self):
+def seen_tasks():
     """Shows a list of seen task types."""
 
-def reset(self):
+def reset():
     """Resets all captured tasks."""
 ```
 
