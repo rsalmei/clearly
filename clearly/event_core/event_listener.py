@@ -1,5 +1,4 @@
 import logging
-import os
 import signal
 import threading
 from queue import Queue
@@ -12,10 +11,11 @@ from celery.events.state import State
 from .events import immutable_task, immutable_worker
 from ..safe_compiler import safe_compile_text
 from ..utils import worker_states
+from ..utils.env_params import get_env_int
 
 logger = logging.getLogger(__name__)
 
-BROKER_CONNECT_TIMEOUT = os.getenv('BROKER_CONNECT_TIMEOUT', 5)
+BROKER_CONNECT_TIMEOUT = get_env_int('BROKER_CONNECT_TIMEOUT', 5)
 
 
 class EventListener(object):
