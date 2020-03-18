@@ -1,4 +1,3 @@
-from collections import Callable
 from unittest import mock
 
 import pytest
@@ -26,7 +25,7 @@ def test_retrieve_correct_var():
     (None, get_env_list, None),
     (None, get_env_str, None),
 ])
-def test_convert_values(value, func: Callable, expected):
+def test_convert_values(value, func, expected):
     with mock.patch('os.getenv') as mocked_getenv:
         mocked_getenv.return_value = value
         assert func('A_VAR', None) == expected
