@@ -78,7 +78,7 @@ $ docker run --rm -p <port>:12223 --name clearly-server \
 
 ```bash
 $ docker run --rm -ti --name clearly-client -v ipythonhist:/root/.ipython/profile_default/ \
-      rsalmei/clearly client clearly-server $(ARGS)
+      rsalmei/clearly client clearly-server
 
 ```
 
