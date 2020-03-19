@@ -1,3 +1,4 @@
+import functools
 from datetime import datetime
 
 import grpc
@@ -15,6 +16,24 @@ HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = Colors.DIM(':)')
 DIM_NONE = Colors.DIM(Colors.CYAN('None'))
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
+
+
+def set_user_friendly_grpc_errors(fn):
+    @functools.wraps(fn)
+    def inner(self, *args, **kwargs):
+        try:
+            fn(self, *args, **kwargs)
+        except grpc.RpcError as e:
+            if self.debug:
+                raise
+            # noinspection PyUnresolvedReferences
+            print('{}: {} ({})'.format(
+                Colors.BOLD('Server communication error'),
+                Colors.RED(e.details()),
+                Colors.DIM(e.code())
+            ))
+
+    return inner
 
 
 class ClearlyClient(object):
