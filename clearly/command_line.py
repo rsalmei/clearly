@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 class AliasedGroup(click.Group):
     """Used to allow calling shorten commands, as long as they're unique.
      Based on recipe from http://click.palletsprojects.com/en/7.x/advanced/
-
     """
 
     def get_command(self, ctx, cmd_name):
@@ -42,7 +41,8 @@ def clearly():
 def server(**kwargs):
     """Starts the Clearly Server.
 
-        BROKER: The broker being used by celery, like "amqp://localhost".
+    \b
+    BROKER: The broker being used by celery, like "amqp://localhost".
     """
     from clearly.server import start_server
     start_server(**{k: v for k, v in kwargs.items() if v},
@@ -53,12 +53,11 @@ def server(**kwargs):
 @click.argument('host', type=str, required=False)
 @click.argument('port', type=int, required=False)
 def client(**kwargs):
-    """Starts a REPL shell, with a configured Clearly Client.
+    """Starts a REPL shell, with an already configured Clearly Client `clearlycli`.
 
-    It can be found under the name `clearlycli`.
-
-        HOST: The host Clearly Server is running
-        PORT: The port Clearly Server is running
+    \b
+    HOST: The host where Clearly Server is running, default localhost
+    PORT: The port where Clearly Server is running, default 12223
     """
     from clearly.client import ClearlyClient
     clearlycli = ClearlyClient(**{k: v for k, v in kwargs.items() if v})
