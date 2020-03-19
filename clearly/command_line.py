@@ -64,5 +64,8 @@ def client(**kwargs):
     # from bpython import embed
     # embed(dict(clearlycli=clearlycli))
 
-    from IPython import embed
-    embed(using='', header='The clearly client is ready to use in `clearlycli`.')
+    import IPython
+    from traitlets.config.loader import Config
+    c = Config()
+    c.TerminalInteractiveShell.banner2 = 'Clearly client is ready to use: clearlycli'
+    IPython.start_ipython(argv=[], user_ns=dict(clearlycli=clearlycli), config=c)

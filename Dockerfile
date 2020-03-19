@@ -10,4 +10,9 @@ ENV BROKER_CONNECT_TIMEOUT=5
 
 EXPOSE 12223
 
+# clearly is already installed, the workdir doesn't really matter anymore.
+# but in client, the REPL autocomplete works better if there isn't other
+# "clearlys" to suggest, like the source dir or the egg-info.
+WORKDIR /
+
 ENTRYPOINT [ "clearly"]
