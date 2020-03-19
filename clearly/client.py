@@ -1,3 +1,4 @@
+import functools
 from datetime import datetime
 
 import grpc
@@ -15,6 +16,24 @@ HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = Colors.DIM(':)')
 DIM_NONE = Colors.DIM(Colors.CYAN('None'))
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
+
+
+def set_user_friendly_grpc_errors(fn):
+    @functools.wraps(fn)
+    def inner(self, *args, **kwargs):
+        try:
+            fn(self, *args, **kwargs)
+        except grpc.RpcError as e:
+            if self.debug:
+                raise
+            # noinspection PyUnresolvedReferences
+            print('{}: {} ({})'.format(
+                Colors.BOLD('Server communication error'),
+                Colors.RED(e.details()),
+                Colors.DIM(e.code())
+            ))
+
+    return inner
 
 
 class ClearlyClient(object):
@@ -99,6 +118,7 @@ class ClearlyClient(object):
         return self.capture(pattern='.', negate=True, workers=pattern, negate_workers=negate,
                             params=False, success=False, error=False, stats=stats)
 
+    @set_user_friendly_grpc_errors
     def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
                 params=None, success=False, error=True, stats=False):
         """Starts capturing all events in real time, so you can instantly see exactly
@@ -130,16 +150,8 @@ class ClearlyClient(object):
                     break
         except KeyboardInterrupt:
             pass
-        except grpc.RpcError as e:
-            if self.debug:
-                raise
-            # noinspection PyUnresolvedReferences
-            print('{}: {} ({})'.format(
-                Colors.BOLD('Server communication error'),
-                Colors.RED(e.details()),
-                Colors.DIM(e.code())
-            ))
 
+    @set_user_friendly_grpc_errors
     def stats(self):
         """Lists some metrics of the capturing system:
 
@@ -165,6 +177,7 @@ class ClearlyClient(object):
             Colors.GREEN(at.duration_human), Colors.GREEN(at.throughput_human)
         ))
 
+    @set_user_friendly_grpc_errors
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
               params=None, success=False, error=True):
         """Filters stored tasks and displays their current statuses.
@@ -212,6 +225,7 @@ class ClearlyClient(object):
             ClearlyClient._display_task(task, params, success, error)
         ClearlyClient._fetched_callback(at)
 
+    @set_user_friendly_grpc_errors
     def workers(self, pattern=None, negate=False, stats=True):
         """Filters known workers and prints their current status.
         
@@ -241,6 +255,7 @@ class ClearlyClient(object):
             ClearlyClient._display_worker(worker, stats)
         ClearlyClient._fetched_callback(at)
 
+    @set_user_friendly_grpc_errors
     def task(self, task_uuid):
         """Finds one specific task.
 
@@ -255,10 +270,12 @@ class ClearlyClient(object):
         else:
             print(EMPTY)
 
+    @set_user_friendly_grpc_errors
     def seen_tasks(self):
         """Shows a list of seen task types."""
         print('\n'.join(self._stub.seen_tasks(clearly_pb2.Empty()).task_types))
 
+    @set_user_friendly_grpc_errors
     def reset(self):
         """Resets all captured tasks."""
         self._stub.reset_tasks(clearly_pb2.Empty())
