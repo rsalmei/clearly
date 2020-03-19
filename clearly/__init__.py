@@ -1,4 +1,4 @@
-VERSION = (0, 8, 1)
+VERSION = (0, 8, 2)
 
 __author__ = 'Rogério Sampaio de Almeida'
 __email__ = 'rsalmei@gmail.com'

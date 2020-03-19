@@ -391,6 +391,7 @@ def reset():
 
 
 ## Changelog highlights:
+- 0.8.2: reduce docker image size; user friendlier gRPC errors on client (with --debug to raise actual exception); nicer client autocomplete
 - 0.8.1: keep un-truncate engine from breaking when very distant celery versions are used in publisher and server sides
 - 0.8.0: clearly is dockerized! both server and client are now available in rsalmei/clearly docker hub; include new `capture_tasks` and `capture_workers` methods; fix task result being displayed in RETRY state; detect and break if can't connect to the broker
 - 0.7.0: code cleanup, to support only Python 3
