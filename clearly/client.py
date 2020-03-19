@@ -26,7 +26,7 @@ class ClearlyClient(object):
 
     """
 
-    def __init__(self, host='localhost', port=12223):
+    def __init__(self, host='localhost', port=12223, debug=False):
         """Constructs a client instance.
         
         Args:
@@ -34,6 +34,7 @@ class ClearlyClient(object):
             port (int): the port of the server
 
         """
+        self.debug = debug
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self._stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
