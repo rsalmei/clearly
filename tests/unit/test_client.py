@@ -1,6 +1,7 @@
 import re
 from unittest import mock
 
+import grpc
 import pytest
 from celery import states
 
@@ -102,6 +103,27 @@ def test_client_capture_worker(bool1, mocked_display):
         (clearly_pb2.RealtimeEventMessage(worker=worker),)
     mocked_display.capture(stats=bool1)
     mocked_display._display_worker.assert_called_once_with(worker, bool1)
+
+
+# noinspection PyProtectedMember
+def test_client_capture_error_normal(mocked_display, capsys):
+    exc = grpc.RpcError()
+    exc.code, exc.details = lambda: 'StatusCode', lambda: 'details'
+    mocked_display._stub.capture_realtime.side_effect = exc
+
+    mocked_display.capture()
+
+    generated = capsys.readouterr().out
+    assert all(x in generated for x in ('Server communication error', 'StatusCode', 'details'))
+
+
+# noinspection PyProtectedMember
+def test_client_capture_error_debug(mocked_display):
+    mocked_display._stub.capture_realtime.side_effect = grpc.RpcError()
+    mocked_display.debug = True
+
+    with pytest.raises(grpc.RpcError):
+        mocked_display.capture()
 
 
 def test_client_capture_tasks(mocked_client):
