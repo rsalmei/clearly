@@ -48,6 +48,7 @@ def server(**kwargs):
 @clearly.command()
 @click.argument('host', type=str, required=False)
 @click.argument('port', type=int, required=False)
+@click.option('--debug', help='Enables debug info', is_flag=True)
 def client(**kwargs):
     """Starts a REPL shell, with an already configured Clearly Client `clearlycli`.
 
