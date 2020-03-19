@@ -1,8 +1,4 @@
-import logging
-
 import click
-
-logger = logging.getLogger(__name__)
 
 
 class AliasedGroup(click.Group):
