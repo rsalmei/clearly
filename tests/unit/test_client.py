@@ -106,24 +106,50 @@ def test_client_capture_worker(bool1, mocked_display):
 
 
 # noinspection PyProtectedMember
-def test_client_capture_error_normal(mocked_display, capsys):
+@pytest.mark.parametrize('method, stub, params', [
+    ('capture_tasks', 'capture_realtime', 0),
+    ('capture_workers', 'capture_realtime', 0),
+    ('capture', 'capture_realtime', 0),
+    ('stats', 'get_stats', 0),
+    ('tasks', 'filter_tasks', 0),
+    ('workers', 'filter_workers', 0),
+    ('task', 'find_task', 1),
+    ('seen_tasks', 'seen_tasks', 0),
+    ('reset', 'reset_tasks', 0),
+])
+def test_client_methods_have_user_friendly_errors(method, stub, params, mocked_display, capsys):
     exc = grpc.RpcError()
     exc.code, exc.details = lambda: 'StatusCode', lambda: 'details'
-    mocked_display._stub.capture_realtime.side_effect = exc
+    getattr(mocked_display._stub, stub).side_effect = exc
 
-    mocked_display.capture()
+    getattr(mocked_display, method)(*('x',) * params)
+    # NOTE: the day I have a method with a non-string param, this will break.
 
     generated = capsys.readouterr().out
-    assert all(x in generated for x in ('Server communication error', 'StatusCode', 'details'))
+    assert 'Server communication error' in generated
+    assert 'StatusCode' in generated
+    assert 'details' in generated
 
 
 # noinspection PyProtectedMember
-def test_client_capture_error_debug(mocked_display):
-    mocked_display._stub.capture_realtime.side_effect = grpc.RpcError()
+@pytest.mark.parametrize('method, stub, params', [
+    ('capture_tasks', 'capture_realtime', 0),
+    ('capture_workers', 'capture_realtime', 0),
+    ('capture', 'capture_realtime', 0),
+    ('stats', 'get_stats', 0),
+    ('tasks', 'filter_tasks', 0),
+    ('workers', 'filter_workers', 0),
+    ('task', 'find_task', 1),
+    ('seen_tasks', 'seen_tasks', 0),
+    ('reset', 'reset_tasks', 0),
+])
+def test_client_methods_trigger_errors_when_debugging(method, stub, params, mocked_display):
+    getattr(mocked_display._stub, stub).side_effect = grpc.RpcError()
     mocked_display.debug = True
 
     with pytest.raises(grpc.RpcError):
-        mocked_display.capture()
+        getattr(mocked_display, method)(*('x',) * params)
+        # NOTE: the day I have a method with a non-string param, this will break.
 
 
 def test_client_capture_tasks(mocked_client):
