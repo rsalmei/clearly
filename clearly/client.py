@@ -130,6 +130,15 @@ class ClearlyClient(object):
                     break
         except KeyboardInterrupt:
             pass
+        except grpc.RpcError as e:
+            if self.debug:
+                raise
+            # noinspection PyUnresolvedReferences
+            print('{}: {} ({})'.format(
+                Colors.BOLD('Server communication error'),
+                Colors.RED(e.details()),
+                Colors.DIM(e.code())
+            ))
 
     def stats(self):
         """Lists some metrics of the capturing system:
