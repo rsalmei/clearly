@@ -7,8 +7,15 @@
 [![PyPI status](https://img.shields.io/pypi/status/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 
+```text
+        __                __
+  _____/ /__  ____ ______/ /_  __
+ / ___/ / _ \/ __ `/ ___/ / / / /
+/ /__/ /  __/ /_/ / /  / / /_/ /
+\___/_/\___/\__,_/_/  /_/\__, /
+                        /____/
+```
 
-# clearly :)
 ## Clearly see and debug your celery pool in real time!
 
 Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [flower](https://github.com/mher/flower)? You'll probably like **Clearly**! 👍
@@ -40,8 +47,7 @@ and you're good to go!
 Highlights:
 - compatible with any version of celery, from 3.1 to 4.2+
 - a result backend is not mandatory (but used if available)
-- `clearly` supports python 3.5+ :)
-(there's a version that still supports 2.7, see at the end of the page)
+- `clearly` now runs inside docker, so anyone with any python version can use it! 👏
 
 
 ## Features
@@ -59,17 +65,10 @@ Highlights:
 
 ## Get `clearly` the docker way
 
-```bash
-$ docker pull rsalmei/clearly
-```
-
-The `clearly` image contains both the server and the client, so you should pull it in both machines.
-
-
 ### Start the server
 
 ```bash
-$ docker run --rm -p <port>:12223 --name clearly-server \
+$ docker run --rm -p <clearly_port>:12223 --name clearly-server \
       rsalmei/clearly server <broker_url> [--backend backend_url]
 ```
 
@@ -81,32 +80,32 @@ $ docker run --rm -ti --name clearly-client -v ipythonhist:/root/.ipython/profil
       rsalmei/clearly client [clearly_server [clearly_port]]
 ```
 
-That's it, you're good to go!
+That's it, you're good to go! \o/
 
+> Note: The above volume is not really necessary, but is very nice to not lose your history inside clearlycli every time you leave it.
 
+What, you really need to use it inside your own REPL?
 <details>
-<summary>Or get `clearly` the pip way</summary>
+<summary>Really?</summary>
 
+> Ok, you can use `clearly` the pip way, but this is not recommended anymore. The docker way is much more portable, and avoids coupling between your and `clearly` code. Also enables me to use internally any python version I see fit, without any compromises :)
+> Well, it currently supports python 3.5+, and there was a version that supported 2.7.
+>
 > ```bash
 > $ pip install clearly
 > ```
-> 
-> The `clearly` package contains both the server and the client, so you should install it in both machines.
-> 
 > 
 > ### Start the server
 > 
 > ```bash
 > $ clearly server <broker_url> [--backend backend_url] [--port 12223]
 > ```
-> 
-> Use `clearly server --help` for more details.
-> 
+>
 > <details>
 > <summary>Just a quickie debug?</summary>
-> 
-> > _Clearly Client_ used to not need any server, which was convenient but made you lose all tasks' history once it is closed, and stresses the broker way more, as it must repeat all events to all connected clients.
-> But if you'd like to use it quickly like that, be it to just assert something or to trial the framework before committing, you still can! Just start the server in-process:
+>
+> > _Clearly Client_ used to not need any server, which was convenient but had several shortcomings, like losing all history when closed, and receiving every single event from the celery pool for each new client, which stressed the broker way more.
+> But if you'd like to use it quickly like that, be it to just assert something or to trial `clearly` before committing, you still can! Just start the server in-process:
 > >
 > > ```python
 > > from clearly.server import start_server
@@ -127,6 +126,22 @@ That's it, you're good to go!
 > ```
 > 
 > That's it, you're good to go!
+>
+> <details>
+> <summary>Constrained to Python 2.7?</summary>
+>
+> > To use in your legacy projects, please use version 0.4.2 as in:
+> > ```bash
+> > $ pip install clearly==0.4.2
+> > ```
+> > 
+> > This version is prior to the server split, so it connects directly to the broker, but should still work like a charm.
+> > 
+> > You could also use 0.6.4, which is newer, but please do mind that gRPC and Python 2.7 have a very annoying bug in this case: you can't CTRL+C out of `clearly` client's `capture` method (or any streaming methods), so you have to kill the process itself when needed with CTRL+\\. For more details on this nasty bug:
+> > - https://github.com/grpc/grpc/issues/3820
+> > - https://github.com/grpc/grpc/issues/6999
+> > - https://bugs.python.org/issue8844
+> </details>
 </details>
 
 
@@ -392,7 +407,7 @@ def reset():
 
 ## Changelog highlights:
 - 0.8.3: extended user friendliness of gRPC errors to all client rpc methods
-- 0.8.2: reduce docker image size; user friendlier gRPC errors on client capture (with --debug to raise actual exception); nicer client autocomplete
+- 0.8.2: reduce docker image size; user friendlier gRPC errors on client capture (with --debug to raise actual exception); nicer client autocomplete (no clearly package or clearly dir are shown)
 - 0.8.1: keep un-truncate engine from breaking when very distant celery versions are used in publisher and server sides
 - 0.8.0: clearly is dockerized! both server and client are now available in rsalmei/clearly docker hub; include new `capture_tasks` and `capture_workers` methods; fix task result being displayed in RETRY state; detect and break if can't connect to the broker
 - 0.7.0: code cleanup, to support only Python 3
@@ -406,23 +421,6 @@ def reset():
 - 0.2.6: gets production quality
 - 0.2.0: support standard celery events
 - 0.1.4: last version that doesn't use events
-
-
-### Python 2 has retired
-That's why the support has been removed. For more details see https://pythonclock.org
-
-To use in your python 2.7 projects, please use version 0.4.2 as in:
-
-```bash
-$ pip install clearly==0.4.2
-```
-
-This version is prior to the server split, so it connects directly to the broker, but works like a charm!
-
-You could also use 0.6.4, which is newer, but please do mind that gRPC and Python itself have a very annoying bug in this case: you can't CTRL+C out of `clearly` client's `capture` method (or any streaming methods), so you have to kill the process itself when needed with CTRL+\\. For more details on this nasty bug:
-- https://github.com/grpc/grpc/issues/3820
-- https://github.com/grpc/grpc/issues/6999
-- https://bugs.python.org/issue8844
 
 
 ## License
