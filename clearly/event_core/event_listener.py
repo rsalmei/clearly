@@ -81,8 +81,9 @@ class EventListener:
         self._listener_thread = threading.Thread(target=self.__run_listener, name=THREAD_NAME)
         self._listener_thread.daemon = True
         self._listener_thread.start()
+
         if not self._wait_event.wait(timeout=BROKER_CONNECT_TIMEOUT):
-            raise TimeoutError("Can't connect to broker.")
+            raise TimeoutError('Broker is unreachable')
         self._wait_event.clear()
 
     def __stop(self) -> None:  # pragma: no cover
