@@ -7,13 +7,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_env_param(name: str, default: T, factory: Callable[[str], T]) -> T:
-    """Get and cast a named environment variable to the correct type, given by
-    the default param.
+    """Return a named environment variable cast to the correct type, or a
+    default param.
 
     Args:
         name: the var name
-        default: the default value, which should have a constructor with str
-        factory: a function to convert the str value
+        default: the default value
+        factory: a function to convert the string values from env
 
     Returns:
         the converted value or default

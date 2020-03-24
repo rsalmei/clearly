@@ -1,3 +1,5 @@
+from typing import Any, Callable
+
 from pygments import highlight
 from pygments.formatters.terminal256 import Terminal256Formatter
 from pygments.lexers.python import PythonTracebackLexer
@@ -11,7 +13,7 @@ DICT_SEPARATOR = Colors.RED(': ')
 NONE = Colors.CYAN('None')
 
 
-def typed_code(p, wrap=True):
+def typed_code(p: Any, wrap: bool = True) -> str:
     if p is None:
         return NONE
 
@@ -72,7 +74,7 @@ def typed_code(p, wrap=True):
     return repr(p)
 
 
-def create_traceback_highlighter():
+def create_traceback_highlighter() -> Callable[[str], str]:
     lexer = PythonTracebackLexer()
     formatter = Terminal256Formatter(style='native')
 

@@ -16,4 +16,5 @@ class Colors:
 
 
 def strip_colors(text):
+def strip_colors(text: str) -> str:
     return re.sub(r'\033\[.+?m', '', text)

@@ -1,12 +1,13 @@
+from typing import Optional, Any
 import click
 
 
 class AliasedGroup(click.Group):
-    """Used to allow calling shorten commands, as long as they're unique.
+    """Used to allow calling shortened commands, as long as they're unique.
      Based on recipe from http://click.palletsprojects.com/en/7.x/advanced/
     """
 
-    def get_command(self, ctx, cmd_name):
+    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv
@@ -35,7 +36,7 @@ def clearly():
 @click.option('--max_workers', '-w', type=int, help='Maximum number of workers in memory')
 @click.option('--debug', help='Enables debug logging', is_flag=True)
 def server(**kwargs):
-    """Starts the Clearly Server.
+    """Start the Clearly Server.
 
     \b
     BROKER: The broker being used by celery, like "amqp://localhost".
@@ -50,7 +51,7 @@ def server(**kwargs):
 @click.argument('port', type=int, required=False)
 @click.option('--debug', help='Enables debug info', is_flag=True)
 def client(**kwargs):
-    """Starts a REPL shell, with an already configured Clearly Client `clearlycli`.
+    """Start a REPL shell, with an already configured Clearly Client `clearlycli`.
 
     \b
     HOST: The host where Clearly Server is running, default localhost

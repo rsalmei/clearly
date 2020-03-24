@@ -3,6 +3,7 @@ import operator
 import re
 from concurrent import futures
 from queue import Empty, Queue
+from typing import Optional
 
 import grpc
 from about_time import about_time

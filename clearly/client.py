@@ -1,8 +1,10 @@
 import functools
 from datetime import datetime
+from typing import Any, Callable, Iterable, Optional
 
 import grpc
 from about_time import about_time
+from about_time.core import HandleStats
 from celery import states
 
 from .code_highlighter import create_traceback_highlighter, typed_code
@@ -18,7 +20,7 @@ DIM_NONE = Colors.DIM(Colors.CYAN('None'))
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
 
 
-def set_user_friendly_grpc_errors(fn):
+def set_user_friendly_grpc_errors(fn: Callable[..., None]) -> Callable[..., None]:
     @functools.wraps(fn)
     def inner(self, *args, **kwargs):
         try:
@@ -36,21 +38,21 @@ def set_user_friendly_grpc_errors(fn):
     return inner
 
 
-class ClearlyClient(object):
-    """Clearly see and debug your celery pool in real time!
-    Client object, to display and manage server captured tasks and workers.
+class ClearlyClient:
+    """Main client object, which interfaces with the Clearly server backend, sends
+    commands and displays captured events.
 
     Attributes:
         _stub: the server stub instance
 
     """
 
-    def __init__(self, host='localhost', port=12223, debug=False):
-        """Constructs a client instance.
+    def __init__(self, host: str = 'localhost', port: int = 12223, debug: bool = False):
+        """Construct a Clearly Client instance.
         
         Args:
-            host (str): the hostname of the server
-            port (int): the port of the server
+            host: the hostname of the server
+            port: the port of the server
 
         """
         self.debug = debug
@@ -58,7 +60,7 @@ class ClearlyClient(object):
         self._stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
     def capture_tasks(self, pattern=None, negate=False, params=None, success=False, error=True):
-        """Starts capturing task events in real time, so you can instantly see exactly
+        """Start capturing task events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
         handle all tasks updates.
@@ -78,13 +80,13 @@ class ClearlyClient(object):
             Display args:
             -------------
 
-            params (Optional[bool]): if True shows args and kwargs in the first and
+            params: if True shows args and kwargs in the first and
                 last seen states, if False never shows, and if None follows the
                 success and error arguments.
                 default is None
-            success (bool): if True shows successful tasks' results.
+            success: if True shows successful tasks' results.
                 default is False
-            error (bool): if True shows failed and retried tasks' tracebacks.
+            error: if True shows failed and retried tasks' tracebacks.
                 default is True, as you're monitoring to find errors, right?
 
         """
@@ -92,7 +94,7 @@ class ClearlyClient(object):
                             params=params, success=success, error=error, stats=False)
 
     def capture_workers(self, pattern=None, negate=False, stats=False):
-        """Starts capturing worker events in real time, so you can instantly see exactly
+        """Start capturing worker events in real time, so you can instantly see exactly
         what your workers states are. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
         handle all tasks and workers updates.
@@ -111,8 +113,7 @@ class ClearlyClient(object):
             Display args:
             -------------
 
-            stats (bool): if True shows complete workers' stats.
-                default is False
+            stats: if True shows complete workers' stats, default is False
 
         """
         return self.capture(pattern='.', negate=True, workers=pattern, negate_workers=negate,
@@ -121,7 +122,7 @@ class ClearlyClient(object):
     @set_user_friendly_grpc_errors
     def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
                 params=None, success=False, error=True, stats=False):
-        """Starts capturing all events in real time, so you can instantly see exactly
+        """Start capturing all events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
         handle all tasks and workers updates.
@@ -129,8 +130,8 @@ class ClearlyClient(object):
         This runs in the foreground. Press CTRL+C at any time to stop it.
 
         See Also:
-            capture_tasks()
-            capture_workers()
+            ClearlyClient#capture_tasks()
+            ClearlyClient#capture_workers()
 
         """
         request = clearly_pb2.CaptureRequest(
@@ -152,14 +153,15 @@ class ClearlyClient(object):
             pass
 
     @set_user_friendly_grpc_errors
-    def stats(self):
-        """Lists some metrics of the capturing system:
+    def stats(self) -> None:
+        """List some metrics about the capturing system itself, which of course
+        reflects the actual celery pool being monitored.
 
-            Tasks processed: the total number of reentrant tasks processed,
-                which includes retry attempts.
-            Events processed: number of events captured and processed.
-            Tasks stored: actual number of unique tasks processed.
-            Workers stored: number of unique workers already seen.
+        Shows:
+            Tasks processed: number of tasks processed, including retries
+            Events processed: number of events processed, including workers and heartbeats
+            Tasks stored: number of unique tasks processed
+            Workers stored: number of unique workers seen
 
         """
         stats = self._stub.get_stats(clearly_pb2.Empty())
@@ -171,7 +173,7 @@ class ClearlyClient(object):
               '\tworkers', Colors.RED(stats.len_workers))
 
     @staticmethod
-    def _fetched_callback(at):  # pragma: no cover
+    def _fetched_callback(at: HandleStats) -> None:  # pragma: no cover
         print('{} {} in {} ({})'.format(
             Colors.DIM('fetched:'), Colors.BOLD(at.count),
             Colors.GREEN(at.duration_human), Colors.GREEN(at.throughput_human)
@@ -180,12 +182,11 @@ class ClearlyClient(object):
     @set_user_friendly_grpc_errors
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
               params=None, success=False, error=True):
-        """Filters stored tasks and displays their current statuses.
+        """Fetch current data from past tasks.
 
-        Note that, to be able to list the tasks sorted chronologically, celery retrieves
-        tasks from the LRU event heap instead of the dict storage, so the total number
-        of tasks fetched may be different than the server `max_tasks` setting. For
-        instance, the `limit` field refers to max events searched, not max tasks.
+        Note that the `limit` field is just a hint, it may not be accurate.
+        Even the total number of tasks fetched may be slightly different than
+        the server `max_tasks` setting.
 
         Args:
             Filter args:
@@ -204,13 +205,13 @@ class ClearlyClient(object):
             Display args:
             -------------
 
-            params (Optional[bool]): if True shows args and kwargs in the first and
+            params: if True shows args and kwargs in the first and
                 last seen states, if False never shows, and if None follows the
                 success and error arguments.
                 default is None
-            success (bool): if True shows successful tasks' results.
+            success: if True shows successful tasks' results.
                 default is False
-            error (bool): if True shows failed and retried tasks' tracebacks.
+            error: if True shows failed and retried tasks' tracebacks.
                 default is True, as you're monitoring to find errors, right?
 
         """
@@ -227,7 +228,7 @@ class ClearlyClient(object):
 
     @set_user_friendly_grpc_errors
     def workers(self, pattern=None, negate=False, stats=True):
-        """Filters known workers and prints their current status.
+        """Fetch current data from known workers.
         
         Args:
             Filter args:
@@ -241,8 +242,7 @@ class ClearlyClient(object):
             Display args:
             -------------
 
-            stats (bool): if True shows complete workers' stats.
-                default is False
+            stats: if True shows complete workers' stats, default is False
 
         """
         request = clearly_pb2.FilterWorkersRequest(
@@ -256,11 +256,11 @@ class ClearlyClient(object):
         ClearlyClient._fetched_callback(at)
 
     @set_user_friendly_grpc_errors
-    def task(self, task_uuid):
-        """Finds one specific task.
+    def task(self, task_uuid: str) -> None:
+        """Fetch current data from a specific task.
 
         Args:
-            task_uuid (str): the task id
+            task_uuid: the task uuid
 
         """
         request = clearly_pb2.FindTaskRequest(task_uuid=task_uuid)
@@ -271,17 +271,18 @@ class ClearlyClient(object):
             print(EMPTY)
 
     @set_user_friendly_grpc_errors
-    def seen_tasks(self):
-        """Shows a list of seen task types."""
+    def seen_tasks(self) -> None:
+        """Fetch a list of seen task types."""
         print('\n'.join(self._stub.seen_tasks(clearly_pb2.Empty()).task_types))
 
     @set_user_friendly_grpc_errors
-    def reset(self):
-        """Resets all captured tasks."""
+    def reset(self) -> None:
+        """Reset all captured tasks."""
         self._stub.reset_tasks(clearly_pb2.Empty())
 
     @staticmethod
-    def _display_task(task, params, success, error):
+    def _display_task(task: clearly_pb2.TaskMessage, params: bool,
+                      success: bool, error: bool) -> None:
         ts = datetime.fromtimestamp(task.timestamp)
         print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
@@ -321,7 +322,7 @@ class ClearlyClient(object):
             print(Colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
     @staticmethod
-    def _display_worker(worker, stats):
+    def _display_worker(worker: clearly_pb2.WorkerMessage, stats: bool) -> None:
         print(ClearlyClient._worker_state(worker.state),
               Colors.DIM(Colors.CYAN(worker.hostname)),
               Colors.DIM(Colors.YELLOW(str(worker.pid))))
@@ -345,7 +346,7 @@ class ClearlyClient(object):
                       Colors.DIM(tsstr))
 
     @staticmethod
-    def _task_state(state):
+    def _task_state(state: str) -> None:
         result = '{:>{}}'.format(state, HEADER_SIZE)
         if state == states.SUCCESS:  # final state in BOLD
             return Colors.BOLD(Colors.GREEN(result))
@@ -354,8 +355,8 @@ class ClearlyClient(object):
         return Colors.YELLOW(result)  # transient states
 
     @staticmethod
-    def _worker_state(state):
         result = '{:>{}}'.format(state, HEADER_SIZE)
+    def _worker_state(state: str) -> None:
         if state == worker_states.ONLINE:
             return Colors.BOLD(Colors.GREEN(result))
         return Colors.BOLD(Colors.RED(result))

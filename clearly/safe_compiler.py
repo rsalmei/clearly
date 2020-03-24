@@ -1,32 +1,38 @@
 import ast
 import re
 from collections import OrderedDict, namedtuple
+from typing import Any, Match
 
 CallDescriptor = namedtuple('CallDescriptor', 'name args kwargs')
 NON_PRINTABLE_PATTERN = re.compile('[\x00-\x1f]')
 
 
-def safe_compile_text(txt, raises=False):
-    """Based on actual ast.literal_eval, but this one supports 'calls', 
+def safe_compile_text(txt: str, raises: bool = False) -> Any:
+    """Generate actual objects from string representations. It internally uses
+    python's ast (Abstract Syntax Trees), including support for safe 'calls',
     like in a repr of a datetime: `datetime.datetime(2017, 5, 20)`.
-    
-    Clearly uses this to generate actual python objects of the params and 
-    results of the tasks, to be able to apply the advanced syntax coloring
-    scheme implemented here. Other frameworks were not up to the task, as
-    Clearly needs for example, to show dicts with a keyword args notation, 
-    to clearly see what the task was called with. And if there's a dict in
-    the value part of said kwarg, it will be correctly rendered as a dict!
+    Clearly uses this to convert params and results of the tasks, to be able to
+    apply the advanced syntax coloring scheme seen on the Client.
+
+    Other frameworks were not up to the task, as Clearly have some non-standard
+    needs. I wanted a representation that could effectively be copied and pasted
+    into a python REPL, without any changes and that would work! Which is a
+    challenge to make it support arbitrary python objects...
+    For example, on one hand Clearly have dicts which represent keyword arguments,
+    and will show them just like a function or task would be called with, using the
+    key=value notation. On the other hand, dicts in other roles would be rendered
+    with the usual {key: value} notation!
     
     Also, it's worth saying that this is safe. I do not use "eval" command
     at all, which is potentially dangerous. This tool compiles the python
     objects received to an Abstract Syntax Tree, and recursively extracts
     the safe parts. Any calls or attribute lookups are returned as descriptors
-    or strings, never being executed. And their parameters _will_ be analysed,
+    or strings, never being executed! And their parameters _will_ be analysed,
     and correctly syntax colored!
 
     Args:
-        txt (str): the text
-        raises (bool): if True, raise an exception in case of error
+        txt: the text
+        raises: if True, raises an exception in case of error, ignores otherwise
     """
 
     def _convert(node):
@@ -82,5 +88,5 @@ def safe_compile_text(txt, raises=False):
     return _convert(txt.body)
 
 
-def _encode_to_hex(match):
+def _encode_to_hex(match: Match) -> str:
     return r'\x{0:02x}'.format(ord(match.group()))

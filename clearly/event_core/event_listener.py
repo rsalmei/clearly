@@ -2,7 +2,7 @@ import logging
 import signal
 import threading
 from queue import Queue
-from typing import Optional
+from typing import Any, Optional
 
 from celery import Celery, states
 from celery.events import EventReceiver
@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 BROKER_CONNECT_TIMEOUT = get_env_int('BROKER_CONNECT_TIMEOUT', 5)
 
 
-class EventListener(object):
-    """Listens for celery events.
+class EventListener:
+    """Listen for celery events.
 
     Server object, to capture events and handle tasks and workers.
 
@@ -32,7 +32,7 @@ class EventListener(object):
 
     def __init__(self, broker, queue_output, backend=None,
                  max_tasks_in_memory=None, max_workers_in_memory=None):
-        """Constructs an event listener instance.
+        """Construct an event listener instance.
 
         Args:
             broker (str): the broker being used by the celery system.
@@ -59,8 +59,8 @@ class EventListener(object):
         )  # type: State
 
         # running engine (should be asyncio in the future)
-        self._listener_thread = None  # type:Optional[threading.Thread]
-        self._celery_receiver = None  # type:Optional[EventReceiver]
+        self._listener_thread: Optional[threading.Thread] = None
+        self._celery_receiver: Optional[EventReceiver] = None
 
         # concurrency control
         self._wait_event = threading.Event()
@@ -72,8 +72,8 @@ class EventListener(object):
         signal.signal(signal.SIGTERM, sigterm_handler)
         self.__start()
 
-    def __start(self):  # pragma: no cover
-        """Starts the real time engine that captures events."""
+    def __start(self) -> None:  # pragma: no cover
+        """Start the real time engine that captures events."""
 
         assert not self._listener_thread
 
@@ -85,8 +85,8 @@ class EventListener(object):
             raise TimeoutError("Can't connect to broker.")
         self._wait_event.clear()
 
-    def __stop(self):  # pragma: no cover
-        """Stops the background engine."""
+    def __stop(self) -> None:  # pragma: no cover
+        """Stop the background engine."""
 
         if not self._listener_thread:
             return
@@ -96,20 +96,20 @@ class EventListener(object):
         self._listener_thread.join()
         self._listener_thread = self._celery_receiver = None
 
-    def __run_listener(self):  # pragma: no cover
         logger.info('Starting listener: %s', threading.current_thread())
+    def __run_listener(self) -> None:  # pragma: no cover
 
         with self._app.connection() as connection:
-            self._celery_receiver = self._app.events.Receiver(
+            self._celery_receiver: EventReceiver = self._app.events.Receiver(
                 connection, handlers={
                     '*': self._process_event,
-                })  # type: EventReceiver
+                })
             self._wait_event.set()
             self._celery_receiver.capture(limit=None, timeout=None, wakeup=True)
 
         logger.info('Listener stopped: %s', threading.current_thread())
 
-    def _process_event(self, event):
+    def _process_event(self, event: dict) -> None:
         event_type = event['type']
         if event_type.startswith('task'):
             data = self._process_task_event(event)
@@ -147,7 +147,7 @@ class EventListener(object):
         return immutable_worker(worker, worker.status_string, pre_state, created)
 
     @staticmethod
-    def compile_task_result(task):
+    def compile_task_result(task: Task) -> Any:
         result = task.result
         # celery 4 sends results converted as strings, sometimes truncated (...)
         if task.worker.sw_ver < '4':

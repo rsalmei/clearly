@@ -6,11 +6,11 @@ import threading
 from collections import namedtuple
 from contextlib import contextmanager
 from queue import Empty, Queue
-from typing import Optional
 
 from .events import TaskData
 from ..expected_state import ExpectedStateHandler, setup_task_states, setup_worker_states
 from ..utils.data import accepts
+from typing import Iterator, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,8 @@ TASK_OP = operator.attrgetter('queue', 'task_regex', 'task_negate')
 WORKER_OP = operator.attrgetter('queue', 'worker_regex', 'worker_negate')
 
 
-class StreamingDispatcher(object):
-    """Dispatches events to connected clients.
+class StreamingDispatcher:
+    """Dispatch events to connected clients.
 
     Server object, gets cleaned tasks and workers and send them to interested parties.
     
@@ -32,11 +32,11 @@ class StreamingDispatcher(object):
         worker_states (ExpectedStateHandler): object that fills missing workers' states
     """
 
-    def __init__(self, queue_input):
-        """Constructs a client dispatcher instance.
+    def __init__(self, queue_input: Queue):
+        """Construct a client dispatcher instance.
         
         Args:
-            queue_input (Queue): to receive from event listener
+            queue_input: to receive from event listener
         """
         logger.info('Creating %s', StreamingDispatcher.__name__)
 
@@ -46,7 +46,7 @@ class StreamingDispatcher(object):
         self.worker_states = setup_worker_states()  # type: ExpectedStateHandler
 
         # running engine (should be asyncio in the future)
-        self.dispatcher_thread = None  # type:Optional[threading.Thread]
+        self.dispatcher_thread: Optional[threading.Thread] = None
 
         # detect shutdown.
         def sigterm_handler(_signo, _stack_frame):  # pragma: no cover
@@ -55,8 +55,8 @@ class StreamingDispatcher(object):
         signal.signal(signal.SIGTERM, sigterm_handler)
         self.__start()
 
-    def __start(self):  # pragma: no cover
-        """Starts the real time engine that captures tasks."""
+    def __start(self) -> None:  # pragma: no cover
+        """Start the real time engine that captures tasks."""
 
         assert not self.dispatcher_thread
 
@@ -66,8 +66,8 @@ class StreamingDispatcher(object):
         self.running = True  # graceful shutdown
         self.dispatcher_thread.start()
 
-    def __stop(self):  # pragma: no cover
-        """Stops the background engine."""
+    def __stop(self) -> None:  # pragma: no cover
+        """Stop the background engine."""
 
         if not self.dispatcher_thread:
             return
@@ -101,8 +101,8 @@ class StreamingDispatcher(object):
         yield cc.queue
         self.observers.remove(cc)
 
-    def __run_dispatcher(self):  # pragma: no cover
         logger.info('Starting dispatcher: %s', threading.current_thread())
+    def __run_dispatcher(self) -> None:  # pragma: no cover
 
         while self.running:
             try:
