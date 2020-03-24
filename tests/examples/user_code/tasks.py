@@ -1,6 +1,7 @@
 from celery import Celery
 
 app = Celery('tasks', broker='amqp://localhost', backend='redis://localhost')
+app.conf.task_send_sent_event = True
 
 
 @app.task(bind=True, max_retries=20)
