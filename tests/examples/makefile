@@ -6,9 +6,6 @@ all:
 setup:
 	docker-compose up -d rabbithost redishost
 
-worker:
-	celery worker -A tasks -E --loglevel=info --heartbeat-interval 10 $(ARGS)
-
 server-backend: ARGS=--backend redis://redishost
 server-backend: server
 
@@ -23,13 +20,12 @@ client:
 # 	docker run --rm -ti --name clearly-client -v $(shell pwd)/../../:/usr/src/clearly \
 	    --network examples_default -v ipythonhist:/root/.ipython/profile_default/ \
 	    rsalmei/clearly client clearly-server $(ARGS)
-# 	clearly client
 
-iclient:
-	ipython -i client.py
+worker:
+	celery worker -A user_code.tasks -E --loglevel=info --heartbeat-interval 10 $(ARGS)
 
-sender:
-	ipython sender.py
+publisher:
+	ipython -m user_code.publisher
 
-isender:
-	ipython -i sender.py
+ipublisher:
+	ipython -mi user_code.publisher
