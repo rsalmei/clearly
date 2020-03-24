@@ -16,7 +16,7 @@ from .utils.colors import Colors
 HEADER_SIZE = 8
 HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = Colors.DIM(':)')
-DIM_NONE = Colors.DIM(Colors.CYAN('None'))
+DIM_NONE = Colors.CYAN_DIM('None')
 TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
 
 
@@ -294,7 +294,7 @@ class ClearlyClient:
                   Colors.DIM(task.uuid))
         else:
             print(ClearlyClient._task_state(task.state),
-                  Colors.DIM(Colors.BLUE(task.retries)),
+                  Colors.BLUE_DIM(task.retries),
                   end=' ')
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
@@ -324,13 +324,13 @@ class ClearlyClient:
     @staticmethod
     def _display_worker(worker: clearly_pb2.WorkerMessage, stats: bool) -> None:
         print(ClearlyClient._worker_state(worker.state),
-              Colors.DIM(Colors.CYAN(worker.hostname)),
-              Colors.DIM(Colors.YELLOW(str(worker.pid))))
+              Colors.CYAN_DIM(worker.hostname),
+              Colors.YELLOW_DIM(str(worker.pid)))
 
         if stats:
             print(Colors.DIM('{:>{}}'.format('sw:', HEADER_SIZE)),
-                  Colors.DIM(Colors.CYAN(worker.sw_sys)),
                   worker.sw_ident,
+                  Colors.CYAN_DIM(worker.sw_sys),
                   Colors.ORANGE(worker.sw_ver))
             print(Colors.DIM('{:>{}}'.format('load:', HEADER_SIZE)),
                   worker.loadavg or DIM_NONE,
@@ -349,14 +349,14 @@ class ClearlyClient:
     def _task_state(state: str) -> None:
         result = '{:>{}}'.format(state, HEADER_SIZE)
         if state == states.SUCCESS:  # final state in BOLD
-            return Colors.BOLD(Colors.GREEN(result))
         if state in (states.FAILURE, states.REVOKED):  # final states too
-            return Colors.BOLD(Colors.RED(result))
+            return Colors.GREEN_BOLD(result)
+            return Colors.RED_BOLD(result)
         return Colors.YELLOW(result)  # transient states
 
     @staticmethod
         result = '{:>{}}'.format(state, HEADER_SIZE)
     def _worker_state(state: str) -> None:
         if state == worker_states.ONLINE:
-            return Colors.BOLD(Colors.GREEN(result))
-        return Colors.BOLD(Colors.RED(result))
+            return Colors.GREEN_BOLD(result)
+        return Colors.RED_BOLD(result)
