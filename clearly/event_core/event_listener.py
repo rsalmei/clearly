@@ -16,6 +16,7 @@ from ..utils.env_params import get_env_int
 logger = logging.getLogger(__name__)
 
 BROKER_CONNECT_TIMEOUT = get_env_int('BROKER_CONNECT_TIMEOUT', 5)
+THREAD_NAME = 'clearly-listener'
 
 
 class EventListener:
@@ -77,8 +78,7 @@ class EventListener:
 
         assert not self._listener_thread
 
-        self._listener_thread = threading.Thread(target=self.__run_listener,
-                                                 name='clearly-listener')
+        self._listener_thread = threading.Thread(target=self.__run_listener, name=THREAD_NAME)
         self._listener_thread.daemon = True
         self._listener_thread.start()
         if not self._wait_event.wait(timeout=BROKER_CONNECT_TIMEOUT):
@@ -91,13 +91,13 @@ class EventListener:
         if not self._listener_thread:
             return
 
-        logger.info('Stopping listener')
+        logger.info('Stopping %s', THREAD_NAME)
         self._celery_receiver.should_stop = True
         self._listener_thread.join()
         self._listener_thread = self._celery_receiver = None
 
-        logger.info('Starting listener: %s', threading.current_thread())
     def __run_listener(self) -> None:  # pragma: no cover
+        logger.info('Starting %s: %s', THREAD_NAME, threading.current_thread())
 
         with self._app.connection() as connection:
             self._celery_receiver: EventReceiver = self._app.events.Receiver(
@@ -107,7 +107,7 @@ class EventListener:
             self._wait_event.set()
             self._celery_receiver.capture(limit=None, timeout=None, wakeup=True)
 
-        logger.info('Listener stopped: %s', threading.current_thread())
+        logger.info('%s stopped: %s', THREAD_NAME, threading.current_thread())
 
     def _process_event(self, event: dict) -> None:
         event_type = event['type']

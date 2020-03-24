@@ -18,6 +18,7 @@ CapturingClient = namedtuple('CapturingClient',
                              'queue task_regex task_negate worker_regex worker_negate')
 TASK_OP = operator.attrgetter('queue', 'task_regex', 'task_negate')
 WORKER_OP = operator.attrgetter('queue', 'worker_regex', 'worker_negate')
+THREAD_NAME = 'clearly-dispatcher'
 
 
 class StreamingDispatcher:
@@ -60,8 +61,7 @@ class StreamingDispatcher:
 
         assert not self.dispatcher_thread
 
-        self.dispatcher_thread = threading.Thread(target=self.__run_dispatcher,
-                                                  name='clearly-dispatcher')
+        self.dispatcher_thread = threading.Thread(target=self.__run_dispatcher, name=THREAD_NAME)
         self.dispatcher_thread.daemon = True
         self.running = True  # graceful shutdown
         self.dispatcher_thread.start()
@@ -72,7 +72,7 @@ class StreamingDispatcher:
         if not self.dispatcher_thread:
             return
 
-        logger.info('Stopping dispatcher')
+        logger.info('Stopping %s', THREAD_NAME)
         self.running = False  # graceful shutdown
         self.dispatcher_thread.join()
         self.dispatcher_thread = None
@@ -101,8 +101,8 @@ class StreamingDispatcher:
         yield cc.queue
         self.observers.remove(cc)
 
-        logger.info('Starting dispatcher: %s', threading.current_thread())
     def __run_dispatcher(self) -> None:  # pragma: no cover
+        logger.info('Starting %s: %s', THREAD_NAME, threading.current_thread())
 
         while self.running:
             try:
@@ -112,7 +112,7 @@ class StreamingDispatcher:
 
             self._dispatch(event_data)
 
-        logger.info('Dispatcher stopped: %s', threading.current_thread())
+        logger.info('%s stopped: %s', THREAD_NAME, threading.current_thread())
 
     def _dispatch(self, event_data):
         if isinstance(event_data, TaskData):
