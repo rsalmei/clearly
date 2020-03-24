@@ -94,7 +94,7 @@ class EventListener:
 
         logger.info('Stopping %s', THREAD_NAME)
         self._celery_receiver.should_stop = True
-        self._listener_thread.join()
+        self._listener_thread.join(1)
         self._listener_thread = self._celery_receiver = None
 
     def __run_listener(self) -> None:  # pragma: no cover

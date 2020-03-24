@@ -74,7 +74,7 @@ class StreamingDispatcher:
 
         logger.info('Stopping %s', THREAD_NAME)
         self.running = False  # graceful shutdown
-        self.dispatcher_thread.join()
+        self.dispatcher_thread.join(1)
         self.dispatcher_thread = None
 
     @contextmanager
