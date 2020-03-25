@@ -1,7 +1,9 @@
 import logging
 import operator
 import re
+import sys
 from concurrent import futures
+from contextlib import ExitStack
 from queue import Empty, Queue
 from typing import Optional
 
@@ -115,7 +117,7 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
         self.dispatcher_tasks, self.dispatcher_workers = dispatcher_tasks, dispatcher_workers
 
     def capture_realtime(self, request, context):
-        """
+        """Initiate a streaming capture.
 
         Args:
             request (clearly_pb2.CaptureRequest):
@@ -127,16 +129,25 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
         """
         RPCService._log_request(request, context)
 
-        with self.dispatcher.streaming_client(tasks_pattern, tasks_negate,
-                                              workers_pattern, workers_negate) as q:  # type: Queue
+        queue = Queue()
+        with ExitStack() as stack:
+            if request.HasField('tasks_capture'):
+                stack.enter_context(
+                    self.dispatcher_tasks.streaming_capture(request.tasks_capture, queue))
+            if request.HasField('workers_capture'):
+                stack.enter_context(
+                    self.dispatcher_workers.streaming_capture(request.workers_capture, queue))
             while True:
                 try:
-                    event_data = q.get(timeout=1)
+                    message = queue.get(timeout=1)
                 except Empty:  # pragma: no cover
                     continue
 
-                key, obj = ClearlyServer._event_to_pb(event_data)
-                yield clearly_pb2.RealtimeEventMessage(**{key: obj})
+                key = {
+                    TaskMessage: 'task',
+                    WorkerMessage: 'worker',
+                }[type(message)]
+                yield RealtimeMessage(**{key: message})
 
     def filter_tasks(self, request, context):
         """Filter tasks by matching patterns to name, routing key and state.
