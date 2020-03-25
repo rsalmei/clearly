@@ -174,13 +174,6 @@ class ClearlyClient:
               '\ttasks', Colors.RED(stats.len_tasks),
               '\tworkers', Colors.RED(stats.len_workers))
 
-    @staticmethod
-    def _fetched_callback(at: HandleStats) -> None:  # pragma: no cover
-        print('{} {} in {} ({})'.format(
-            Colors.DIM('fetched:'), Colors.BOLD(at.count),
-            Colors.GREEN(at.duration_human), Colors.GREEN(at.throughput_human)
-        ))
-
     @set_user_friendly_grpc_errors
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
               params=None, success=False, error=True):
@@ -226,7 +219,7 @@ class ClearlyClient:
         at = about_time(self._stub.filter_tasks(request))
         for task in at:
             ClearlyClient.__display_task(task, params, success, error)
-        ClearlyClient.__fetched_callback(at)
+        ClearlyClient.__fetched_info(at)
 
     @set_user_friendly_grpc_errors
     def workers(self, pattern=None, negate=False, stats=True):
@@ -255,7 +248,7 @@ class ClearlyClient:
         at = about_time(self._stub.filter_workers(request))
         for worker in at:
             ClearlyClient.__display_worker(worker, stats)
-        ClearlyClient.__fetched_callback(at)
+        ClearlyClient.__fetched_info(at)
 
     @set_user_friendly_grpc_errors
     def task(self, task_uuid: str) -> None:
@@ -281,6 +274,13 @@ class ClearlyClient:
     def reset(self) -> None:
         """Reset all captured tasks."""
         self._stub.reset_tasks(Empty())
+
+    @staticmethod
+    def __fetched_info(at: HandleStats) -> None:  # pragma: no cover
+        print('{} {} in {} ({})'.format(
+            Colors.DIM('fetched:'), Colors.BOLD(at.count),
+            Colors.GREEN(at.duration_human), Colors.GREEN(at.throughput_human)
+        ))
 
     @staticmethod
     def __display_task(task: TaskMessage, params: bool,
