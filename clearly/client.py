@@ -7,8 +7,8 @@ from about_time import about_time
 from about_time.core import HandleStats
 from celery import states
 
-from .code_highlighter import create_traceback_highlighter, typed_code
 from .protos import clearly_pb2, clearly_pb2_grpc
+from .code_highlighter import traceback_highlighter_factory, typed_code
 from .safe_compiler import safe_compile_text
 from .utils import worker_states
 from .utils.colors import Colors
@@ -17,7 +17,7 @@ HEADER_SIZE = 8
 HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = Colors.DIM(':)')
 DIM_NONE = Colors.CYAN_DIM('None')
-TRACEBACK_HIGHLIGHTER = create_traceback_highlighter()
+TRACEBACK_HIGHLIGHTER = traceback_highlighter_factory()
 
 
 def set_user_friendly_grpc_errors(fn: Callable[..., None]) -> Callable[..., None]:
