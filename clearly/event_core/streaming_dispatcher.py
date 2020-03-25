@@ -68,7 +68,7 @@ class StreamingDispatcher:
 
         assert not self.dispatcher_thread
 
-        self.dispatcher_thread = threading.Thread(target=self.__run_dispatcher, name=THREAD_NAME)
+        self.dispatcher_thread = threading.Thread(target=self.__run, name=self.role.thread_name)
         self.dispatcher_thread.daemon = True
         self.running = True  # graceful shutdown
         self.dispatcher_thread.start()
@@ -79,7 +79,7 @@ class StreamingDispatcher:
         if not self.dispatcher_thread:
             return
 
-        logger.info('Stopping %s', THREAD_NAME)
+        logger.info('Stopping %s', self.role.thread_name)
         self.running = False  # graceful shutdown
         self.dispatcher_thread.join(1)
         self.dispatcher_thread = None
@@ -108,8 +108,8 @@ class StreamingDispatcher:
         yield cc.queue
         self.observers.remove(cc)
 
-    def __run_dispatcher(self) -> None:  # pragma: no cover
-        logger.info('Starting %s: %s', THREAD_NAME, threading.current_thread())
+    def __run(self) -> None:  # pragma: no cover
+        logger.info('Starting: %r', threading.current_thread())
 
         while self.running:
             try:
@@ -119,7 +119,7 @@ class StreamingDispatcher:
 
             self._dispatch(event_data)
 
-        logger.info('%s stopped: %s', THREAD_NAME, threading.current_thread())
+        logger.info('Stopped: %r', threading.current_thread())
 
     def _dispatch(self, event_data):
         if isinstance(event_data, TaskData):
