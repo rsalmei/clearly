@@ -357,8 +357,8 @@ class ClearlyClient:
         return Colors.YELLOW(result)  # transient states
 
     @staticmethod
-        result = '{:>{}}'.format(state, HEADER_SIZE)
     def __worker_state(state: str) -> None:
+        result = state
         if state == worker_states.ONLINE:
             return Colors.GREEN_BOLD(result)
         return Colors.RED_BOLD(result)
