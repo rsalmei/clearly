@@ -2,16 +2,19 @@ import logging
 import signal
 import threading
 from queue import Queue
-from typing import Any, Optional
+from typing import Any, Iterator, Optional, Union
 
-from celery import Celery, states
+from celery import Celery
 from celery.events import EventReceiver
-from celery.events.state import State
+from celery.events.state import State, Task, Worker
+from celery.states import PENDING, SUCCESS
 
-from .events import immutable_task, immutable_worker
+from ..expected_state import ExpectedStateHandler, setup_task_states
+from ..protos.clearly_pb2 import TaskMessage, WorkerMessage
 from ..safe_compiler import safe_compile_text
-from ..utils import worker_states
+from ..utils.data import obj_to_message
 from ..utils.env_params import get_env_int
+from ..utils import worker_states
 
 logger = logging.getLogger(__name__)
 
@@ -25,39 +28,38 @@ class EventListener:
     Server object, to capture events and handle tasks and workers.
 
     Attributes:
-        _app (Celery): a configured celery app instance
-        _queue_output (Queue): to send to streaming dispatcher
-        memory (State): LRU storage object to keep tasks and workers
-        _use_result_backend (bool): if True, there's a result backend to fetch results from
+        app: a configured celery app instance
+        queue_tasks: to send to the streaming dispatcher responsible for tasks
+        queue_workers: to send to the streaming dispatcher responsible for workers
+        memory: LRU storage object to keep tasks and workers
+        use_result_backend: if True, there's a result backend to fetch results from
+        task_states: object that fills missing tasks' states
+        worker_states: object that fills missing workers' states
+
     """
 
-    def __init__(self, broker, queue_output, backend=None,
-                 max_tasks_in_memory=None, max_workers_in_memory=None):
+    def __init__(self, broker: str, queue_tasks: Queue, queue_workers: Queue, memory: State,
+                 backend: str = None):
         """Construct an event listener instance.
 
         Args:
-            broker (str): the broker being used by the celery system.
-            queue_output (Queue): to send to streaming dispatcher.
-            backend (str): the result backend being used by the celery system.
-            max_tasks_in_memory (int): max tasks stored
-            max_workers_in_memory (int): max workers stored
+            broker: the broker being used by the celery system.
+            queue_tasks: to send to the streaming dispatcher responsible for tasks
+            queue_workers: to send to the streaming dispatcher responsible for workers
+            backend: the result backend being used by the celery system.
+
         """
-        self._app = Celery(broker=broker, backend=backend)
-        self._queue_output = queue_output
+        logger.info('Creating %s: broker=%s', EventListener.__name__, broker)
+
+        self.app = Celery(broker=broker, backend=backend)
+        self.queue_tasks, self.queue_workers, self.memory = queue_tasks, queue_workers, memory
 
         from celery.backends.base import DisabledBackend
-        self._use_result_backend = not isinstance(self._app.backend, DisabledBackend)
+        self.use_result_backend = not isinstance(self.app.backend, DisabledBackend)
+        logger.info('Detected result backend: %s', self.use_result_backend and backend)
 
-        logger.info('Creating %s: max_tasks=%d; max_workers=%d\n'
-                    'Celery broker=%s; backend=%s; using_result_backend=%s',
-                    EventListener.__name__, max_tasks_in_memory, max_workers_in_memory,
-                    broker, backend, self._use_result_backend)
-
-        # events handling: storage and filling missing states.
-        self.memory = State(
-            max_tasks_in_memory=max_tasks_in_memory,
-            max_workers_in_memory=max_workers_in_memory,
-        )  # type: State
+        # fill missing gaps in states.
+        self.task_states: ExpectedStateHandler = setup_task_states()
 
         # running engine (should be asyncio in the future)
         self._listener_thread: Optional[threading.Thread] = None
@@ -78,7 +80,7 @@ class EventListener:
 
         assert not self._listener_thread
 
-        self._listener_thread = threading.Thread(target=self.__run_listener, name=THREAD_NAME)
+        self._listener_thread = threading.Thread(target=self.__run, name=THREAD_NAME)
         self._listener_thread.daemon = True
         self._listener_thread.start()
 
@@ -97,18 +99,18 @@ class EventListener:
         self._listener_thread.join(1)
         self._listener_thread = self._celery_receiver = None
 
-    def __run_listener(self) -> None:  # pragma: no cover
-        logger.info('Starting %s: %s', THREAD_NAME, threading.current_thread())
+    def __run(self) -> None:  # pragma: no cover
+        logger.info('Starting: %r', threading.current_thread())
 
-        with self._app.connection() as connection:
-            self._celery_receiver: EventReceiver = self._app.events.Receiver(
+        with self.app.connection() as connection:
+            self._celery_receiver: EventReceiver = self.app.events.Receiver(
                 connection, handlers={
                     '*': self._process_event,
                 })
             self._wait_event.set()
             self._celery_receiver.capture(limit=None, timeout=None, wakeup=True)
 
-        logger.info('%s stopped: %s', THREAD_NAME, threading.current_thread())
+        logger.info('Stopped: %r', threading.current_thread())
 
     def _process_event(self, event: dict) -> None:
         event_type = event['type']
