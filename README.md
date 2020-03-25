@@ -8,7 +8,27 @@
 [![PyPI downloads](https://img.shields.io/pypi/dm/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 
 
-# clearly :)
+```text
+        __                __
+  _____/ /__  ____ ______/ /_  __
+ / ___/ / _ \/ __ `/ ___/ / / / /
+/ /__/ /  __/ /_/ / /  / / /_/ /
+\___/_/\___/\__,_/_/  /_/\__, /
+                        /____/
+```
+
+### 📌 Extra!
+
+Clearly will be debuting a new architecture in version 0.9, since its very near 1.0! \o/
+
+A major revamp is being made to make the code more mature, more reliable and faster!
+You can see it in https://github.com/rsalmei/clearly/pull/52 (work in progress).
+
+I think this version is going to be really polished and professional, hope you like it! And if you do, tell me! Open an issue with a compliment... 😊
+
+Enjoy!
+
+
 ## Clearly see and debug your celery pool in real time!
 
 Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [flower](https://github.com/mher/flower)? You'll probably like **Clearly**! 👍
