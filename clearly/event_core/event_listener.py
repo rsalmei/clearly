@@ -147,6 +147,27 @@ class EventListener:
         (worker, _), _ = self.memory.event(event)
         return immutable_worker(worker, worker.status_string, pre_state, created)
 
+    # noinspection PyBroadException
+    def _derive_task_result(self, task: Task) -> Any:
+        try:  # verify if the task result is truncated.
+            return EventListener.compile_task_result(task)
+        except SyntaxError:  # <== this means the result is truncated.
+            error = 'no-result-backend'
+        except Exception:
+            logger.exception('Failed to compile task result: %s, worker: %s',
+                             task.result, task.worker)
+            error = 'compile-failed'
+
+        if self.use_result_backend:
+            try:
+                return repr(self.app.AsyncResult(task.uuid).result)
+            except Exception:  # probably incompatible celery versions in clearly and user code.
+                logger.exception('Failed to fetch task result from result_backend: %s',
+                                 task.uuid)
+                error = 'fetch-failed'
+
+        return '<{}> {}'.format(error, task.result)
+
     @staticmethod
     def compile_task_result(task: Task) -> Any:
         result = task.result
