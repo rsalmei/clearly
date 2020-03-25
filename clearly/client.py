@@ -21,7 +21,7 @@ DIM_NONE = Colors.CYAN_DIM('None')
 TRACEBACK_HIGHLIGHTER = traceback_highlighter_factory()
 
 
-def set_user_friendly_grpc_errors(fn: Callable[..., None]) -> Callable[..., None]:
+def set_user_friendly_errors(fn: Callable[..., None]) -> Callable[..., None]:
     @functools.wraps(fn)
     def inner(self, *args, **kwargs):
         try:
@@ -35,6 +35,8 @@ def set_user_friendly_grpc_errors(fn: Callable[..., None]) -> Callable[..., None
                 Colors.RED(e.details()),
                 Colors.DIM(e.code())
             ))
+        except UserWarning as e:
+            print(Colors.RED(e))
 
     return inner
 
@@ -44,7 +46,8 @@ class ClearlyClient:
     commands and displays captured events.
 
     Attributes:
-        _stub: the server stub instance
+        debug: if True, let the ugly  errors be seen, humanizes them otherwise
+        _stub: the rpc communication stub instance
 
     """
 
@@ -121,9 +124,9 @@ class ClearlyClient:
         return self.capture(pattern='.', negate=True, workers=pattern, negate_workers=negate,
                             params=False, success=False, error=False, stats=stats)
 
-    @set_user_friendly_grpc_errors
     def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
                 params=None, success=False, error=True, stats=False):
+    @set_user_friendly_errors
         """Start capturing all events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
@@ -154,7 +157,7 @@ class ClearlyClient:
         except KeyboardInterrupt:
             pass
 
-    @set_user_friendly_grpc_errors
+    @set_user_friendly_errors
     def stats(self) -> None:
         """List some metrics about the capturing system itself, which of course
         reflects the actual celery pool being monitored.
@@ -174,9 +177,9 @@ class ClearlyClient:
               '\ttasks', Colors.RED(stats.len_tasks),
               '\tworkers', Colors.RED(stats.len_workers))
 
-    @set_user_friendly_grpc_errors
     def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
               params=None, success=False, error=True):
+    @set_user_friendly_errors
         """Fetch current data from past tasks.
 
         Note that the `limit` field is just a hint, it may not be accurate.
@@ -221,8 +224,8 @@ class ClearlyClient:
             ClearlyClient.__display_task(task, params, success, error)
         ClearlyClient.__fetched_info(at)
 
-    @set_user_friendly_grpc_errors
     def workers(self, pattern=None, negate=False, stats=True):
+    @set_user_friendly_errors
         """Fetch current data from known workers.
         
         Args:
@@ -250,7 +253,7 @@ class ClearlyClient:
             ClearlyClient.__display_worker(worker, stats)
         ClearlyClient.__fetched_info(at)
 
-    @set_user_friendly_grpc_errors
+    @set_user_friendly_errors
     def task(self, task_uuid: str) -> None:
         """Fetch current data from a specific task.
 
@@ -265,12 +268,12 @@ class ClearlyClient:
         else:
             print(EMPTY)
 
-    @set_user_friendly_grpc_errors
+    @set_user_friendly_errors
     def seen_tasks(self) -> None:
         """Fetch a list of seen task types."""
         print('\n'.join(self._stub.seen_tasks(Empty()).task_types))
 
-    @set_user_friendly_grpc_errors
+    @set_user_friendly_errors
     def reset(self) -> None:
         """Reset all captured tasks."""
         self._stub.reset_tasks(Empty())
