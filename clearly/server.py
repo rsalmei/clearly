@@ -9,13 +9,14 @@ from typing import Optional
 
 import grpc
 from about_time import about_time
-from celery.events.state import Task, Worker
+from celery.events.state import State
 
 from .event_core.event_listener import EventListener
-from .event_core.events import TaskData, WorkerData
-from .event_core.streaming_dispatcher import StreamingDispatcher
-from .protos import clearly_pb2, clearly_pb2_grpc
-from .utils.data import accepts
+from .event_core.streaming_dispatcher import Role, StreamingDispatcher
+from .protos import clearly_pb2_grpc
+from .protos.clearly_pb2 import RealtimeMessage, SeenTasksMessage, StatsMessage, TaskMessage, \
+    WorkerMessage
+from .utils.data import accept_task, accept_worker, obj_to_message
 
 logger = logging.getLogger(__name__)
 
@@ -203,11 +204,11 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.TaskMessage
 
         """
-        task = self.listener.memory.tasks.get(request.task_uuid)
         RPCService._log_request(request, context)
+        task = self.memory.tasks.get(request.task_uuid)
         if not task:
-            return clearly_pb2.TaskMessage()
-        return ClearlyServer._event_to_pb(task)[1]
+            return TaskMessage()
+        return obj_to_message(task, TaskMessage)
 
     def seen_tasks(self, request, context):
         """Returns all seen task types.
@@ -216,16 +217,16 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.SeenTasksMessage
 
         """
-        result = clearly_pb2.SeenTasksMessage()
-        result.task_types.extend(self.listener.memory.task_types())
         RPCService._log_request(request, context)
+        result = SeenTasksMessage()
+        result.task_types.extend(self.memory.task_types())
         return result
 
     def reset_tasks(self, request, context):
         """Resets all captured tasks."""
-        self.listener.memory.clear_tasks()
-        return clearly_pb2.Empty()
         RPCService._log_request(request, context)
+        self.memory.clear_tasks()
+        return Empty()
 
     def get_stats(self, request, context):
         """Returns the server statistics.
@@ -234,9 +235,9 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.StatsMessage
 
         """
-        m = self.listener.memory
-        return clearly_pb2.StatsMessage(
         RPCService._log_request(request, context)
+        m = self.memory
+        return StatsMessage(
             task_count=m.task_count,
             event_count=m.event_count,
             len_tasks=len(m.tasks),
