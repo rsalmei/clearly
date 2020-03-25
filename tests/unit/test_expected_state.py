@@ -2,26 +2,7 @@ import pytest
 # noinspection PyProtectedMember
 from celery.states import FAILURE, PENDING, RECEIVED, REJECTED, RETRY, REVOKED, STARTED, SUCCESS
 
-from clearly.expected_state import setup_task_states, setup_worker_states
-from clearly.utils.worker_states import OFFLINE, ONLINE
-
-
-@pytest.mark.parametrize('state_initial, state, expected', [
-    (OFFLINE, 'orange', ValueError),
-    ('banana', ONLINE, ValueError),
-    ('banana', 'orange', ValueError),
-    (OFFLINE, OFFLINE, []),
-    (OFFLINE, ONLINE, [ONLINE]),
-    (ONLINE, ONLINE, []),
-    (ONLINE, OFFLINE, [OFFLINE]),
-])
-def test_expected_states_worker(state_initial, state, expected):
-    states = setup_worker_states()
-    if isinstance(expected, list):
-        assert list(states.states_through(state_initial, state)) == expected
-    else:
-        with pytest.raises(expected):
-            list(states.states_through(state_initial, state))
+from clearly.expected_state import setup_task_states
 
 
 @pytest.mark.parametrize('state_initial, state, expected', [

@@ -2,8 +2,6 @@ from typing import Tuple, Iterable, Optional, Union
 
 from celery import states as task_states
 
-from .utils import worker_states
-
 
 class ExpectedStateHandler:
     """Events received will usually be totally disordered, which is not a
@@ -79,10 +77,4 @@ def setup_task_states() -> ExpectedStateHandler:
              task_states.REVOKED,), task_states.RETRY) \
         .to(received)
 
-
-def setup_worker_states() -> ExpectedStateHandler:
-    expected_path = ExpectedPath(worker_states.OFFLINE)
-    expected_path.to(worker_states.ONLINE).to(expected_path)
-
-    return ExpectedStateHandler(expected_path)
     return ExpectedStateHandler(pending)
