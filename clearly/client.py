@@ -314,7 +314,7 @@ class ClearlyClient:
                        success: bool, error: bool) -> None:
         ts = datetime.fromtimestamp(task.timestamp)
         print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
-        if task.created:
+        if not task.state:
             routing_key = task.routing_key or EMPTY
             print(Colors.BLUE(task.name),
                   Colors.MAGENTA(routing_key[len(task.name):] or '-'
@@ -330,7 +330,7 @@ class ClearlyClient:
         show_result = (task.state in task_states.PROPAGATE_STATES and error) \
             or (task.state == task_states.SUCCESS and success)
 
-        first_seen = bool(params) and task.created
+        first_seen = bool(params) and not task.state
         result = params is not False and show_result
         if first_seen or result:
             print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
