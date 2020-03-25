@@ -4,6 +4,7 @@ branch = True
 omit =
     clearly/protos/*
     clearly/command_line.py
+    clearly/utils/states.py
 
 [report]
 # Regexes for lines to exclude from consideration
