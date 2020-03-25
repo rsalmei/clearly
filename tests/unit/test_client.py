@@ -8,7 +8,6 @@ from celery import states
 from clearly.client import ClearlyClient
 from clearly.protos import clearly_pb2
 from clearly.utils import worker_states
-from clearly.utils.colors import strip_colors
 
 
 @pytest.fixture
@@ -230,8 +229,8 @@ def task_result(request):
 
 # noinspection PyProtectedMember
 def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
-                             task_state_type, task_tb, mocked_client, capsys):
     task = clearly_pb2.TaskMessage(
+                             task_state_type, task_tb, mocked_client, capsys, strip_colors):
         name='name', routing_key='routing_key', uuid='uuid', retries=2,
         args='args123', kwargs='kwargs', result=task_result, traceback=task_tb,
         timestamp=123.1, state=task_state_type, created=bool3,
@@ -272,8 +271,8 @@ def worker_heartbeat(request):
 
 # noinspection PyProtectedMember
 def test_client_display_worker(bool1, bool2, worker_state_type, worker_heartbeat,
-                               mocked_client, capsys):
     worker = clearly_pb2.WorkerMessage(
+                               mocked_client, capsys, strip_colors):
         hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
         sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, alive=bool2,
         state=worker_state_type, freq=5, last_heartbeat=worker_heartbeat,
