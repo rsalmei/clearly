@@ -71,34 +71,6 @@ class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
                 key, obj = ClearlyServer._event_to_pb(event_data)
                 yield clearly_pb2.RealtimeEventMessage(**{key: obj})
 
-    @staticmethod
-    def _event_to_pb(event):
-        """Supports converting internal TaskData and WorkerData, as well as
-        celery Task and Worker to proto buffers messages.
-
-        Args:
-            event (Union[TaskData|Task|WorkerData|Worker]):
-
-        Returns:
-            Tuple[str, Union[clearly_pb2.TaskMessage, clearly_pb2.WorkerMessage]
-
-        """
-        if isinstance(event, (TaskData, Task)):
-            key, klass = 'task', clearly_pb2.TaskMessage
-        elif isinstance(event, (WorkerData, Worker)):
-            key, klass = 'worker', clearly_pb2.WorkerMessage
-        else:
-            raise ValueError('unknown event')
-        keys = klass.DESCRIPTOR.fields_by_name.keys()
-        # noinspection PyProtectedMember
-        data = {k: v for k, v in
-                getattr(
-                    event, '_asdict',  # internal TaskData and WorkerData
-                    lambda: {f: getattr(event, f) for f in event._fields}  # celery Task and Worker
-                )
-                ().items() if k in keys}
-        return key, klass(**data)
-
     def filter_tasks(self, request, context):
         """Filter tasks by matching patterns to name, routing key and state.
 
