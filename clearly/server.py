@@ -60,6 +60,43 @@ class ClearlyServer:
         self.dispatcher_tasks = StreamingDispatcher(queue_tasks, Role.TASKS)
         self.dispatcher_workers = StreamingDispatcher(queue_workers, Role.WORKERS)
         self.rpc = RPCService(self.memory, self.dispatcher_tasks, self.dispatcher_workers)
+
+    def start_server(self, port: int = None, blocking: Optional[bool] = None) \
+            -> Optional[grpc.Server]:  # pragma: no cover
+        """Start the communication service in a new gRPC server instance.
+
+        Args:
+            port: the port clearly server will serve on
+            blocking: if True manages gRPC server and blocks the main thread,
+                just returns the server otherwise
+
+        Returns:
+            the gRPC server if not blocking, None otherwise
+
+        """
+        port = port or 12223
+        logger.info('Initiating gRPC server: port=%d', port)
+
+        gserver = grpc.server(futures.ThreadPoolExecutor())
+        clearly_pb2_grpc.add_ClearlyServerServicer_to_server(self.rpc, gserver)
+        gserver.add_insecure_port('[::]:{}'.format(port))
+
+        logger.info('gRPC server ok')
+        if blocking is False:
+            return gserver
+
+        gserver.start()
+
+        one_day_in_seconds = 24 * 60 * 60
+        import time
+        try:
+            while True:
+                time.sleep(one_day_in_seconds)
+        except KeyboardInterrupt:
+            logger.info('Stopping gRPC server')
+            gserver.stop(None)  # immediately.
+
+
 class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
     """Service that implements the RPC communication."""
 
@@ -217,38 +254,3 @@ def _setup_logging(debug):  # pragma: no cover
     logging.getLogger('clearly').setLevel(logging.DEBUG if debug else logging.INFO)
 
 
-def start_server(broker, backend=None, port=12223,
-                 max_tasks=10000, max_workers=100,
-                 blocking=False, debug=False):  # pragma: no cover
-    """Starts a Clearly Server programmatically."""
-    _setup_logging(debug)
-
-    queue_listener_dispatcher = Queue()
-    listener = EventListener(broker, queue_listener_dispatcher, backend=backend,
-                             max_tasks_in_memory=max_tasks,
-                             max_workers_in_memory=max_workers)
-    dispatcher = StreamingDispatcher(queue_listener_dispatcher)
-    clearlysrv = ClearlyServer(listener, dispatcher)
-    return _serve(clearlysrv, port, blocking)
-
-
-def _serve(instance, port, blocking):  # pragma: no cover
-    logger.info('Initiating gRPC server: port=%d', port)
-
-    gserver = grpc.server(futures.ThreadPoolExecutor())
-    clearly_pb2_grpc.add_ClearlyServerServicer_to_server(instance, gserver)
-    gserver.add_insecure_port('[::]:{}'.format(port))
-
-    logger.info('gRPC server ok')
-    gserver.start()
-
-    if not blocking:
-        return gserver
-
-    one_day_in_seconds = 24 * 60 * 60
-    import time
-    try:
-        while True:
-            time.sleep(one_day_in_seconds)
-    except KeyboardInterrupt:
-        gserver.stop(None)
