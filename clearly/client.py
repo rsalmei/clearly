@@ -361,11 +361,10 @@ class ClearlyClient:
 
         if stats:
             print(Colors.DIM('{:>{}}'.format('sw:', HEADER_SIZE)),
-                  worker.sw_ident,
-                  Colors.CYAN_DIM(worker.sw_sys),
+                  Colors.CYAN_DIM(' '.join((worker.sw_sys, worker.sw_ident))),
                   Colors.ORANGE(worker.sw_ver))
             print(Colors.DIM('{:>{}}'.format('load:', HEADER_SIZE)),
-                  worker.loadavg or DIM_NONE,
+                  ClearlyClient.__item_list(worker.loadavg),
                   Colors.DIM('processed:'), worker.processed or DIM_NONE)
             heartbeats = [datetime.fromtimestamp(x).strftime('%H:%M:%S.%f')[:-3]
                           for x in worker.heartbeats or []]
