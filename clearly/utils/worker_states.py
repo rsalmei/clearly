@@ -4,7 +4,7 @@ OFFLINE = 'OFFLINE'
 ONLINE = 'ONLINE'
 HEARTBEAT = 'HEARTBEAT'
 
-WORKER_STATES = frozenset((OFFLINE, ONLINE, HEARTBEAT))
+ALL_STATES = frozenset((OFFLINE, ONLINE, HEARTBEAT))
 
 # event types from celery Worker.type
 TYPES = {
