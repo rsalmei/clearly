@@ -1,9 +1,5 @@
 from typing import Any, Callable
 
-from pygments import highlight
-from pygments.formatters.terminal256 import Terminal256Formatter
-from pygments.lexers.python import PythonTracebackLexer
-
 from .safe_compiler import CallDescriptor
 from .utils.colors import Colors
 
@@ -74,11 +70,14 @@ def typed_code(p: Any, wrap: bool = True) -> str:
     return repr(p)
 
 
-def create_traceback_highlighter() -> Callable[[str], str]:
+def traceback_highlighter_factory() -> Callable[[str], str]:  # pragma: no cover
+    from pygments.lexers.python import PythonTracebackLexer
     lexer = PythonTracebackLexer()
+    from pygments.formatters.terminal256 import Terminal256Formatter
     formatter = Terminal256Formatter(style='native')
 
     def inner(tb):
         return highlight(tb, lexer, formatter)
 
+    from pygments import highlight
     return inner
