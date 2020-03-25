@@ -64,11 +64,15 @@ class ClearlyClient:
         from .protos import clearly_pb2_grpc
         self._stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
-    def capture_tasks(self, pattern=None, negate=False, params=None, success=False, error=True):
+    def capture_tasks(self, tasks: Optional[str] = None, params: Optional[bool] = None,
+                      success: bool = False, error: bool = True) -> None:
         """Start capturing task events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
         handle all tasks updates.
+
+        Currently you can filter tasks by name, routing key or state.
+        Insert an '!' in the first position to select those that do not match criteria.
 
         This runs in the foreground. Press CTRL+C at any time to stop it.
 
@@ -76,11 +80,12 @@ class ClearlyClient:
             Filter args:
             ------------
 
-            pattern (Optional[str]): a simple pattern to filter tasks by name.
-                ex.: 'email' to filter task names containing that word anywhere
-                     '^trigger|^email' to filter names starting with any of those words
-                     'trigger.*123456' to filter names with those words in that sequence
-            negate (bool): send True to filter tasks that do not match criteria.
+            tasks: a simple pattern to filter tasks.
+                ex.: 'email' to find values containing that word anywhere
+                     'failure|rejected|revoked' to find tasks with problem
+                     '^trigger|^email' to find values starting with any of those words
+                     'trigger.*123456' to find values with those words in that sequence
+                     '!^trigger|^email' to filter values not starting with both those words
 
             Display args:
             -------------
@@ -95,14 +100,16 @@ class ClearlyClient:
                 default is True, as you're monitoring to find errors, right?
 
         """
-        return self.capture(pattern=pattern, negate=negate, workers='.', negate_workers=True,
-                            params=params, success=success, error=error, stats=False)
+        self.capture(tasks=tasks, params=params, success=success, error=error, workers='!')
 
-    def capture_workers(self, pattern=None, negate=False, stats=False):
+    def capture_workers(self, workers: Optional[str] = None, stats: bool = False) -> None:
         """Start capturing worker events in real time, so you can instantly see exactly
         what your workers states are. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
         handle all tasks and workers updates.
+
+        Currently you can filter workers by hostname.
+        Insert an '!' in the first position to select those that do not match criteria.
 
         This runs in the foreground. Press CTRL+C at any time to stop it.
 
@@ -110,10 +117,10 @@ class ClearlyClient:
             Filter args:
             ------------
 
-            pattern (Optional[str]): a simple pattern to filter workers by name.
-                ex.: 'email' to filter worker names containing that word anywhere
-                     'service|priority' to filter names containing any of those words
-            negate (bool): send True to filter workers that do not match criteria.
+            workers: a simple pattern to filter workers.
+                ex.: 'email' to find values containing that word anywhere
+                     'service|priority' to find values containing any of those words
+                     '!service|priority' to find values not containing both those words
 
             Display args:
             -------------
@@ -121,12 +128,12 @@ class ClearlyClient:
             stats: if True shows complete workers' stats, default is False
 
         """
-        return self.capture(pattern='.', negate=True, workers=pattern, negate_workers=negate,
-                            params=False, success=False, error=False, stats=stats)
+        self.capture(workers=workers, stats=stats, tasks='!')
 
-    def capture(self, pattern=None, negate=False, workers=None, negate_workers=False,
-                params=None, success=False, error=True, stats=False):
     @set_user_friendly_errors
+    def capture(self, tasks: Optional[str] = None, workers: Optional[str] = None,
+                params: Optional[bool] = None, success: bool = False, error: bool = True,
+                stats: bool = False) -> None:
         """Start capturing all events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
@@ -139,11 +146,14 @@ class ClearlyClient:
             ClearlyClient#capture_workers()
 
         """
-            tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.',
-                                                    negate=negate),
-            workers_capture=clearly_pb2.PatternFilter(pattern=workers or '.',
-                                                      negate=negate_workers),
+
+        tasks_filter = ClearlyClient.__parse_pattern(tasks)
+        workers_filter = ClearlyClient.__parse_pattern(workers)
+        if not tasks_filter and not workers_filter:
+            raise UserWarning('Nothing would be selected.')
+
         request = CaptureRequest(
+            tasks_capture=tasks_filter, workers_capture=workers_filter,
         )
         try:
             for realtime in self._stub.capture_realtime(request):
@@ -177,9 +187,9 @@ class ClearlyClient:
               '\ttasks', Colors.RED(stats.len_tasks),
               '\tworkers', Colors.RED(stats.len_workers))
 
-    def tasks(self, pattern=None, negate=False, state=None, limit=None, reverse=True,
-              params=None, success=False, error=True):
     @set_user_friendly_errors
+    def tasks(self, tasks: Optional[str] = None, limit: Optional[int] = None, reverse: bool = True,
+              params: Optional[bool] = None, success: bool = False, error: bool = True) -> None:
         """Fetch current data from past tasks.
 
         Note that the `limit` field is just a hint, it may not be accurate.
@@ -190,15 +200,14 @@ class ClearlyClient:
             Filter args:
             ------------
 
-            pattern (Optional[str]): a simple pattern to filter tasks by name.
-                ex.: 'email' to filter task names containing that word anywhere
-                     '^trigger|^email' to filter names starting with any of those words
-                     'trigger.*123456' to filter names with those words in that sequence
-            negate (bool): send True to filter tasks that do not match criteria.
-            state (Optional[str]): a celery task state to filter
-            limit (int): the maximum number of events to fetch
-                if None or 0, fetches all.
-            reverse (bool): if True (default), shows the most recent first
+            tasks: a simple pattern to filter tasks.
+                ex.: 'email' to find values containing that word anywhere
+                     'failure|rejected|revoked' to find tasks with problem
+                     '^trigger|^email' to find values starting with any of those words
+                     'trigger.*123456' to find values with those words in that sequence
+                     '!^trigger|^email' to filter values not starting with both those words
+            limit: the maximum number of events to fetch, fetches all if None or 0 (default).
+            reverse: if True (default), shows the most recent first
 
             Display args:
             -------------
@@ -213,10 +222,12 @@ class ClearlyClient:
                 default is True, as you're monitoring to find errors, right?
 
         """
-            tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
-                                                   negate=negate),
-            state_pattern=state or '.', limit=limit, reverse=reverse
+        tasks_filter = ClearlyClient.__parse_pattern(tasks)
+        if not tasks_filter:
+            raise UserWarning('Nothing would be selected.')
+
         request = FilterTasksRequest(
+            tasks_filter=tasks_filter, limit=limit, reverse=reverse
         )
 
         at = about_time(self._stub.filter_tasks(request))
@@ -224,18 +235,18 @@ class ClearlyClient:
             ClearlyClient.__display_task(task, params, success, error)
         ClearlyClient.__fetched_info(at)
 
-    def workers(self, pattern=None, negate=False, stats=True):
     @set_user_friendly_errors
+    def workers(self, workers: Optional[str] = None, stats: bool = True) -> None:
         """Fetch current data from known workers.
         
         Args:
             Filter args:
             ------------
 
-            pattern (Optional[str]): a simple pattern to filter workers by name.
-                ex.: 'email' to filter worker names containing that word anywhere
-                     'service|priority' to filter names containing any of those words
-            negate (bool): send True to filter workers that do not match criteria.
+            workers: a simple pattern to filter workers.
+                ex.: 'email' to find values containing that word anywhere
+                     'service|priority' to find values containing any of those words
+                     '!service|priority' to find values not containing both those words
 
             Display args:
             -------------
@@ -243,9 +254,10 @@ class ClearlyClient:
             stats: if True shows complete workers' stats, default is False
 
         """
-            workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
-                                                     negate=negate),
-        )
+        workers_filter = ClearlyClient.__parse_pattern(workers)
+        if not workers_filter:
+            raise UserWarning('Nothing would be selected.')
+
         request = FilterWorkersRequest(workers_filter=workers_filter)
 
         at = about_time(self._stub.filter_workers(request))
@@ -284,6 +296,18 @@ class ClearlyClient:
             Colors.DIM('fetched:'), Colors.BOLD(at.count),
             Colors.GREEN(at.duration_human), Colors.GREEN(at.throughput_human)
         ))
+
+    @staticmethod
+    def __parse_pattern(pattern: str) -> PatternFilter:
+        pattern = pattern or ''
+        if not isinstance(pattern, str):
+            raise UserWarning('Invalid pattern.')
+
+        pattern = pattern.strip() or '.'
+        if pattern in ('!', '!.'):
+            return
+        negate = pattern.startswith('!')
+        return PatternFilter(pattern=pattern[negate:], negate=negate)
 
     @staticmethod
     def __display_task(task: TaskMessage, params: bool,
