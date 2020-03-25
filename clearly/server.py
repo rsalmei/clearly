@@ -125,9 +125,9 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.RealtimeEventMessage
 
         """
-        _log_request(request, context)
         tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_capture)
         workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_capture)
+        RPCService._log_request(request, context)
 
         with self.dispatcher.streaming_client(tasks_pattern, tasks_negate,
                                               workers_pattern, workers_negate) as q:  # type: Queue
@@ -147,10 +147,10 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.TaskMessage
 
         """
-        _log_request(request, context)
         tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_filter)
         state_pattern = request.state_pattern
         limit, reverse = request.limit, request.reverse
+        RPCService._log_request(request, context)
 
         pregex = re.compile(tasks_pattern)  # pattern filter condition
         sregex = re.compile(state_pattern)  # state filter condition
@@ -175,8 +175,8 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.WorkerMessage
 
         """
-        _log_request(request, context)
         workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_filter)
+        RPCService._log_request(request, context)
 
         hregex = re.compile(workers_pattern)  # hostname filter condition
 
@@ -199,8 +199,8 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.TaskMessage
 
         """
-        _log_request(request, context)
         task = self.listener.memory.tasks.get(request.task_uuid)
+        RPCService._log_request(request, context)
         if not task:
             return clearly_pb2.TaskMessage()
         return ClearlyServer._event_to_pb(task)[1]
@@ -212,16 +212,16 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.SeenTasksMessage
 
         """
-        _log_request(request, context)
         result = clearly_pb2.SeenTasksMessage()
         result.task_types.extend(self.listener.memory.task_types())
+        RPCService._log_request(request, context)
         return result
 
     def reset_tasks(self, request, context):
         """Resets all captured tasks."""
-        _log_request(request, context)
         self.listener.memory.clear_tasks()
         return clearly_pb2.Empty()
+        RPCService._log_request(request, context)
 
     def get_stats(self, request, context):
         """Returns the server statistics.
@@ -230,19 +230,17 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.StatsMessage
 
         """
-        _log_request(request, context)
         m = self.listener.memory
         return clearly_pb2.StatsMessage(
+        RPCService._log_request(request, context)
             task_count=m.task_count,
             event_count=m.event_count,
             len_tasks=len(m.tasks),
             len_workers=len(m.workers)
         )
 
-
-def _log_request(request, context):  # pragma: no cover
-    req_name = request.DESCRIPTOR.full_name
-    req_text = ' '.join(part.strip() for part in filter(None, str(request).split('\n')))
-    logger.debug('[%s] %s { %s }', context.peer(), req_name, req_text)
-
-
+    @staticmethod
+    def _log_request(request, context):  # pragma: no cover
+        req_name = request.DESCRIPTOR.full_name
+        req_text = ' '.join(part.strip() for part in str(request).splitlines())
+        logger.debug('[%s] %s { %s }', context.peer(), req_name, req_text)
