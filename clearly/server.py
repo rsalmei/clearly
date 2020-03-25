@@ -17,7 +17,7 @@ from .utils.data import accepts
 
 logger = logging.getLogger(__name__)
 
-PATTERN_PARAMS_OP = operator.attrgetter('pattern', 'negate')
+PATTERN_FILTER_OP = operator.attrgetter('pattern', 'negate')
 WORKER_HOSTNAME_OP = operator.attrgetter('hostname')
 
 
@@ -125,8 +125,6 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.RealtimeEventMessage
 
         """
-        tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_capture)
-        workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_capture)
         RPCService._log_request(request, context)
 
         with self.dispatcher.streaming_client(tasks_pattern, tasks_negate,
@@ -147,13 +145,13 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.TaskMessage
 
         """
-        tasks_pattern, tasks_negate = PATTERN_PARAMS_OP(request.tasks_filter)
         state_pattern = request.state_pattern
         limit, reverse = request.limit, request.reverse
         RPCService._log_request(request, context)
 
         pregex = re.compile(tasks_pattern)  # pattern filter condition
         sregex = re.compile(state_pattern)  # state filter condition
+        pattern, negate = PATTERN_FILTER_OP(request.tasks_filter)
 
         # generators are cool!
         found_tasks = (task for _, task in
@@ -175,10 +173,10 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.WorkerMessage
 
         """
-        workers_pattern, workers_negate = PATTERN_PARAMS_OP(request.workers_filter)
         RPCService._log_request(request, context)
 
         hregex = re.compile(workers_pattern)  # hostname filter condition
+        pattern, negate = PATTERN_FILTER_OP(request.workers_filter)
 
         # generators are cool!
         found_workers = (worker for worker in
