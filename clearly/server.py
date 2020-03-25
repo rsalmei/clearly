@@ -22,28 +22,61 @@ PATTERN_PARAMS_OP = operator.attrgetter('pattern', 'negate')
 WORKER_HOSTNAME_OP = operator.attrgetter('hostname')
 
 
-class ClearlyServer(clearly_pb2_grpc.ClearlyServerServicer):
-    """Simple and real time monitor for celery.
-    Server object, to capture events and handle tasks and workers.
-    
+class ClearlyServer:
+    """Main server object, which orchestrates capturing of celery events, see to
+    the connected clients' needs, and manages the RPC communication.
+
     Attributes:
-        listener (EventListener): the object that listens and keeps celery events
-        dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
+        memory: LRU storage object to keep celery tasks and workers
+        listener: the object that listens and keeps celery events
+        dispatcher_tasks: the mechanism to dispatch tasks to clients
+        dispatcher_workers: the mechanism to dispatch workers to clients
+        rpc: the gRPC service
 
     """
 
-    def __init__(self, listener, dispatcher):
-        """Constructs a server instance.
-        
+    def __init__(self, broker: str, backend: Optional[str] = None,
+                 max_tasks: Optional[int] = None, max_workers: Optional[int] = None):
+        """Construct a Clearly Server instance.
+
         Args:
-            listener (EventListener): the object that listens and keeps celery events
-            dispatcher (StreamingDispatcher): the mechanism to dispatch data to clients
+            broker: the broker being used by the celery system
+            backend: the result backend being used by the celery system
+            max_tasks: max tasks stored
+            max_workers: max workers stored
 
         """
-        logger.info('Creating %s', ClearlyServer.__name__)
+        max_tasks, max_workers = max_tasks or 10000, max_workers or 100
+        logger.info('Creating memory: max_tasks=%d; max_workers=%d', max_tasks, max_workers)
+        self.memory = State(max_tasks_in_memory=max_tasks, max_workers_in_memory=max_workers)
 
-        self.listener = listener
-        self.dispatcher = dispatcher
+        queue_tasks, queue_workers = Queue(), Queue()  # hands new events to be distributed.
+        try:
+            self.listener = EventListener(broker, queue_tasks, queue_workers, self.memory, backend)
+        except TimeoutError as e:
+            logger.critical(e)
+            sys.exit(1)
+
+        self.dispatcher_tasks = StreamingDispatcher(queue_tasks, Role.TASKS)
+        self.dispatcher_workers = StreamingDispatcher(queue_workers, Role.WORKERS)
+        self.rpc = RPCService(self.memory, self.dispatcher_tasks, self.dispatcher_workers)
+class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
+    """Service that implements the RPC communication."""
+
+    def __init__(self, memory: State, dispatcher_tasks: StreamingDispatcher,
+                 dispatcher_workers: StreamingDispatcher):
+        """Construct an RPC server instance.
+        
+        Args:
+            memory: LRU storage object to keep tasks and workers
+            dispatcher_tasks: the mechanism to dispatch tasks to clients
+            dispatcher_workers: the mechanism to dispatch workers to clients
+
+        """
+        logger.info('Creating %s', RPCService.__name__)
+
+        self.memory = memory
+        self.dispatcher_tasks, self.dispatcher_workers = dispatcher_tasks, dispatcher_workers
 
     def capture_realtime(self, request, context):
         """
