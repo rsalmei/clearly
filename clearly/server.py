@@ -156,24 +156,20 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
             clearly_pb2.TaskMessage
 
         """
-        state_pattern = request.state_pattern
-        limit, reverse = request.limit, request.reverse
         RPCService._log_request(request, context)
 
-        pregex = re.compile(tasks_pattern)  # pattern filter condition
-        sregex = re.compile(state_pattern)  # state filter condition
         pattern, negate = PATTERN_FILTER_OP(request.tasks_filter)
+        limit, reverse = request.limit, request.reverse
+        pattern = re.compile(pattern)
 
         # generators are cool!
         found_tasks = (task for _, task in
-                       self.listener.memory.tasks_by_time(limit=limit or None,
-                                                          reverse=reverse)
-                       if accepts(pregex, tasks_negate, task.name, task.routing_key)
-                       and accepts(sregex, tasks_negate, task.state))
+                       self.memory.tasks_by_time(limit=limit or None, reverse=reverse)
+                       if accept_task(pattern, negate, task))
 
         at = about_time(found_tasks)
         for task in at:
-            yield ClearlyServer._event_to_pb(task)[1]
+            yield obj_to_message(task, TaskMessage)
         logger.debug('%s iterated %d tasks in %s (%s)', self.filter_tasks.__name__,
                      at.count, at.duration_human, at.throughput_human)
 
@@ -186,18 +182,17 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
         """
         RPCService._log_request(request, context)
 
-        hregex = re.compile(workers_pattern)  # hostname filter condition
         pattern, negate = PATTERN_FILTER_OP(request.workers_filter)
+        pattern = re.compile(pattern)
 
         # generators are cool!
         found_workers = (worker for worker in
-                         sorted(self.listener.memory.workers.values(),
-                                key=WORKER_HOSTNAME_OP)
-                         if accepts(hregex, workers_negate, worker.hostname))
+                         sorted(self.memory.workers.values(), key=WORKER_HOSTNAME_OP)
+                         if accept_worker(pattern, negate, worker))
 
         at = about_time(found_workers)
         for worker in at:
-            yield ClearlyServer._event_to_pb(worker)[1]
+            yield obj_to_message(worker, WorkerMessage)
         logger.debug('%s iterated %d workers in %s (%s)', self.filter_workers.__name__,
                      at.count, at.duration_human, at.throughput_human)
 
