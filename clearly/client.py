@@ -350,9 +350,9 @@ class ClearlyClient:
     @staticmethod
     def __task_state(state: str) -> None:
         result = '{:>{}}'.format(state, HEADER_SIZE)
-        if state in (states.FAILURE, states.REVOKED):  # final states too
         if state == task_states.SUCCESS:  # final state in BOLD
             return Colors.GREEN_BOLD(result)
+        if state in (task_states.FAILURE, task_states.REVOKED, task_states.REJECTED):  # final too
             return Colors.RED_BOLD(result)
         return Colors.YELLOW(result)  # transient states
 
