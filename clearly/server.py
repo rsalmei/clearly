@@ -13,7 +13,6 @@ from .event_core.event_listener import EventListener
 from .event_core.events import TaskData, WorkerData
 from .event_core.streaming_dispatcher import StreamingDispatcher
 from .protos import clearly_pb2, clearly_pb2_grpc
-from .utils.colors import Colors
 from .utils.data import accepts
 
 logger = logging.getLogger('clearly.server')
@@ -245,12 +244,5 @@ def _log_request(request, context):  # pragma: no cover
     req_name = request.DESCRIPTOR.full_name
     req_text = ' '.join(part.strip() for part in filter(None, str(request).split('\n')))
     logger.debug('[%s] %s { %s }', context.peer(), req_name, req_text)
-
-
-def _setup_logging(debug):  # pragma: no cover
-    f = Colors.DIM('%(asctime)s') + Colors.MAGENTA(' %(name)s') \
-        + Colors.BLUE(' %(levelname)s') + ' %(message)s'
-    logging.basicConfig(level=logging.WARNING, format=f)
-    logging.getLogger('clearly').setLevel(logging.DEBUG if debug else logging.INFO)
 
 
