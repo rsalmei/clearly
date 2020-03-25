@@ -63,6 +63,25 @@ class StreamingDispatcher:
         signal.signal(signal.SIGTERM, sigterm_handler)
         self.__start()
 
+    @contextmanager
+    def streaming_capture(self, capture: PatternFilter, queue: Queue) -> Queue:
+        """Put a connected client in streaming capture mode, filtering all
+        incoming events in real time.
+
+        Args:
+            capture: the criteria for desired events
+            queue: where to put the matching events
+
+        """
+        observer = queue, re.compile(capture.pattern), capture.negate
+
+        # should not need any locks, thanks to GIL
+        self.observers.append(observer)
+        try:
+            yield queue
+        finally:
+            self.observers.remove(observer)
+
     def __start(self) -> None:  # pragma: no cover
         """Start the real time engine that captures tasks."""
 
@@ -84,62 +103,21 @@ class StreamingDispatcher:
         self.dispatcher_thread.join(1)
         self.dispatcher_thread = None
 
-    @contextmanager
-    def streaming_client(self, tasks_regex, tasks_negate, workers_regex, workers_negate):
-        """Connects a client to the streaming capture, filtering the events that are sent
-        to it.
-
-        Args:
-            tasks_regex (str): a pattern to filter tasks to capture.
-                ex.: '^dispatch|^email' to filter names starting with that
-                      or 'dispatch.*123456' to filter that exact name and number
-                      or even '123456' to filter that exact number anywhere.
-            tasks_negate (bool): if True, finds tasks that do not match criteria
-            workers_regex (str): a pattern to filter workers to capture.
-                ex.: 'service|priority' to filter names containing that
-            workers_negate (bool): if True, finds workers that do not match criteria
-        """
-
-        cc = CapturingClient(Queue(),
-                             re.compile(tasks_regex), tasks_negate,
-                             re.compile(workers_regex), workers_negate)
-
-        self.observers.append(cc)
-        yield cc.queue
-        self.observers.remove(cc)
-
     def __run(self) -> None:  # pragma: no cover
         logger.info('Starting: %r', threading.current_thread())
 
         while self.running:
             try:
-                event_data = self.queue_input.get(timeout=1)
+                message = self.queue_input.get(timeout=1)
             except Empty:
                 continue
 
-            self._dispatch(event_data)
+            self._dispatch(message)
 
         logger.info('Stopped: %r', threading.current_thread())
 
-    def _dispatch(self, event_data):
-        if isinstance(event_data, TaskData):
-            op, path = TASK_OP, self.task_states
-            values = (event_data.name, event_data.routing_key)
-        else:
-            op, path = WORKER_OP, self.worker_states
-            values = (event_data.hostname,)
-
+    def _dispatch(self, message: Union[TaskMessage, WorkerMessage]) -> None:
         # let's see who's interested.
-        for q, regex, negate in map(op, self.observers):
-            if not accepts(regex, negate, *values):
-                continue
-            for kwds in StreamingDispatcher.generate_states(event_data, path):
-                # noinspection PyUnresolvedReferences,PyProtectedMember
-                q.put(event_data._replace(**kwds))
-
-    @staticmethod
-    def generate_states(event_data, path):
-        if event_data.created:
-            yield dict(state='-')  # sends one more, to present the params
-        for field in path.states_through(event_data.pre_state, event_data.state):
-            yield dict(state=field, created=False)
+        for q, pattern, negate in self.observers:
+            if self.role.func_accept(pattern, negate, message):
+                q.put(message)
