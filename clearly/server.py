@@ -15,7 +15,7 @@ from .event_core.streaming_dispatcher import StreamingDispatcher
 from .protos import clearly_pb2, clearly_pb2_grpc
 from .utils.data import accepts
 
-logger = logging.getLogger('clearly.server')
+logger = logging.getLogger(__name__)
 
 PATTERN_PARAMS_OP = operator.attrgetter('pattern', 'negate')
 WORKER_HOSTNAME_OP = operator.attrgetter('hostname')
