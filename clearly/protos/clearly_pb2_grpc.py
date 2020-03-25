@@ -19,7 +19,7 @@ class ClearlyServerStub(object):
     self.capture_realtime = channel.unary_stream(
         '/ClearlyServer/capture_realtime',
         request_serializer=protos_dot_clearly__pb2.CaptureRequest.SerializeToString,
-        response_deserializer=protos_dot_clearly__pb2.RealtimeEventMessage.FromString,
+        response_deserializer=protos_dot_clearly__pb2.RealtimeMessage.FromString,
         )
     self.filter_tasks = channel.unary_stream(
         '/ClearlyServer/filter_tasks',
@@ -114,7 +114,7 @@ def add_ClearlyServerServicer_to_server(servicer, server):
       'capture_realtime': grpc.unary_stream_rpc_method_handler(
           servicer.capture_realtime,
           request_deserializer=protos_dot_clearly__pb2.CaptureRequest.FromString,
-          response_serializer=protos_dot_clearly__pb2.RealtimeEventMessage.SerializeToString,
+          response_serializer=protos_dot_clearly__pb2.RealtimeMessage.SerializeToString,
       ),
       'filter_tasks': grpc.unary_stream_rpc_method_handler(
           servicer.filter_tasks,
