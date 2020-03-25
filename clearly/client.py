@@ -378,6 +378,14 @@ class ClearlyClient:
                       Colors.DIM(tsstr))
 
     @staticmethod
+    def __item_list(items: Iterable[Any], color: Callable[[str], str] = str) -> str:
+        return '{}{}{}'.format(
+            Colors.MAGENTA('['),
+            Colors.MAGENTA(', ').join(map(color, items)),
+            Colors.MAGENTA(']'),
+        )
+
+    @staticmethod
     def __task_state(state: str) -> None:
         result = '{:>{}}'.format(state, HEADER_SIZE)
         if state == task_states.SUCCESS:  # final state in BOLD
