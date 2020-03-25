@@ -20,27 +20,24 @@ class ExpectedStateHandler:
     def __init__(self, expected_path: 'ExpectedPath'):
         self.expected_path: ExpectedPath = expected_path
 
+    @staticmethod
+    def __traverse(pre, target, yielding):
+        pointer, seen = pre, [pre.name]
+        while pointer.name != target:
+            pointer = pointer.find(target)
+            if pointer.name in seen:
+                raise ValueError('impossible to find from {}'.format(pre))
+            seen.append(pointer.name)
+            if yielding:
+                yield pointer.name
+        return pointer
+
     def states_through(self, pre: str, post: str) -> Iterable[str]:
         if pre == post:
             return
 
-        pointer = self.expected_path
-        expected = pre
-        seen = [pointer.name]
-        while pointer.name != expected:
-            pointer = pointer.find(expected)
-            if pointer.name in seen:
-                raise ValueError('impossible to start from {}'.format(pre))
-            seen.append(pointer.name)
-
-        expected = post
-        seen = [pointer.name]
-        while pointer.name != expected:
-            pointer = pointer.find(expected)
-            if pointer.name in seen:
-                raise ValueError('impossible to go from {} to {}'.format(pre, post))
-            seen.append(pointer.name)
-            yield pointer.name
+        pointer = yield from self.__traverse(self.expected_path, pre, False)
+        yield from self.__traverse(pointer, post, True)
 
 
 class ExpectedPath:
