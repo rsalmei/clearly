@@ -113,39 +113,47 @@ class EventListener:
     def _process_event(self, event: dict) -> None:
         event_type = event['type']
         if event_type.startswith('task'):
-            data = self._process_task_event(event)
+            gen, queue, to_type = self._set_task_event(event), self.queue_tasks, TaskMessage
         elif event_type.startswith('worker'):
-            data = self._process_worker_event(event)
+            gen, queue, to_type = self._set_worker_event(event), self.queue_workers, WorkerMessage
         else:
-            logger.warning('unknown event: %s', event)
+            self._set_custom_event(event)
             return
 
-        self._queue_output.put(data)
+        obj = next(gen)
+        for state in gen:
+            queue.put(obj_to_message(obj, to_type, state=state))
 
-    def _process_task_event(self, event):
+    def _set_task_event(self, event: dict) -> Iterator[Union[Task, str]]:
         task = self.memory.tasks.get(event['uuid'])
-        pre_state, created = (task.state, False) if task else (states.PENDING, True)
-        (task, _), _ = self.memory.event(event)  # the `created` is broken in celery.
-        if task.state == states.SUCCESS:
-            try:
-                # verify if the celery task result is truncated.
-                task.result = EventListener.compile_task_result(task)
-            except SyntaxError:
-                # use result backend as fallback if allowed and available.
-                if self._use_result_backend:  # pragma: no cover
-                    try:
-                        task.result = repr(self._app.AsyncResult(task.uuid).result)
-                    except:  # different versions of celery in clearly and publisher
-                        logger.exception('Failed to un-truncate task result %s from result_backend',
-                                         task.uuid)
-        return immutable_task(task, task.state, pre_state, created)
+        pre_state = task and task.state
+        (task, _), _ = self.memory.event(event)
 
-    def _process_worker_event(self, event):
-        worker = self.memory.workers.get(event['hostname'])
-        pre_state, created = (worker.status_string, False) \
-            if worker else (worker_states.OFFLINE, True)
+        # fix or insert fields.
+        if task.state == SUCCESS:
+            task.result = self._derive_task_result(task)
+        yield task
+
+        # fix shortcomings of `created` field: a task should be displayed as PENDING if not
+        # new; if a task is first seen in any other state, it should not be new.
+        if not pre_state:
+            yield '' if task.state == PENDING else task.state  # empty state will mean new.
+            return
+
+        yield from self.task_states.states_through(pre_state, task.state)
+
+    def _set_worker_event(self, event: dict) -> Iterator[Union[Worker, str]]:
         (worker, _), _ = self.memory.event(event)
-        return immutable_worker(worker, worker.status_string, pre_state, created)
+
+        # fix or insert fields.
+        worker.state = worker_states.TYPES[worker.type]
+        yield worker
+
+        yield worker.state
+
+    def _set_custom_event(self, event: dict) -> None:
+        # could pass custom user events here, if the need ever arises.
+        logger.warning('unknown event: %s', event)
 
     # noinspection PyBroadException
     def _derive_task_result(self, task: Task) -> Any:
