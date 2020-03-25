@@ -352,6 +352,9 @@ class ClearlyClient:
 
     @staticmethod
     def __display_worker(worker: WorkerMessage, stats: bool) -> None:
+        if worker.timestamp:
+            ts = datetime.fromtimestamp(worker.timestamp)
+            print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         print(ClearlyClient.__worker_state(worker.state),
               Colors.CYAN_DIM(worker.hostname),
               Colors.YELLOW_DIM(str(worker.pid)))
