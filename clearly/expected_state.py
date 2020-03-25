@@ -68,18 +68,16 @@ class ExpectedPath:
         raise UserWarning('unknown name {} in {}'.format(name, self.name))
 
 
-    expected_path = ExpectedPath(task_states.PENDING)
-    return_path = expected_path.to(task_states.RECEIVED)
-    # noinspection PyTypeChecker
 def setup_task_states() -> ExpectedStateHandler:
-    return_path.to(task_states.STARTED) \
+    pending = ExpectedPath(task_states.PENDING)
+    received = pending.to(task_states.RECEIVED)
+    received \
+        .to(task_states.STARTED) \
         .to((task_states.SUCCESS,
              task_states.FAILURE,
              task_states.REJECTED,
              task_states.REVOKED,), task_states.RETRY) \
-        .to(return_path)
-
-    return ExpectedStateHandler(expected_path)
+        .to(received)
 
 
 def setup_worker_states() -> ExpectedStateHandler:
@@ -87,3 +85,4 @@ def setup_worker_states() -> ExpectedStateHandler:
     expected_path.to(worker_states.ONLINE).to(expected_path)
 
     return ExpectedStateHandler(expected_path)
+    return ExpectedStateHandler(pending)
