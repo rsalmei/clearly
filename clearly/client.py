@@ -359,6 +359,8 @@ class ClearlyClient:
     @staticmethod
     def __worker_state(state: str) -> None:
         result = state
+        if state == worker_states.HEARTBEAT:
+            return Colors.GREEN(result)
         if state == worker_states.ONLINE:
             return Colors.GREEN_BOLD(result)
         return Colors.RED_BOLD(result)
