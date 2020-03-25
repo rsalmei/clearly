@@ -367,15 +367,12 @@ class ClearlyClient:
             print(Colors.DIM('{:>{}}'.format('load:', HEADER_SIZE)),
                   worker.loadavg or DIM_NONE,
                   Colors.DIM('processed:'), worker.processed or DIM_NONE)
-            if worker.alive:
-                if worker.last_heartbeat:
-                    ts = datetime.fromtimestamp(worker.last_heartbeat)
-                    tsstr = ts.strftime('%H:%M:%S.%f')[:-3]
-                else:
-                    tsstr = DIM_NONE
-                print(Colors.DIM('{:>{}}'.format('heartbeat:', HEADER_SIZE)),
-                      '/{}s'.format(worker.freq),
-                      Colors.DIM(tsstr))
+            heartbeats = [datetime.fromtimestamp(x).strftime('%H:%M:%S.%f')[:-3]
+                          for x in worker.heartbeats or []]
+            print(Colors.DIM('{:>{}}'.format('heartb:', HEADER_SIZE)),
+                  '{}{}'.format(Colors.ORANGE(worker.freq),
+                                Colors.DIM('s')),
+                  ClearlyClient.__item_list(heartbeats))
 
     @staticmethod
     def __item_list(items: Iterable[Any], color: Callable[[str], str] = str) -> str:
