@@ -1,50 +1,57 @@
 import logging
-import operator
 import re
 import signal
 import threading
-from collections import namedtuple
 from contextlib import contextmanager
+from enum import Enum
 from queue import Empty, Queue
+from typing import List, Optional, Pattern, Tuple, Union, Callable
 
-from .events import TaskData
-from ..expected_state import ExpectedStateHandler, setup_task_states, setup_worker_states
-from ..utils.data import accepts
-from typing import Iterator, List, Optional, Union
+from ..protos.clearly_pb2 import PatternFilter, TaskMessage, WorkerMessage
+from ..utils.data import accept_task, accept_worker
 
 logger = logging.getLogger(__name__)
 
-CapturingClient = namedtuple('CapturingClient',
-                             'queue task_regex task_negate worker_regex worker_negate')
-TASK_OP = operator.attrgetter('queue', 'task_regex', 'task_negate')
-WORKER_OP = operator.attrgetter('queue', 'worker_regex', 'worker_negate')
 THREAD_NAME = 'clearly-dispatcher'
+
+
+class Role(Enum):
+    TASKS = (accept_task,)
+    WORKERS = (accept_worker,)
+
+    @property
+    def thread_name(self) -> str:
+        return '{}-{}'.format(THREAD_NAME, self.name.lower())
+
+    @property
+    def func_accept(self) -> Callable[[Pattern, bool, Union[TaskMessage, WorkerMessage]], bool]:
+        return self.value[0]
 
 
 class StreamingDispatcher:
     """Dispatch events to connected clients.
 
     Server object, gets cleaned tasks and workers and send them to interested parties.
+    One instance takes care of only one of those, two instances are needed.
     
     Attributes:
-        queue_input (Queue): to receive from event listener
-        observers (list): currently connected clients, receiving real time events
-        task_states (ExpectedStateHandler): object that fills missing tasks' states
-        worker_states (ExpectedStateHandler): object that fills missing workers' states
+        queue_input: to receive from event listener
+        observers: currently connected clients, interested in real time worker events
+        role: current role this dispatcher is running
+
     """
 
-    def __init__(self, queue_input: Queue):
+    def __init__(self, queue_input: Queue, role: Role):
         """Construct a client dispatcher instance.
         
         Args:
             queue_input: to receive from event listener
+
         """
         logger.info('Creating %s', StreamingDispatcher.__name__)
 
-        self.queue_input = queue_input
-        self.observers = []  # should not need any lock, thanks to GIL
-        self.task_states = setup_task_states()  # type: ExpectedStateHandler
-        self.worker_states = setup_worker_states()  # type: ExpectedStateHandler
+        self.queue_input, self.role = queue_input, role
+        self.observers: List[Tuple[Queue, Pattern, bool]] = []
 
         # running engine (should be asyncio in the future)
         self.dispatcher_thread: Optional[threading.Thread] = None
