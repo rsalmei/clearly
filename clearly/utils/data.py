@@ -1,10 +1,14 @@
-def accepts(regex, negate, *values):
-    """Given a compiled regex and a negate, find if any of the values match.
+import operator
 from typing import Pattern, Tuple, Union
 
 from celery.events.state import Task, Worker
 
 from ..protos.clearly_pb2 import TaskMessage, WorkerMessage
+
+TASK_OP = operator.attrgetter('name', 'routing_key', 'state')
+WORKER_OP = operator.attrgetter('hostname')
+
+
 def obj_to_message(obj: Union[Task, Worker], to_type: Union[TaskMessage, WorkerMessage],
                    **updates) -> Union[TaskMessage, WorkerMessage]:
     """Convert celery Task/Worker objects to proto buffer messages, updating
@@ -26,18 +30,23 @@ def obj_to_message(obj: Union[Task, Worker], to_type: Union[TaskMessage, WorkerM
     return to_type(**data)
 
 
-def copy_update(pb_message, **kwds):
-    """Returns a copy of the PB object, with some fields updated.
-
-    Args:
-        pb_message:
-        **kwds:
-
-    Returns:
+def accept_task(pattern: Pattern, negate: bool, message: TaskMessage) -> bool:
+    """Find if the message values match the given pattern and negate.
+    This centralizes the search criteria, to both real time streaming
+    and past events.
 
     """
-    result = pb_message.__class__()
-    result.CopyFrom(pb_message)
-    for k, v in kwds.items():
-        setattr(result, k, v)
-    return result
+    return _accept(pattern, negate, TASK_OP(message))
+
+
+def accept_worker(pattern: Pattern, negate: bool, message: WorkerMessage) -> bool:
+    """Find if the message values match the given pattern and negate.
+    This centralizes the search criteria, to both real time streaming
+    and past events.
+
+    """
+    return _accept(pattern, negate, WORKER_OP(message))
+
+
+def _accept(pattern: Pattern, negate: bool, values: Tuple[str, ...]) -> bool:
+    return any(v and pattern.search(v) for v in values) != negate
