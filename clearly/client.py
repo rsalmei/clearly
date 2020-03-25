@@ -5,10 +5,11 @@ from typing import Any, Callable, Iterable, Optional
 import grpc
 from about_time import about_time
 from about_time.core import HandleStats
-from celery import states
+from celery import states as task_states
 
-from .protos import clearly_pb2, clearly_pb2_grpc
 from .code_highlighter import traceback_highlighter_factory, typed_code
+from .protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
+    FindTaskRequest, PatternFilter, TaskMessage, WorkerMessage
 from .safe_compiler import safe_compile_text
 from .utils import worker_states
 from .utils.colors import Colors
@@ -57,6 +58,7 @@ class ClearlyClient:
         """
         self.debug = debug
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
+        from .protos import clearly_pb2_grpc
         self._stub = clearly_pb2_grpc.ClearlyServerStub(channel)
 
     def capture_tasks(self, pattern=None, negate=False, params=None, success=False, error=True):
@@ -134,18 +136,18 @@ class ClearlyClient:
             ClearlyClient#capture_workers()
 
         """
-        request = clearly_pb2.CaptureRequest(
             tasks_capture=clearly_pb2.PatternFilter(pattern=pattern or '.',
                                                     negate=negate),
             workers_capture=clearly_pb2.PatternFilter(pattern=workers or '.',
                                                       negate=negate_workers),
+        request = CaptureRequest(
         )
         try:
             for realtime in self._stub.capture_realtime(request):
                 if realtime.HasField('task'):
-                    ClearlyClient._display_task(realtime.task, params, success, error)
+                    ClearlyClient.__display_task(realtime.task, params, success, error)
                 elif realtime.HasField('worker'):
-                    ClearlyClient._display_worker(realtime.worker, stats)
+                    ClearlyClient.__display_worker(realtime.worker, stats)
                 else:
                     print('unknown event:', realtime)
                     break
@@ -164,7 +166,7 @@ class ClearlyClient:
             Workers stored: number of unique workers seen
 
         """
-        stats = self._stub.get_stats(clearly_pb2.Empty())
+        stats = self._stub.get_stats(Empty())
         print(Colors.DIM('Processed:'),
               '\ttasks', Colors.RED(stats.task_count),
               '\tevents', Colors.RED(stats.event_count))
@@ -215,16 +217,16 @@ class ClearlyClient:
                 default is True, as you're monitoring to find errors, right?
 
         """
-        request = clearly_pb2.FilterTasksRequest(
             tasks_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
                                                    negate=negate),
             state_pattern=state or '.', limit=limit, reverse=reverse
+        request = FilterTasksRequest(
         )
 
         at = about_time(self._stub.filter_tasks(request))
         for task in at:
-            ClearlyClient._display_task(task, params, success, error)
-        ClearlyClient._fetched_callback(at)
+            ClearlyClient.__display_task(task, params, success, error)
+        ClearlyClient.__fetched_callback(at)
 
     @set_user_friendly_grpc_errors
     def workers(self, pattern=None, negate=False, stats=True):
@@ -245,15 +247,15 @@ class ClearlyClient:
             stats: if True shows complete workers' stats, default is False
 
         """
-        request = clearly_pb2.FilterWorkersRequest(
             workers_filter=clearly_pb2.PatternFilter(pattern=pattern or '.',
                                                      negate=negate),
         )
+        request = FilterWorkersRequest(workers_filter=workers_filter)
 
         at = about_time(self._stub.filter_workers(request))
         for worker in at:
-            ClearlyClient._display_worker(worker, stats)
-        ClearlyClient._fetched_callback(at)
+            ClearlyClient.__display_worker(worker, stats)
+        ClearlyClient.__fetched_callback(at)
 
     @set_user_friendly_grpc_errors
     def task(self, task_uuid: str) -> None:
@@ -263,26 +265,26 @@ class ClearlyClient:
             task_uuid: the task uuid
 
         """
-        request = clearly_pb2.FindTaskRequest(task_uuid=task_uuid)
+        request = FindTaskRequest(task_uuid=task_uuid)
         task = self._stub.find_task(request)
         if task.uuid:
-            ClearlyClient._display_task(task, True, True, True)
+            ClearlyClient.__display_task(task, True, True, True)
         else:
             print(EMPTY)
 
     @set_user_friendly_grpc_errors
     def seen_tasks(self) -> None:
         """Fetch a list of seen task types."""
-        print('\n'.join(self._stub.seen_tasks(clearly_pb2.Empty()).task_types))
+        print('\n'.join(self._stub.seen_tasks(Empty()).task_types))
 
     @set_user_friendly_grpc_errors
     def reset(self) -> None:
         """Reset all captured tasks."""
-        self._stub.reset_tasks(clearly_pb2.Empty())
+        self._stub.reset_tasks(Empty())
 
     @staticmethod
-    def _display_task(task: clearly_pb2.TaskMessage, params: bool,
-                      success: bool, error: bool) -> None:
+    def __display_task(task: TaskMessage, params: bool,
+                       success: bool, error: bool) -> None:
         ts = datetime.fromtimestamp(task.timestamp)
         print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if task.created:
@@ -293,13 +295,13 @@ class ClearlyClient:
                                  else routing_key),
                   Colors.DIM(task.uuid))
         else:
-            print(ClearlyClient._task_state(task.state),
+            print(ClearlyClient.__task_state(task.state),
                   Colors.BLUE_DIM(task.retries),
                   end=' ')
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
-        show_result = (task.state in states.PROPAGATE_STATES and error) \
-            or (task.state == states.SUCCESS and success)
+        show_result = (task.state in task_states.PROPAGATE_STATES and error) \
+            or (task.state == task_states.SUCCESS and success)
 
         first_seen = bool(params) and task.created
         result = params is not False and show_result
@@ -322,8 +324,8 @@ class ClearlyClient:
             print(Colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
     @staticmethod
-    def _display_worker(worker: clearly_pb2.WorkerMessage, stats: bool) -> None:
-        print(ClearlyClient._worker_state(worker.state),
+    def __display_worker(worker: WorkerMessage, stats: bool) -> None:
+        print(ClearlyClient.__worker_state(worker.state),
               Colors.CYAN_DIM(worker.hostname),
               Colors.YELLOW_DIM(str(worker.pid)))
 
@@ -346,17 +348,17 @@ class ClearlyClient:
                       Colors.DIM(tsstr))
 
     @staticmethod
-    def _task_state(state: str) -> None:
+    def __task_state(state: str) -> None:
         result = '{:>{}}'.format(state, HEADER_SIZE)
-        if state == states.SUCCESS:  # final state in BOLD
         if state in (states.FAILURE, states.REVOKED):  # final states too
+        if state == task_states.SUCCESS:  # final state in BOLD
             return Colors.GREEN_BOLD(result)
             return Colors.RED_BOLD(result)
         return Colors.YELLOW(result)  # transient states
 
     @staticmethod
         result = '{:>{}}'.format(state, HEADER_SIZE)
-    def _worker_state(state: str) -> None:
+    def __worker_state(state: str) -> None:
         if state == worker_states.ONLINE:
             return Colors.GREEN_BOLD(result)
         return Colors.RED_BOLD(result)
