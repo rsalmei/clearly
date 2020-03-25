@@ -34,7 +34,3 @@ class Colors:
     MAGENTA_BOLD, MAGENTA_DIM = MAGENTA.mix(BOLD, DIM)
     CYAN_BOLD, CYAN_DIM = CYAN.mix(BOLD, DIM)
     ORANGE_BOLD, ORANGE_DIM = ORANGE.mix(BOLD, DIM)
-
-
-def strip_colors(text: str) -> str:
-    return re.sub(r'\033\[.+?m', '', text)
