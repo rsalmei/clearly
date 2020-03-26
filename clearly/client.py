@@ -24,11 +24,11 @@ TRACEBACK_HIGHLIGHTER = traceback_highlighter_factory()
 
 def set_user_friendly_errors(fn: Callable[..., None]) -> Callable[..., None]:
     @functools.wraps(fn)
-    def inner(self, *args, **kwargs):
+    def inner(self: 'ClearlyClient', *args, **kwargs):
         try:
             fn(self, *args, **kwargs)
         except grpc.RpcError as e:
-            if self.debug:
+            if self._debug:
                 raise
             # noinspection PyUnresolvedReferences
             print('{}: {} ({})'.format(
@@ -60,7 +60,7 @@ class ClearlyClient:
             port: the port of the server
 
         """
-        self.debug = debug
+        self._debug = debug
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self._stub = ClearlyServerStub(channel)
 
