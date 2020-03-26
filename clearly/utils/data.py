@@ -5,7 +5,7 @@ from celery.events.state import Task, Worker
 
 from ..protos.clearly_pb2 import TaskMessage, WorkerMessage
 
-TASK_OP = operator.attrgetter('name', 'routing_key', 'state')
+TASK_OP = operator.attrgetter('name', 'uuid', 'routing_key', 'state')
 WORKER_OP = operator.attrgetter('hostname')
 
 
