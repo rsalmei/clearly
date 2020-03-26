@@ -147,8 +147,8 @@ class ClearlyClient:
 
         """
 
-        tasks_filter = ClearlyClient.__parse_pattern(tasks)
-        workers_filter = ClearlyClient.__parse_pattern(workers)
+        tasks_filter = ClearlyClient._parse_pattern(tasks)
+        workers_filter = ClearlyClient._parse_pattern(workers)
         if not tasks_filter and not workers_filter:
             raise UserWarning('Nothing would be selected.')
 
@@ -158,9 +158,9 @@ class ClearlyClient:
         try:
             for realtime in self._stub.capture_realtime(request):
                 if realtime.HasField('task'):
-                    ClearlyClient.__display_task(realtime.task, params, success, error)
+                    ClearlyClient._display_task(realtime.task, params, success, error)
                 elif realtime.HasField('worker'):
-                    ClearlyClient.__display_worker(realtime.worker, stats)
+                    ClearlyClient._display_worker(realtime.worker, stats)
                 else:
                     print('unknown event:', realtime)
                     break
@@ -222,7 +222,7 @@ class ClearlyClient:
                 default is True, as you're monitoring to find errors, right?
 
         """
-        tasks_filter = ClearlyClient.__parse_pattern(tasks)
+        tasks_filter = ClearlyClient._parse_pattern(tasks)
         if not tasks_filter:
             raise UserWarning('Nothing would be selected.')
 
@@ -232,8 +232,8 @@ class ClearlyClient:
 
         at = about_time(self._stub.filter_tasks(request))
         for task in at:
-            ClearlyClient.__display_task(task, params, success, error)
-        ClearlyClient.__fetched_info(at)
+            ClearlyClient._display_task(task, params, success, error)
+        ClearlyClient._fetched_info(at)
 
     @set_user_friendly_errors
     def workers(self, workers: Optional[str] = None, stats: bool = True) -> None:
@@ -254,7 +254,7 @@ class ClearlyClient:
             stats: if True shows complete workers' stats, default is False
 
         """
-        workers_filter = ClearlyClient.__parse_pattern(workers)
+        workers_filter = ClearlyClient._parse_pattern(workers)
         if not workers_filter:
             raise UserWarning('Nothing would be selected.')
 
@@ -262,8 +262,6 @@ class ClearlyClient:
 
         at = about_time(self._stub.filter_workers(request))
         for worker in at:
-            ClearlyClient.__display_worker(worker, stats)
-        ClearlyClient.__fetched_info(at)
 
     @set_user_friendly_errors
     def task(self, task_uuid: str) -> None:
@@ -279,6 +277,8 @@ class ClearlyClient:
             ClearlyClient.__display_task(task, True, True, True)
         else:
             print(EMPTY)
+            ClearlyClient._display_worker(worker, stats)
+        ClearlyClient._fetched_info(at)
 
     @set_user_friendly_errors
     def seen_tasks(self) -> None:
@@ -291,14 +291,14 @@ class ClearlyClient:
         self._stub.reset_tasks(Empty())
 
     @staticmethod
-    def __fetched_info(at: HandleStats) -> None:  # pragma: no cover
+    def _fetched_info(at: HandleStats) -> None:  # pragma: no cover
         print('{} {} in {} ({})'.format(
             Colors.DIM('fetched:'), Colors.BOLD(at.count),
             Colors.GREEN(at.duration_human), Colors.GREEN(at.throughput_human)
         ))
 
     @staticmethod
-    def __parse_pattern(pattern: str) -> PatternFilter:
+    def _parse_pattern(pattern: str) -> PatternFilter:
         pattern = pattern or ''
         if not isinstance(pattern, str):
             raise UserWarning('Invalid pattern.')
@@ -310,8 +310,8 @@ class ClearlyClient:
         return PatternFilter(pattern=pattern[negate:], negate=negate)
 
     @staticmethod
-    def __display_task(task: TaskMessage, params: bool,
-                       success: bool, error: bool) -> None:
+    def _display_task(task: TaskMessage, params: bool,
+                      success: bool, error: bool) -> None:
         ts = datetime.fromtimestamp(task.timestamp)
         print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if not task.state:
@@ -322,7 +322,7 @@ class ClearlyClient:
                                  else routing_key),
                   Colors.DIM(task.uuid))
         else:
-            print(ClearlyClient.__task_state(task.state),
+            print(ClearlyClient._task_state(task.state),
                   Colors.BLUE_DIM(task.retries),
                   end=' ')
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
@@ -351,11 +351,11 @@ class ClearlyClient:
             print(Colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
     @staticmethod
-    def __display_worker(worker: WorkerMessage, stats: bool) -> None:
+    def _display_worker(worker: WorkerMessage, stats: bool) -> None:
         if worker.timestamp:
             ts = datetime.fromtimestamp(worker.timestamp)
             print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
-        print(ClearlyClient.__worker_state(worker.state),
+        print(ClearlyClient._worker_state(worker.state),
               Colors.CYAN_DIM(worker.hostname),
               Colors.YELLOW_DIM(str(worker.pid)))
 
@@ -364,17 +364,17 @@ class ClearlyClient:
                   Colors.CYAN_DIM(' '.join((worker.sw_sys, worker.sw_ident))),
                   Colors.ORANGE(worker.sw_ver))
             print(Colors.DIM('{:>{}}'.format('load:', HEADER_SIZE)),
-                  ClearlyClient.__item_list(worker.loadavg),
+                  ClearlyClient._item_list(worker.loadavg),
                   Colors.DIM('processed:'), worker.processed or DIM_NONE)
             heartbeats = [datetime.fromtimestamp(x).strftime('%H:%M:%S.%f')[:-3]
                           for x in worker.heartbeats or []]
             print(Colors.DIM('{:>{}}'.format('heartb:', HEADER_SIZE)),
                   '{}{}'.format(Colors.ORANGE(worker.freq),
                                 Colors.DIM('s')),
-                  ClearlyClient.__item_list(heartbeats))
+                  ClearlyClient._item_list(heartbeats))
 
     @staticmethod
-    def __item_list(items: Iterable[Any], color: Callable[[str], str] = str) -> str:
+    def _item_list(items: Iterable[Any], color: Callable[[str], str] = str) -> str:
         return '{}{}{}'.format(
             Colors.MAGENTA('['),
             Colors.MAGENTA(', ').join(map(color, items)),
@@ -382,7 +382,7 @@ class ClearlyClient:
         )
 
     @staticmethod
-    def __task_state(state: str) -> None:
+    def _task_state(state: str) -> None:
         result = '{:>{}}'.format(state, HEADER_SIZE)
         if state == task_states.SUCCESS:  # final state in BOLD
             return Colors.GREEN_BOLD(result)
@@ -391,7 +391,7 @@ class ClearlyClient:
         return Colors.YELLOW(result)  # transient states
 
     @staticmethod
-    def __worker_state(state: str) -> None:
+    def _worker_state(state: str) -> None:
         result = state
         if state == worker_states.HEARTBEAT:
             return Colors.GREEN(result)
