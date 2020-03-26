@@ -1,12 +1,14 @@
+from itertools import chain
 from queue import Queue
 from unittest import mock
-from unittest.mock import DEFAULT, PropertyMock
+from unittest.mock import DEFAULT, call, PropertyMock
 
 import pytest
-from celery import states
+from celery import states as task_states
 from celery.events.state import Task, Worker
 
 from clearly.event_core.event_listener import EventListener
+from clearly.protos.clearly_pb2 import TaskMessage, WorkerMessage
 from clearly.utils import worker_states
 
 
@@ -16,98 +18,126 @@ def listener():
          mock.patch('threading.Event'), \
          mock.patch('clearly.event_core.event_listener.Celery'):
         # noinspection PyTypeChecker
-        yield EventListener('', Queue())
+        yield EventListener('', Queue(), Queue(), mock.Mock())
 
 
-@pytest.fixture(params=(False, True))
-def bool1(request):
-    return request.param
+def test_listener_process_event_task(listener):
+    with mock.patch.multiple(listener, _set_task_event=DEFAULT,
+                             _set_worker_event=DEFAULT, _set_custom_event=DEFAULT) as mtw, \
+            mock.patch('clearly.event_core.event_listener.obj_to_message') as otm:
+        mtw['_set_task_event'].return_value = (x for x in chain(('obj',), 'abc'))
 
-
-@pytest.fixture(params=(False, True))
-def bool2(request):
-    return request.param
-
-
-@pytest.fixture(params=sorted(states.ALL_STATES))
-def task_state_type(request):
-    yield request.param
-
-
-@pytest.fixture(params=sorted(worker_states.ALL_STATES))
-def worker_state_type(request):
-    yield request.param
-
-
-@pytest.mark.parametrize('raw_event', [
-    dict(type='task-received'),
-    dict(type='worker-heartbeat'),
-    dict(type='cool-event'),
-])
-def test_listener_process_event(raw_event, listener):
-    with mock.patch.multiple(listener,
-                             _process_task_event=DEFAULT,
-                             _process_worker_event=DEFAULT) as mtw:
         # noinspection PyProtectedMember
-        listener._process_event(raw_event)
-        name, _, _ = raw_event['type'].partition('-')
-        m = dict(task=mtw['_process_task_event'],
-                 worker=mtw['_process_worker_event']).get(name)
-        if m:
-            m.assert_called_once_with(raw_event)
+        listener._process_event(dict(type='task-anything'))
+
+    mtw['_set_task_event'].assert_called_once_with(dict(type='task-anything'))
+    for k in '_set_worker_event', '_set_custom_event':
+        mtw[k].assert_not_called()
+    assert listener.queue_tasks.qsize() == 3
+    assert listener.queue_workers.qsize() == 0
+    assert otm.call_args_list == [
+        call('obj', TaskMessage, state='a'),
+        call('obj', TaskMessage, state='b'),
+        call('obj', TaskMessage, state='c'),
+    ]
+
+
+def test_listener_process_event_worker(listener):
+    with mock.patch.multiple(listener, _set_task_event=DEFAULT,
+                             _set_worker_event=DEFAULT, _set_custom_event=DEFAULT) as mtw, \
+            mock.patch('clearly.event_core.event_listener.obj_to_message') as otm:
+        mtw['_set_worker_event'].return_value = (x for x in ('obj', 'ok'))
+
+        # noinspection PyProtectedMember
+        listener._process_event(dict(type='worker-anything'))
+
+    mtw['_set_worker_event'].assert_called_once_with(dict(type='worker-anything'))
+    for k in '_set_task_event', '_set_custom_event':
+        mtw[k].assert_not_called()
+    assert listener.queue_workers.qsize() == 1
+    assert listener.queue_tasks.qsize() == 0
+    assert otm.call_args_list == [
+        call('obj', WorkerMessage, state='ok'),
+    ]
+
+
+def test_listener_process_event_custom(listener):
+    with mock.patch.multiple(listener, _set_task_event=DEFAULT,
+                             _set_worker_event=DEFAULT, _set_custom_event=DEFAULT) as mtw:
+        # noinspection PyProtectedMember
+        listener._process_event(dict(type='cool-event'))
+
+    mtw['_set_custom_event'].assert_called_once_with(dict(type='cool-event'))
+    for k in '_set_task_event', '_set_worker_event':
+        mtw[k].assert_not_called()
+
+
+def test_listener_set_task_event(task_state_type, bool1, listener):
+    with mock.patch.object(listener, '_derive_task_result') as dtr:
+        listener.memory.tasks.get.return_value = Task('uuid', state='pre_state') if bool1 else None
+        task = Task('uuid', state=task_state_type)
+        listener.memory.event.return_value = (task, ''), ''
+
+        # noinspection PyProtectedMember
+        gen = listener._set_task_event(dict(uuid='uuid'))
+        assert task == next(gen)
+
+    listener.memory.event.assert_called_once_with(dict(uuid='uuid'))
+    if task_state_type == task_states.SUCCESS:
+        dtr.assert_called_once_with(task)
+
+    with mock.patch.object(listener, 'task_states') as ts_through:
+        ts_through.states_through.return_value = (x for x in 'abc')
+
+        states = list(gen)
+        if not bool1:
+            if task_state_type == task_states.PENDING:
+                assert states == ['']
+            else:
+                assert states == [task_state_type]
         else:
-            all(m.assert_not_called() for m in mtw.values())
+            ts_through.states_through.assert_called_once_with('pre_state', task_state_type)
+            assert states == ['a', 'b', 'c']
 
 
-def test_listener_process_task(bool1, bool2, task_state_type, listener):
-    with mock.patch.object(listener.memory.tasks, 'get') as tg, \
-            mock.patch.object(listener.memory, 'event') as mev, \
-            mock.patch('clearly.event_core.event_listener.immutable_task') as it, \
-            mock.patch(
-                'clearly.event_core.event_listener.EventListener.compile_task_result'
-            ) as ctr:
-        tg.return_value = Task('uuid', state='pre_state') if bool1 else None
-        task = Task('uuid', state=task_state_type, result='ok')
-        mev.return_value = (task, ''), ''
-        if bool2:
-            ctr.side_effect = SyntaxError
+def test_listener_set_worker_event(worker_event_type, listener):
+    worker = Worker('hostname')
+    listener.memory.event.return_value = (worker, ''), ''
 
-        # noinspection PyProtectedMember
-        listener._process_task_event(dict(uuid='uuid'))
-
-    if task_state_type == states.SUCCESS:
-        ctr.assert_called_once_with(task)
-        if bool2:
-            # noinspection PyProtectedMember
-            listener._app.AsyncResult.assert_called_once_with('uuid')
-    it.assert_called_once_with(task, task_state_type, 'pre_state' if bool1 else states.PENDING,
-                               not bool1)
+    # noinspection PyProtectedMember
+    gen = listener._set_worker_event(dict(type=worker_event_type))
+    assert worker == next(gen)
+    listener.memory.event.assert_called_once_with(dict(type=worker_event_type))
+    assert worker.state == next(gen)
+    assert worker.state == worker_states.TYPES[worker_event_type]
 
 
-def test_listener_process_worker(bool1, listener):
-    with mock.patch.object(listener.memory.workers, 'get') as wg, \
-            mock.patch.object(listener.memory, 'event') as mev, \
-            mock.patch('clearly.event_core.event_listener.immutable_worker') as it:
-        worker_pre = Worker('hostname')
-        wg.return_value = worker_pre if bool1 else None
-        worker = Worker('hostname')
-        mev.return_value = (worker, ''), ''
+@pytest.mark.parametrize('compile, use_rb, result_backend, expected', [
+    ('ok', None, None, 'ok'),
+    (SyntaxError, False, None, '<no-result-backend> original'),
+    (SyntaxError, True, 'ok', "'ok'"),
+    (SyntaxError, True, Exception, '<fetch-failed> original'),
+    (Exception, False, None, '<compile-failed> original'),
+    (Exception, True, 'ok', "'ok'"),
+    (Exception, True, Exception, '<fetch-failed> original'),
+])
+def test_listener_derive_task_result(compile, use_rb, result_backend, expected, listener):
+    with mock.patch('clearly.event_core.event_listener.EventListener.compile_task_result') as ctr, \
+        mock.patch.object(listener, 'use_result_backend', use_rb):
+        ctr.side_effect = (compile,)
+        type(listener.app.AsyncResult()).result = PropertyMock(side_effect = (result_backend,))
 
-        with mock.patch('celery.events.state.Worker.status_string',
-                        new_callable=PropertyMock) as wss:
-            wss.side_effect = (('pre_state',) if bool1 else ()) + ('state',)
-            # noinspection PyProtectedMember
-            listener._process_worker_event(dict(hostname='hostname'))
+        task = Task(result='original')
+        result = listener._derive_task_result(task)
 
-    it.assert_called_once_with(worker, 'state', 'pre_state' if bool1 else worker_states.OFFLINE,
-                               not bool1)
+    assert result == expected
 
 
 @pytest.mark.parametrize('worker_version, num_calls, expected', [
     ('3.nice', 2, 'a'),
     ('4.cool', 1, 'x'),
 ])
-def test_listener_celery_result_compiler(worker_version, num_calls, expected):
+def test_listener_celery_version_result_compiler(worker_version, num_calls, expected):
     task = mock.Mock()
     task.result = 'x'
     task.worker.sw_ver = worker_version
