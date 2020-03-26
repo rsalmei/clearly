@@ -148,7 +148,7 @@ class EventListener:
         (worker, _), _ = self.memory.event(event)
 
         # fix or insert fields.
-        worker.state = worker_states.TYPES[worker.type]
+        worker.state = worker_states.TYPES[event['type']]
         yield worker
 
         yield worker.state
