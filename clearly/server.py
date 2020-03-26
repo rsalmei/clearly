@@ -197,19 +197,6 @@ class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
         logger.debug('%s iterated %d workers in %s (%s)', self.filter_workers.__name__,
                      at.count, at.duration_human, at.throughput_human)
 
-    def find_task(self, request, context):
-        """Finds one specific task.
-
-        Returns:
-            clearly_pb2.TaskMessage
-
-        """
-        RPCService._log_request(request, context)
-        task = self.memory.tasks.get(request.task_uuid)
-        if not task:
-            return TaskMessage()
-        return obj_to_message(task, TaskMessage)
-
     def seen_tasks(self, request, context):
         """Returns all seen task types.
 

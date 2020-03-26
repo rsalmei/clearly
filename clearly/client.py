@@ -262,21 +262,6 @@ class ClearlyClient:
 
         at = about_time(self._stub.filter_workers(request))
         for worker in at:
-
-    @set_user_friendly_errors
-    def task(self, task_uuid: str) -> None:
-        """Fetch current data from a specific task.
-
-        Args:
-            task_uuid: the task uuid
-
-        """
-        request = FindTaskRequest(task_uuid=task_uuid)
-        task = self._stub.find_task(request)
-        if task.uuid:
-            ClearlyClient.__display_task(task, True, True, True)
-        else:
-            print(EMPTY)
             ClearlyClient._display_worker(worker, stats)
         ClearlyClient._fetched_info(at)
 
