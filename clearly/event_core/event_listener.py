@@ -158,7 +158,7 @@ class EventListener:
         logger.warning('unknown event: %s', event)
 
     # noinspection PyBroadException
-    def _derive_task_result(self, task: Task) -> Any:
+    def _derive_task_result(self, task: Task) -> str:
         try:  # verify if the task result is truncated.
             return EventListener.compile_task_result(task)
         except SyntaxError:  # <== this means the result is truncated.
