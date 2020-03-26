@@ -153,7 +153,7 @@ class EventListener:
 
         yield worker.state
 
-    def _set_custom_event(self, event: dict) -> None:
+    def _set_custom_event(self, event: dict) -> None:  # pragma: no cover
         # could pass custom user events here, if the need ever arises.
         logger.warning('unknown event: %s', event)
 
