@@ -64,7 +64,7 @@ class StreamingDispatcher:
         self.__start()
 
     @contextmanager
-    def streaming_capture(self, capture: PatternFilter, queue: Queue) -> Queue:
+    def streaming_capture(self, capture: PatternFilter, queue: Queue) -> None:
         """Put a connected client in streaming capture mode, filtering all
         incoming events in real time.
 
@@ -78,7 +78,7 @@ class StreamingDispatcher:
         # should not need any locks, thanks to GIL
         self.observers.append(observer)
         try:
-            yield queue
+            yield
         finally:
             self.observers.remove(observer)
 
