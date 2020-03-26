@@ -10,6 +10,7 @@ from celery import states as task_states
 from .code_highlighter import traceback_highlighter_factory, typed_code
 from .protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
     FindTaskRequest, PatternFilter, TaskMessage, WorkerMessage
+from .protos.clearly_pb2_grpc import ClearlyServerStub
 from .safe_compiler import safe_compile_text
 from .utils import worker_states
 from .utils.colors import Colors
@@ -61,8 +62,7 @@ class ClearlyClient:
         """
         self.debug = debug
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
-        from .protos import clearly_pb2_grpc
-        self._stub = clearly_pb2_grpc.ClearlyServerStub(channel)
+        self._stub = ClearlyServerStub(channel)
 
     def capture_tasks(self, tasks: Optional[str] = None, params: Optional[bool] = None,
                       success: bool = False, error: bool = True) -> None:

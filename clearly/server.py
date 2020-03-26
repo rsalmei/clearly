@@ -13,9 +13,9 @@ from celery.events.state import State
 
 from .event_core.event_listener import EventListener
 from .event_core.streaming_dispatcher import Role, StreamingDispatcher
-from .protos import clearly_pb2_grpc
 from .protos.clearly_pb2 import RealtimeMessage, SeenTasksMessage, StatsMessage, TaskMessage, \
     WorkerMessage
+from .protos.clearly_pb2_grpc import ClearlyServerServicer, add_ClearlyServerServicer_to_server
 from .utils.data import accept_task, accept_worker, obj_to_message
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class ClearlyServer:
         logger.info('Initiating gRPC server: port=%d', port)
 
         gserver = grpc.server(futures.ThreadPoolExecutor())
-        clearly_pb2_grpc.add_ClearlyServerServicer_to_server(self.rpc, gserver)
+        add_ClearlyServerServicer_to_server(self.rpc, gserver)
         gserver.add_insecure_port('[::]:{}'.format(port))
 
         logger.info('gRPC server ok')
@@ -99,7 +99,7 @@ class ClearlyServer:
             gserver.stop(None)  # immediately.
 
 
-class RPCService(clearly_pb2_grpc.ClearlyServerServicer):
+class RPCService(ClearlyServerServicer):
     """Service that implements the RPC communication."""
 
     def __init__(self, memory: State, dispatcher_tasks: StreamingDispatcher,
