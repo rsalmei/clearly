@@ -19,12 +19,14 @@
 
 ### 📌 Extra!
 
-Clearly will be debuting a new architecture in version 0.9, since its very near 1.0! \o/
+Clearly will debut a new architecture in version 0.9, since its very near 1.0! \o/
 
 A major revamp is being made to make the code more mature, more reliable and faster!
-You can see it in https://github.com/rsalmei/clearly/pull/52 (work in progress).
+<br>You can see it in https://github.com/rsalmei/clearly/pull/52 (work in progress).
+<br>The code is ready and very nice to my eyes, I'm happy with the result! Working now on the tests, to achieve 100% coverage again, but is much work, almost everything has changed.
 
-I think this version is going to be really polished and professional, hope you like it! And if you do, tell me! Open an issue with a compliment... 😊
+I think this version is going to be really polished and professional, hope you all like it, and make **Clearly** gain more momentum!
+<br>And if you do, tell me! You could open an issue with a compliment... 😊
 
 Enjoy!
 
