@@ -1,6 +1,7 @@
 import functools
 from datetime import datetime
-from typing import Any, Callable, Iterable, Optional
+from enum import Enum
+from typing import Any, Callable, Iterable, Optional, Union
 
 import grpc
 from about_time import about_time
@@ -9,7 +10,7 @@ from celery import states as task_states
 
 from .code_highlighter import traceback_highlighter_factory, typed_code
 from .protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
-    FindTaskRequest, PatternFilter, TaskMessage, WorkerMessage
+    PatternFilter, TaskMessage, WorkerMessage
 from .protos.clearly_pb2_grpc import ClearlyServerStub
 from .safe_compiler import safe_compile_text
 from .utils import worker_states
@@ -20,6 +21,41 @@ HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = Colors.DIM(':)')
 DIM_NONE = Colors.CYAN_DIM('None')
 TRACEBACK_HIGHLIGHTER = traceback_highlighter_factory()
+
+
+class ModeTask(Enum):
+    BASIC = 'name, uuid, state and retries', False, False, False
+    ALL = 'basic + params, results and errors', True, True, True
+    ONLY_PARAMS = 'basic + params on initial and terminal states', True, False, False
+    ONLY_RESULTS = 'basic + results', False, True, False
+    ONLY_ERRORS = 'basic + errors', False, False, True
+    RESULTS = 'basic + params and results', None, True, False
+    ERRORS = 'basic + params and errors', None, False, True
+
+    def __new__(cls, description, *spec):
+        obj = object.__new__(cls)
+        obj._value_ = description
+        obj.__spec = spec
+        return obj
+
+    @property
+    def spec(self):
+        return self.__spec
+
+
+class ModeWorker(Enum):
+    BRIEF = 'timestamp, status, name and pid', False
+    STATS = 'brief + version, load and heartbeats', True
+
+    def __new__(cls, description, *spec):
+        obj = object.__new__(cls)
+        obj._value_ = description
+        obj.__spec = spec
+        return obj
+
+    @property
+    def spec(self):
+        return self.__spec
 
 
 def set_user_friendly_errors(fn: Callable[..., None]) -> Callable[..., None]:
@@ -63,46 +99,36 @@ class ClearlyClient:
         self._debug = debug
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self._stub = ClearlyServerStub(channel)
+        self._task_mode, self._worker_mode = ModeTask.ERRORS, ModeWorker.BRIEF
 
-    def capture_tasks(self, tasks: Optional[str] = None, params: Optional[bool] = None,
-                      success: bool = False, error: bool = True) -> None:
+    def capture_tasks(self, tasks: Optional[str] = None, mode: Optional[ModeTask] = None) -> None:
         """Start capturing task events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
         handle all tasks updates.
 
-        Currently you can filter tasks by name, routing key or state.
+        Currently you can filter tasks by name, uuid, routing key or state.
         Insert an '!' in the first position to select those that do not match criteria.
 
         This runs in the foreground. Press CTRL+C at any time to stop it.
 
         Args:
-            Filter args:
-            ------------
-
-            tasks: a simple pattern to filter tasks.
+            tasks: a simple pattern to filter tasks
                 ex.: 'email' to find values containing that word anywhere
                      'failure|rejected|revoked' to find tasks with problem
                      '^trigger|^email' to find values starting with any of those words
                      'trigger.*123456' to find values with those words in that sequence
                      '!^trigger|^email' to filter values not starting with both those words
+            mode: the display mode to present results
 
-            Display args:
-            -------------
-
-            params: if True shows args and kwargs in the first and
-                last seen states, if False never shows, and if None follows the
-                success and error arguments.
-                default is None
-            success: if True shows successful tasks' results.
-                default is False
-            error: if True shows failed and retried tasks' tracebacks.
-                default is True, as you're monitoring to find errors, right?
+        See Also:
+            ClearlyClient#display_modes()
 
         """
-        self.capture(tasks=tasks, params=params, success=success, error=error, workers='!')
+        self.capture(tasks=tasks, mode_tasks=mode, workers='!')
 
-    def capture_workers(self, workers: Optional[str] = None, stats: bool = False) -> None:
+    def capture_workers(self, workers: Optional[str] = None,
+                        mode: Optional[ModeWorker] = None) -> None:
         """Start capturing worker events in real time, so you can instantly see exactly
         what your workers states are. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
@@ -114,26 +140,22 @@ class ClearlyClient:
         This runs in the foreground. Press CTRL+C at any time to stop it.
 
         Args:
-            Filter args:
-            ------------
-
-            workers: a simple pattern to filter workers.
+            workers: a simple pattern to filter workers
                 ex.: 'email' to find values containing that word anywhere
                      'service|priority' to find values containing any of those words
                      '!service|priority' to find values not containing both those words
+            mode: the display mode to present results
 
-            Display args:
-            -------------
-
-            stats: if True shows complete workers' stats, default is False
+        See Also:
+            ClearlyClient#display_modes()
 
         """
-        self.capture(workers=workers, stats=stats, tasks='!')
+        self.capture(workers=workers, mode_workers=mode, tasks='!')
 
     @set_user_friendly_errors
     def capture(self, tasks: Optional[str] = None, workers: Optional[str] = None,
-                params: Optional[bool] = None, success: bool = False, error: bool = True,
-                stats: bool = False) -> None:
+                mode_tasks: Optional[ModeTask] = None,
+                mode_workers: Optional[ModeWorker] = None) -> None:
         """Start capturing all events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
@@ -141,9 +163,16 @@ class ClearlyClient:
 
         This runs in the foreground. Press CTRL+C at any time to stop it.
 
+        Args:
+            tasks: the pattern to filter tasks
+            workers: the pattern to filter workers
+            mode_tasks: the display mode to present results
+            mode_workers: the display mode to present results
+
         See Also:
             ClearlyClient#capture_tasks()
             ClearlyClient#capture_workers()
+            ClearlyClient#display_modes()
 
         """
 
@@ -158,9 +187,9 @@ class ClearlyClient:
         try:
             for realtime in self._stub.capture_realtime(request):
                 if realtime.HasField('task'):
-                    ClearlyClient._display_task(realtime.task, params, success, error)
+                    self._display_task(realtime.task, mode_tasks)
                 elif realtime.HasField('worker'):
-                    ClearlyClient._display_worker(realtime.worker, stats)
+                    self._display_worker(realtime.worker, mode_workers)
                 else:
                     print('unknown event:', realtime)
                     break
@@ -188,8 +217,8 @@ class ClearlyClient:
               '\tworkers', Colors.RED(stats.len_workers))
 
     @set_user_friendly_errors
-    def tasks(self, tasks: Optional[str] = None, limit: Optional[int] = None, reverse: bool = True,
-              params: Optional[bool] = None, success: bool = False, error: bool = True) -> None:
+    def tasks(self, tasks: Optional[str] = None, mode: Optional[ModeTask] = None,
+              limit: Optional[int] = None, reverse: bool = True) -> None:
         """Fetch current data from past tasks.
 
         Note that the `limit` field is just a hint, it may not be accurate.
@@ -197,29 +226,14 @@ class ClearlyClient:
         the server `max_tasks` setting.
 
         Args:
-            Filter args:
-            ------------
-
-            tasks: a simple pattern to filter tasks.
-                ex.: 'email' to find values containing that word anywhere
-                     'failure|rejected|revoked' to find tasks with problem
-                     '^trigger|^email' to find values starting with any of those words
-                     'trigger.*123456' to find values with those words in that sequence
-                     '!^trigger|^email' to filter values not starting with both those words
-            limit: the maximum number of events to fetch, fetches all if None or 0 (default).
+            tasks: the pattern to filter tasks
+            mode: the display mode to present results
+            limit: the maximum number of events to fetch, fetches all if None or 0 (default)
             reverse: if True (default), shows the most recent first
 
-            Display args:
-            -------------
-
-            params: if True shows args and kwargs in the first and
-                last seen states, if False never shows, and if None follows the
-                success and error arguments.
-                default is None
-            success: if True shows successful tasks' results.
-                default is False
-            error: if True shows failed and retried tasks' tracebacks.
-                default is True, as you're monitoring to find errors, right?
+        See Also:
+            ClearlyClient#capture_tasks()
+            ClearlyClient#display_modes()
 
         """
         tasks_filter = ClearlyClient._parse_pattern(tasks)
@@ -232,26 +246,20 @@ class ClearlyClient:
 
         at = about_time(self._stub.filter_tasks(request))
         for task in at:
-            ClearlyClient._display_task(task, params, success, error)
+            self._display_task(task, mode)
         ClearlyClient._fetched_info(at)
 
     @set_user_friendly_errors
-    def workers(self, workers: Optional[str] = None, stats: bool = True) -> None:
+    def workers(self, workers: Optional[str] = None, mode: Optional[ModeWorker] = None) -> None:
         """Fetch current data from known workers.
         
         Args:
-            Filter args:
-            ------------
+            workers: the pattern to filter workers
+            mode: the display mode to present results
 
-            workers: a simple pattern to filter workers.
-                ex.: 'email' to find values containing that word anywhere
-                     'service|priority' to find values containing any of those words
-                     '!service|priority' to find values not containing both those words
-
-            Display args:
-            -------------
-
-            stats: if True shows complete workers' stats, default is False
+        See Also:
+            ClearlyClient#capture_workers()
+            ClearlyClient#display_modes()
 
         """
         workers_filter = ClearlyClient._parse_pattern(workers)
@@ -262,7 +270,7 @@ class ClearlyClient:
 
         at = about_time(self._stub.filter_workers(request))
         for worker in at:
-            ClearlyClient._display_worker(worker, stats)
+            self._display_worker(worker, mode)
         ClearlyClient._fetched_info(at)
 
     @set_user_friendly_errors
@@ -274,6 +282,28 @@ class ClearlyClient:
     def reset(self) -> None:
         """Reset all captured tasks."""
         self._stub.reset_tasks(Empty())
+
+    def _set_display_mode(self, to: Union[ModeTask, ModeWorker]) -> None:  # pragma: no cover
+        if isinstance(to, ModeTask):
+            self._task_mode, what = to, 'Task'
+        elif isinstance(to, ModeWorker):
+            self._worker_mode, what = to, 'Worker'
+        else:
+            raise UserWarning('Invalid mode')
+        print(what, 'mode set to:', Colors.ORANGE(to.name), Colors.YELLOW_DIM(to.value))
+
+    def display_modes(self, to: Union[ModeTask, ModeWorker] = None) -> None:
+        if to:
+            return self._set_display_mode(to)
+
+        print(Colors.BLUE('tasks'))
+        for d in ModeTask:
+            print('  {} {:12}: {}'.format(d == self._task_mode and '*' or ' ',
+                                          d.name, Colors.YELLOW_DIM(d.value)))
+        print(Colors.BLUE('workers'))
+        for d in ModeWorker:
+            print('  {} {:12}: {}'.format(d == self._worker_mode and '*' or ' ',
+                                          d.name, Colors.YELLOW_DIM(d.value)))
 
     @staticmethod
     def _fetched_info(at: HandleStats) -> None:  # pragma: no cover
@@ -294,9 +324,8 @@ class ClearlyClient:
         negate = pattern.startswith('!')
         return PatternFilter(pattern=pattern[negate:], negate=negate)
 
-    @staticmethod
-    def _display_task(task: TaskMessage, params: bool,
-                      success: bool, error: bool) -> None:
+    def _display_task(self, task: TaskMessage, mode: ModeTask) -> None:
+        params, success, error = (mode or self._task_mode).spec
         ts = datetime.fromtimestamp(task.timestamp)
         print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if not task.state:
@@ -335,8 +364,8 @@ class ClearlyClient:
                 output = EMPTY
             print(Colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
-    @staticmethod
-    def _display_worker(worker: WorkerMessage, stats: bool) -> None:
+    def _display_worker(self, worker: WorkerMessage, mode: ModeWorker) -> None:
+        stats, = (mode or self._worker_mode).spec
         if worker.timestamp:
             ts = datetime.fromtimestamp(worker.timestamp)
             print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
