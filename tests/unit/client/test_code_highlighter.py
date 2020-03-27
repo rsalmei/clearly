@@ -4,8 +4,8 @@ from decimal import Decimal
 
 import pytest
 
-from clearly.code_highlighter import typed_code
-from clearly.safe_compiler import CallDescriptor
+from clearly.client.code_highlighter import typed_code
+from clearly.utils.safe_compiler import CallDescriptor
 
 
 @pytest.mark.parametrize('obj, text', [
