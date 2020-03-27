@@ -11,12 +11,12 @@ import grpc
 from about_time import about_time
 from celery.events.state import State
 
-from .event_core.event_listener import EventListener
-from .event_core.streaming_dispatcher import Role, StreamingDispatcher
-from .protos.clearly_pb2 import RealtimeMessage, SeenTasksMessage, StatsMessage, TaskMessage, \
+from .event_listener import EventListener
+from .streaming_dispatcher import Role, StreamingDispatcher
+from ..protos.clearly_pb2 import RealtimeMessage, SeenTasksMessage, StatsMessage, TaskMessage, \
     WorkerMessage
-from .protos.clearly_pb2_grpc import ClearlyServerServicer, add_ClearlyServerServicer_to_server
-from .utils.data import accept_task, accept_worker, obj_to_message
+from ..protos.clearly_pb2_grpc import ClearlyServerServicer, add_ClearlyServerServicer_to_server
+from ..utils.data import accept_task, accept_worker, obj_to_message
 
 logger = logging.getLogger(__name__)
 
