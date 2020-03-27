@@ -112,7 +112,7 @@ def test_listener_set_worker_event(worker_event_type, listener):
     assert worker.state == worker_states.TYPES[worker_event_type]
 
 
-@pytest.mark.parametrize('compile, use_rb, result_backend, expected', [
+@pytest.mark.parametrize('compile_res, use_rb, result_backend, expected', [
     ('ok', None, None, 'ok'),
     (SyntaxError, False, None, '<no-result-backend> original'),
     (SyntaxError, True, 'ok', "'ok'"),
@@ -121,13 +121,14 @@ def test_listener_set_worker_event(worker_event_type, listener):
     (Exception, True, 'ok', "'ok'"),
     (Exception, True, Exception, '<fetch-failed> original'),
 ])
-def test_listener_derive_task_result(compile, use_rb, result_backend, expected, listener):
-        mock.patch.object(listener, 'use_result_backend', use_rb):
-        ctr.side_effect = (compile,)
-        type(listener.app.AsyncResult()).result = PropertyMock(side_effect = (result_backend,))
+def test_listener_derive_task_result(compile_res, use_rb, result_backend, expected, listener):
     with mock.patch('clearly.server.event_listener.EventListener.compile_task_result') as ctr, \
+            mock.patch.object(listener, 'use_result_backend', use_rb):
+        ctr.side_effect = (compile_res,)
+        type(listener.app.AsyncResult()).result = PropertyMock(side_effect=(result_backend,))
 
         task = Task(result='original')
+        # noinspection PyProtectedMember
         result = listener._derive_task_result(task)
 
     assert result == expected
