@@ -73,8 +73,11 @@ def client(**kwargs):
     HOST: The host where Clearly Server is running, default localhost
     PORT: The port where Clearly Server is running, default 12223
     """
-    from clearly.client import ClearlyClient
-    clearly_client = ClearlyClient(**{k: v for k, v in kwargs.items() if v})
+    from clearly.client import ClearlyClient, ModeTask, ModeWorker
+    share = dict(
+        clearlycli=ClearlyClient(**{k: v for k, v in kwargs.items() if v}),
+        ModeTask=ModeTask, ModeWorker=ModeWorker,
+    )
 
     # the first option was bpython, but unfortunately it is broken...
     # https://github.com/bpython/bpython/issues/758
@@ -86,4 +89,4 @@ def client(**kwargs):
     c = Config()
     c.TerminalInteractiveShell.banner1 = logo.render('client') + '\n'
     c.TerminalInteractiveShell.banner2 = 'Clearly client is ready to use: clearlycli'
-    IPython.start_ipython(argv=[], user_ns=dict(clearlycli=clearly_client), config=c)
+    IPython.start_ipython(argv=[], user_ns=share, config=c)
