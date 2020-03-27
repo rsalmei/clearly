@@ -7,7 +7,7 @@ import pytest
 from celery import states as task_states
 from celery.events.state import Task, Worker
 
-from clearly.event_core.event_listener import EventListener
+from clearly.server.event_listener import EventListener
 from clearly.protos.clearly_pb2 import TaskMessage, WorkerMessage
 from clearly.utils import worker_states
 
@@ -16,7 +16,7 @@ from clearly.utils import worker_states
 def listener():
     with mock.patch('threading.Thread'), \
          mock.patch('threading.Event'), \
-         mock.patch('clearly.event_core.event_listener.Celery'):
+         mock.patch('clearly.server.event_listener.Celery'):
         # noinspection PyTypeChecker
         yield EventListener('', Queue(), Queue(), mock.Mock())
 
@@ -24,7 +24,7 @@ def listener():
 def test_listener_process_event_task(listener):
     with mock.patch.multiple(listener, _set_task_event=DEFAULT,
                              _set_worker_event=DEFAULT, _set_custom_event=DEFAULT) as mtw, \
-            mock.patch('clearly.event_core.event_listener.obj_to_message') as otm:
+            mock.patch('clearly.server.event_listener.obj_to_message') as otm:
         mtw['_set_task_event'].return_value = (x for x in chain(('obj',), 'abc'))
 
         # noinspection PyProtectedMember
@@ -45,7 +45,7 @@ def test_listener_process_event_task(listener):
 def test_listener_process_event_worker(listener):
     with mock.patch.multiple(listener, _set_task_event=DEFAULT,
                              _set_worker_event=DEFAULT, _set_custom_event=DEFAULT) as mtw, \
-            mock.patch('clearly.event_core.event_listener.obj_to_message') as otm:
+            mock.patch('clearly.server.event_listener.obj_to_message') as otm:
         mtw['_set_worker_event'].return_value = (x for x in ('obj', 'ok'))
 
         # noinspection PyProtectedMember
@@ -122,10 +122,10 @@ def test_listener_set_worker_event(worker_event_type, listener):
     (Exception, True, Exception, '<fetch-failed> original'),
 ])
 def test_listener_derive_task_result(compile, use_rb, result_backend, expected, listener):
-    with mock.patch('clearly.event_core.event_listener.EventListener.compile_task_result') as ctr, \
         mock.patch.object(listener, 'use_result_backend', use_rb):
         ctr.side_effect = (compile,)
         type(listener.app.AsyncResult()).result = PropertyMock(side_effect = (result_backend,))
+    with mock.patch('clearly.server.event_listener.EventListener.compile_task_result') as ctr, \
 
         task = Task(result='original')
         result = listener._derive_task_result(task)
@@ -142,7 +142,7 @@ def test_listener_celery_version_result_compiler(worker_version, num_calls, expe
     task.result = 'x'
     task.worker.sw_ver = worker_version
 
-    with mock.patch('clearly.event_core.event_listener.safe_compile_text') as msc:
+    with mock.patch('clearly.server.event_listener.safe_compile_text') as msc:
         msc.side_effect = ('a', 'b')
         result = EventListener.compile_task_result(task)
 
