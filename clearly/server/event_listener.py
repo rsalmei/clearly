@@ -9,7 +9,7 @@ from celery.events import EventReceiver
 from celery.events.state import State, Task, Worker
 from celery.states import PENDING, SUCCESS
 
-from ..expected_state import ExpectedStateHandler, setup_task_states
+from .expected_state import ExpectedStateHandler, setup_task_states
 from ..protos.clearly_pb2 import TaskMessage, WorkerMessage
 from ..safe_compiler import safe_compile_text
 from ..utils.data import obj_to_message
