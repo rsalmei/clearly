@@ -34,7 +34,6 @@ class EventListener:
         memory: LRU storage object to keep tasks and workers
         use_result_backend: if True, there's a result backend to fetch results from
         task_states: object that fills missing tasks' states
-        worker_states: object that fills missing workers' states
 
     """
 
@@ -153,6 +152,7 @@ class EventListener:
 
         yield worker.state
 
+    # noinspection PyMethodMayBeStatic
     def _set_custom_event(self, event: dict) -> None:  # pragma: no cover
         # could pass custom user events here, if the need ever arises.
         logger.warning('unknown event: %s', event)
