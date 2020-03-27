@@ -276,7 +276,9 @@ class ClearlyClient:
     @set_user_friendly_errors
     def seen_tasks(self) -> None:
         """Fetch a list of seen task types."""
-        print('\n'.join(self._stub.seen_tasks(Empty()).task_types))
+        task_types = self._stub.seen_tasks(Empty()).task_types
+        for i, task_type in enumerate(task_types, 1):
+            print(Colors.DIM(i), Colors.BLUE(task_type))
 
     @set_user_friendly_errors
     def reset(self) -> None:
