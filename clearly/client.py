@@ -197,7 +197,7 @@ class ClearlyClient:
             pass
 
     @set_user_friendly_errors
-    def stats(self) -> None:
+    def metrics(self) -> None:
         """List some metrics about the capturing system itself, which of course
         reflects the actual celery pool being monitored.
 
