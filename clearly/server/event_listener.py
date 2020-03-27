@@ -11,10 +11,10 @@ from celery.states import PENDING, SUCCESS
 
 from .expected_state import ExpectedStateHandler, setup_task_states
 from ..protos.clearly_pb2 import TaskMessage, WorkerMessage
-from ..safe_compiler import safe_compile_text
+from ..utils import worker_states
 from ..utils.data import obj_to_message
 from ..utils.env_params import get_env_int
-from ..utils import worker_states
+from ..utils.safe_compiler import safe_compile_text
 
 logger = logging.getLogger(__name__)
 

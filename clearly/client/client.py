@@ -12,9 +12,9 @@ from .code_highlighter import traceback_highlighter_factory, typed_code
 from ..protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
     PatternFilter, TaskMessage, WorkerMessage
 from ..protos.clearly_pb2_grpc import ClearlyServerStub
-from ..safe_compiler import safe_compile_text
 from ..utils import worker_states
 from ..utils.colors import Colors
+from ..utils.safe_compiler import safe_compile_text
 
 HEADER_SIZE = 8
 HEADER_PADDING = ' ' * HEADER_SIZE
