@@ -284,6 +284,7 @@ class ClearlyClient:
     def reset(self) -> None:
         """Reset all captured tasks."""
         self._stub.reset_tasks(Empty())
+        print(Colors.BLUE('Ok'))
 
     def _set_display_mode(self, to: Union[ModeTask, ModeWorker]) -> None:  # pragma: no cover
         if isinstance(to, ModeTask):
