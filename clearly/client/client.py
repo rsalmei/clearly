@@ -9,12 +9,12 @@ from about_time.core import HandleStats
 from celery import states as task_states
 
 from .code_highlighter import traceback_highlighter_factory, typed_code
-from .protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
+from ..protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
     PatternFilter, TaskMessage, WorkerMessage
-from .protos.clearly_pb2_grpc import ClearlyServerStub
-from .safe_compiler import safe_compile_text
-from .utils import worker_states
-from .utils.colors import Colors
+from ..protos.clearly_pb2_grpc import ClearlyServerStub
+from ..safe_compiler import safe_compile_text
+from ..utils import worker_states
+from ..utils.colors import Colors
 
 HEADER_SIZE = 8
 HEADER_PADDING = ' ' * HEADER_SIZE

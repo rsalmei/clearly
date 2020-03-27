@@ -1,7 +1,7 @@
 from typing import Any, Callable
 
-from .safe_compiler import CallDescriptor
-from .utils.colors import Colors
+from ..safe_compiler import CallDescriptor
+from ..utils.colors import Colors
 
 SEPARATOR = Colors.RED(', ')
 KWARGS_SEPARATOR = Colors.RED('=')
