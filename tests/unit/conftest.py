@@ -12,12 +12,14 @@ def task_state_type(request):
     yield request.param
 
 
-@pytest.fixture(params=sorted(task_states.ALL_STATES.union(set('TRUNCATE'))))
-def task_state_type_truncating(request):
+@pytest.fixture(params=sorted(task_states.ALL_STATES.union(set('?'))))
+def task_state_plus(request):
+    """Can be used for a double SUCCESS, which truncates results or not, or for a
+    double PENDING, which is created or not."""
     # task results only make sense in success, so to test truncate resolving mechanism,
-    # I can't just insert a bool, as all combinations would not make sense.
-    truncating = request.param == 'TRUNCATE'
-    yield task_states.SUCCESS if truncating else request.param, truncating
+    # I can't just insert a bool, as almost all combinations would not make sense.
+    # the same for pending.
+    yield request.param
 
 
 @pytest.fixture(params=sorted(worker_states.ALL_STATES))
