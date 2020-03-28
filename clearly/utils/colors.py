@@ -5,8 +5,8 @@ C = TypeVar('C')  # how to constrain to only the closure below?
 
 
 def color_factory(color_code: str) -> C:
-    def apply(text: str) -> str:
-        return color_code + str(text) + '\033[0m'
+    def apply(text: str, format_spec: str = '') -> str:
+        return color_code + format(text, format_spec) + '\033[0m'
 
     def mix(*colors: C) -> List[C]:
         return [color_factory(c.color_code + color_code) for c in colors]
