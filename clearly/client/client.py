@@ -1,6 +1,5 @@
 import functools
 from datetime import datetime
-from enum import Enum
 from typing import Any, Callable, Iterable, Optional, Union
 
 import grpc
@@ -8,6 +7,7 @@ from about_time import about_time
 from about_time.core import HandleStats
 from celery import states as task_states
 
+from .display_modes import ModeTask, ModeWorker, find_mode
 from .code_highlighter import traceback_highlighter_factory, typed_code
 from ..protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
     PatternFilter, TaskMessage, WorkerMessage
@@ -21,41 +21,6 @@ HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = Colors.DIM(':)')
 DIM_NONE = Colors.CYAN_DIM('None')
 TRACEBACK_HIGHLIGHTER = traceback_highlighter_factory()
-
-
-class ModeTask(Enum):
-    BASIC = 'name, uuid, state and retries', False, False, False
-    ALL = 'basic + params, results and errors', True, True, True
-    ONLY_PARAMS = 'basic + params on initial and terminal states', True, False, False
-    ONLY_RESULTS = 'basic + results', False, True, False
-    ONLY_ERRORS = 'basic + errors', False, False, True
-    RESULTS = 'basic + params and results', None, True, False
-    ERRORS = 'basic + params and errors', None, False, True
-
-    def __new__(cls, description, *spec):
-        obj = object.__new__(cls)
-        obj._value_ = description
-        obj.__spec = spec
-        return obj
-
-    @property
-    def spec(self):
-        return self.__spec
-
-
-class ModeWorker(Enum):
-    BRIEF = 'timestamp, status, name and pid', False
-    STATS = 'brief + version, load and heartbeats', True
-
-    def __new__(cls, description, *spec):
-        obj = object.__new__(cls)
-        obj._value_ = description
-        obj.__spec = spec
-        return obj
-
-    @property
-    def spec(self):
-        return self.__spec
 
 
 def set_user_friendly_errors(fn: Callable[..., None]) -> Callable[..., None]:
