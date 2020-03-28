@@ -328,12 +328,12 @@ class ClearlyClient:
                   end=' ')
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
-        show_result = (task.state in task_states.PROPAGATE_STATES and error) \
+        show_outcome = (task.state in task_states.PROPAGATE_STATES and error) \
             or (task.state == task_states.SUCCESS and success)
 
         first_seen = bool(params) and not task.state
-        result = params is not False and show_result
-        if first_seen or result:
+        params_outcome = params is not False and show_outcome
+        if first_seen or params_outcome:
             print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
                   typed_code(safe_compile_text(task.args),
                              wrap=False) or EMPTY)
@@ -341,7 +341,7 @@ class ClearlyClient:
                   typed_code(safe_compile_text(task.kwargs),
                              wrap=False) or EMPTY)
 
-        if show_result:
+        if show_outcome:
             if task.result:
                 output = typed_code(safe_compile_text(task.result))
             elif task.traceback:
