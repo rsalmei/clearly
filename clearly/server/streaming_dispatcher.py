@@ -12,20 +12,26 @@ from ..utils.data import accept_task, accept_worker
 
 logger = logging.getLogger(__name__)
 
-THREAD_NAME = 'clearly-dispatcher'
+BASE_THREAD_NAME = 'clearly-dispatcher'
 
 
 class Role(Enum):
     TASKS = (accept_task,)
     WORKERS = (accept_worker,)
 
+    def __new__(cls, func_accept):
+        obj = object.__new__(cls)
+        obj._value_ = len(cls.__members__) + 1
+        obj.__func_accept = func_accept
+        return obj
+
     @property
     def thread_name(self) -> str:
-        return '{}-{}'.format(THREAD_NAME, self.name.lower())
+        return '{}-{}'.format(BASE_THREAD_NAME, self.name.lower())
 
     @property
     def func_accept(self) -> Callable[[Pattern, bool, Union[TaskMessage, WorkerMessage]], bool]:
-        return self.value[0]
+        return self.__func_accept
 
 
 class StreamingDispatcher:
