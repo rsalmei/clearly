@@ -64,7 +64,7 @@ class ClearlyClient:
         self._debug = debug
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self._stub = ClearlyServerStub(channel)
-        self._task_mode, self._worker_mode = ModeTask.ERRORS, ModeWorker.BRIEF
+        self._task_mode, self._worker_mode = ModeTask.FAILURE, ModeWorker.BRIEF
 
     def capture_tasks(self, tasks: Optional[str] = None, mode: Optional[ModeTask] = None) -> None:
         """Start capturing task events in real time, so you can instantly see exactly
@@ -251,27 +251,46 @@ class ClearlyClient:
         self._stub.reset_tasks(Empty())
         print(Colors.BLUE('Ok'))
 
-    def _set_display_mode(self, to: Union[ModeTask, ModeWorker]) -> None:  # pragma: no cover
+    def _set_display_mode(self, to: Union[int, ModeTask, ModeWorker]) -> None:
         if isinstance(to, ModeTask):
             self._task_mode, what = to, 'Task'
         elif isinstance(to, ModeWorker):
             self._worker_mode, what = to, 'Worker'
         else:
-            raise UserWarning('Invalid mode')
-        print(what, 'mode set to:', Colors.ORANGE(to.name), Colors.YELLOW_DIM(to.value))
+            raise UserWarning('Invalid mode constant.')
+        print(what, 'display mode set to:', Colors.ORANGE(to.name), Colors.YELLOW_DIM(to.value))
 
-    def display_modes(self, to: Union[ModeTask, ModeWorker] = None) -> None:
-        if to:
-            return self._set_display_mode(to)
+    @set_user_friendly_errors
+    def display_modes(self, to: Union[int, ModeTask, ModeWorker] = None,
+                      to2: Union[int, ModeTask, ModeWorker] = None) -> None:
+        """Show available display modes, including the currently selected one.
+        Also change the current mode, just send one or both task and worker display modes.
+        See that constant beside a mode? You can rapidly set a mode with it!
 
-        print(Colors.BLUE('tasks'))
-        for d in ModeTask:
-            print('  {} {:12}: {}'.format(d == self._task_mode and '*' or ' ',
-                                          d.name, Colors.YELLOW_DIM(d.value)))
-        print(Colors.BLUE('workers'))
-        for d in ModeWorker:
-            print('  {} {:12}: {}'.format(d == self._worker_mode and '*' or ' ',
-                                          d.name, Colors.YELLOW_DIM(d.value)))
+        Args:
+            to: a display mode to set, any mode is accepted, task or worker
+                even their constants are accepted!
+            to2: the same, use to set both task and worker modes in one call
+
+        Returns:
+
+        """
+        to, to2 = find_mode(to), find_mode(to2)
+        if to or to2:
+            if to and to2 and isinstance(to2, type(to)):
+                raise UserWarning('Two modes of the same type?')
+            self._set_display_mode(to or to2)
+            if to and to2:
+                self._set_display_mode(to2)
+            return
+
+        modes = ('tasks', ModeTask, self._task_mode), ('workers', ModeWorker, self._worker_mode)
+        for title, klass, var_mode in modes:
+            print(Colors.BLUE(title))
+            for d in klass:
+                print('  {} {:8} {}: {}'.format(
+                    d == var_mode and '*' or ' ', d.name,
+                    Colors.ORANGE_BOLD(d.value, '>2'), Colors.YELLOW(d.description)))
 
     @staticmethod
     def _fetched_info(at: HandleStats) -> None:  # pragma: no cover

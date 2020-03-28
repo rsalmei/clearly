@@ -1,1 +1,2 @@
-from .client import ClearlyClient, ModeTask, ModeWorker
+from .client import ClearlyClient
+from .display_modes import ModeTask, ModeWorker
