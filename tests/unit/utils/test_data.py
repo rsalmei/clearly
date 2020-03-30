@@ -12,7 +12,7 @@ TASK = dict(name='name', routing_key='routing_key', uuid='uuid', retries=5,
             args='args', kwargs='kwargs', result='result', traceback='traceback')
 
 WORKER = dict(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-              sw_ver='sw_ver', loadavg=[1, 2, 3], processed=789789, freq=5, heartbeats=[1])
+              sw_ver='sw_ver', loadavg=[1., 2., 3.], processed=789789, freq=5, heartbeats=[1])
 
 
 @pytest.mark.parametrize('obj, to_type, data', [
