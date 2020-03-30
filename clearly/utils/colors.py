@@ -1,4 +1,3 @@
-import re
 from typing import List, TypeVar
 
 C = TypeVar('C')  # how to constrain to only the closure below?
