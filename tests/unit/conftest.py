@@ -5,6 +5,7 @@ import pytest
 from celery import states as task_states
 
 from clearly.utils import worker_states
+from clearly.client import ModeTask, ModeWorker
 
 
 @pytest.fixture(params=sorted(task_states.ALL_STATES))
@@ -29,6 +30,16 @@ def worker_state_type(request):
 
 @pytest.fixture(params=sorted(worker_states.TYPES.keys()))
 def worker_event_type(request):
+    yield request.param
+
+
+@pytest.fixture(params=ModeTask.__members__.values())
+def mode_task_type(request):
+    yield request.param
+
+
+@pytest.fixture(params=ModeWorker.__members__.values())
+def mode_worker_type(request):
     yield request.param
 
 
