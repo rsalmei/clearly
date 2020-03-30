@@ -301,15 +301,15 @@ class ClearlyClient:
 
     @staticmethod
     def _parse_pattern(pattern: str) -> PatternFilter:
-        pattern = pattern or ''
-        if not isinstance(pattern, str):
+        if not isinstance(pattern, (type(None), str)):
             raise UserWarning('Invalid pattern.')
 
-        pattern = pattern.strip() or '.'
-        if pattern in ('!', '!.'):
-            return
+        pattern = (pattern or '').strip()
         negate = pattern.startswith('!')
-        return PatternFilter(pattern=pattern[negate:], negate=negate)
+        pattern = pattern[negate:].strip() or '.'
+        if negate and pattern == '.':
+            return
+        return PatternFilter(pattern=pattern, negate=negate)
 
     def _display_task(self, task: TaskMessage, mode: ModeTask) -> None:
         params, success, error = (mode or self._task_mode).spec
