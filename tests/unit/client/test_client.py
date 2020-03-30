@@ -1,19 +1,20 @@
 import re
 from unittest import mock
+from unittest.mock import call
 
 import grpc
 import pytest
-from celery import states
+from celery import states as task_states
 
-from clearly.client import ClearlyClient
-from clearly.protos import clearly_pb2
-from clearly.utils import worker_states
+from clearly.client import ClearlyClient, ModeTask, ModeWorker
+from clearly.protos.clearly_pb2 import Empty, PatternFilter, RealtimeMessage, SeenTasksMessage, \
+    StatsMessage, TaskMessage, WorkerMessage
 
 
 @pytest.fixture
 def mocked_client():
-    with mock.patch('clearly.client.grpc.insecure_channel'), \
-         mock.patch('clearly.client.clearly_pb2_grpc.ClearlyServerStub'):
+    with mock.patch('grpc.insecure_channel'), \
+         mock.patch('clearly.client.client.ClearlyServerStub'):
         yield ClearlyClient()
 
 
@@ -24,46 +25,34 @@ def mocked_display(mocked_client):
         yield mocked_client
 
 
-@pytest.fixture(params=(True, False))
-def bool1(request):
-    yield request.param
+@pytest.fixture
+def task_message():
+    yield TaskMessage(
+        name='name', routing_key='routing_key', uuid='uuid', retries=2,
+        args='args', kwargs='kwargs', result='result', traceback='traceback',
+        timestamp=123.1, state='ANY',
+    )
 
 
-@pytest.fixture(params=(True, False))
-def bool2(request):
-    yield request.param
-
-
-@pytest.fixture(params=(True, False))
-def bool3(request):
-    yield request.param
-
-
-@pytest.fixture(params=(True, False, None))
-def tristate(request):
-    yield request.param
-
-
-@pytest.fixture(params=sorted(states.ALL_STATES))
-def task_state_type(request):
-    yield request.param
-
-
-@pytest.fixture(params=sorted(worker_states.ALL_STATES))
-def worker_state_type(request):
-    yield request.param
+@pytest.fixture
+def worker_message():
+    yield WorkerMessage(
+        hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
+        sw_ver='sw_ver', loadavg=[1., 2., 3.], processed=5432, state='state',
+        freq=5, heartbeats=[234.2],
+    )
 
 
 # noinspection PyProtectedMember
 def test_client_reset(mocked_client):
     mocked_client.reset()
-    assert mocked_client._stub.reset_tasks.call_count == 1
+    mocked_client._stub.reset_tasks.assert_called_once_with(Empty())
 
 
 # noinspection PyProtectedMember
 def test_client_seen_tasks_do_print(mocked_client, capsys):
     inner_tasks = ['app{i}.task{i}'.format(i=i) for i in range(3)]
-    tasks = clearly_pb2.SeenTasksMessage()
+    tasks = SeenTasksMessage()
     tasks.task_types.extend(inner_tasks)
     mocked_client._stub.seen_tasks.return_value = tasks
     mocked_client.seen_tasks()
@@ -72,57 +61,46 @@ def test_client_seen_tasks_do_print(mocked_client, capsys):
 
 
 # noinspection PyProtectedMember
-def test_client_capture_task(tristate, bool1, bool2, mocked_display):
-    task = clearly_pb2.TaskMessage(
-        name='name', routing_key='routing_key', uuid='uuid', retries=2,
-        args='args', kwargs='kwargs', result='result', traceback='traceback',
-        timestamp=123.1, state='ANY', created=False,
-    )
+def test_client_capture_task(task_message, mode_task_type, mocked_display):
     mocked_display._stub.capture_realtime.return_value = \
-        (clearly_pb2.RealtimeEventMessage(task=task),)
-    mocked_display.capture(params=tristate, success=bool1, error=bool2)
-    mocked_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
+        (RealtimeMessage(task=task_message),)
+    mocked_display.capture(mode_tasks=mode_task_type)
+    mocked_display._display_task.assert_called_once_with(task_message, mode_task_type)
 
 
 # noinspection PyProtectedMember
 def test_client_capture_ignore_unknown(mocked_display):
-    mocked_display._stub.capture_realtime.return_value = (clearly_pb2.RealtimeEventMessage(),)
+    mocked_display._stub.capture_realtime.return_value = (RealtimeMessage(),)
     mocked_display.capture()
     mocked_display._display_task.assert_not_called()
 
 
 # noinspection PyProtectedMember
-def test_client_capture_worker(bool1, mocked_display):
-    worker = clearly_pb2.WorkerMessage(
-        hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-        sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
-        alive=True, freq=5, last_heartbeat=234.2,
-    )
+def test_client_capture_worker(worker_message, mode_worker_type, mocked_display):
     mocked_display._stub.capture_realtime.return_value = \
-        (clearly_pb2.RealtimeEventMessage(worker=worker),)
-    mocked_display.capture(stats=bool1)
-    mocked_display._display_worker.assert_called_once_with(worker, bool1)
+        (RealtimeMessage(worker=worker_message),)
+    mocked_display.capture(mode_workers=mode_worker_type)
+    mocked_display._display_worker.assert_called_once_with(worker_message, mode_worker_type)
 
 
 # noinspection PyProtectedMember
-@pytest.mark.parametrize('method, stub, params', [
-    ('capture_tasks', 'capture_realtime', 0),
-    ('capture_workers', 'capture_realtime', 0),
-    ('capture', 'capture_realtime', 0),
-    ('stats', 'get_stats', 0),
-    ('tasks', 'filter_tasks', 0),
-    ('workers', 'filter_workers', 0),
-    ('task', 'find_task', 1),
-    ('seen_tasks', 'seen_tasks', 0),
-    ('reset', 'reset_tasks', 0),
+@pytest.mark.parametrize('method, stub', [
+    ('capture_tasks', 'capture_realtime'),
+    ('capture_workers', 'capture_realtime'),
+    ('capture', 'capture_realtime'),
+    ('metrics', 'get_stats'),
+    ('tasks', 'filter_tasks'),
+    ('workers', 'filter_workers'),
+    ('seen_tasks', 'seen_tasks'),
+    ('reset', 'reset_tasks'),
 ])
-def test_client_methods_have_user_friendly_errors(method, stub, params, mocked_display, capsys):
+def test_client_methods_have_user_friendly_grpc_errors(method, stub, mocked_display, capsys):
     exc = grpc.RpcError()
     exc.code, exc.details = lambda: 'StatusCode', lambda: 'details'
     getattr(mocked_display._stub, stub).side_effect = exc
 
-    getattr(mocked_display, method)(*('x',) * params)
-    # NOTE: the day I have a method with a non-string param, this will break.
+    with mock.patch.object(mocked_display, '_debug', False):
+        getattr(mocked_display, method)()
 
     generated = capsys.readouterr().out
     assert 'Server communication error' in generated
@@ -131,32 +109,45 @@ def test_client_methods_have_user_friendly_errors(method, stub, params, mocked_d
 
 
 # noinspection PyProtectedMember
-@pytest.mark.parametrize('method, stub, params', [
-    ('capture_tasks', 'capture_realtime', 0),
-    ('capture_workers', 'capture_realtime', 0),
-    ('capture', 'capture_realtime', 0),
-    ('stats', 'get_stats', 0),
-    ('tasks', 'filter_tasks', 0),
-    ('workers', 'filter_workers', 0),
-    ('task', 'find_task', 1),
-    ('seen_tasks', 'seen_tasks', 0),
-    ('reset', 'reset_tasks', 0),
+@pytest.mark.parametrize('method, stub', [
+    ('capture_tasks', 'capture_realtime'),
+    ('capture_workers', 'capture_realtime'),
+    ('capture', 'capture_realtime'),
+    ('metrics', 'get_stats'),
+    ('tasks', 'filter_tasks'),
+    ('workers', 'filter_workers'),
+    ('seen_tasks', 'seen_tasks'),
+    ('reset', 'reset_tasks'),
 ])
-def test_client_methods_trigger_errors_when_debugging(method, stub, params, mocked_display):
-    getattr(mocked_display._stub, stub).side_effect = grpc.RpcError()
-    mocked_display.debug = True
+def test_client_methods_trigger_grpc_errors_when_debugging(method, stub, mocked_client):
+    rpc_error = grpc.RpcError()
+    rpc_error.details = rpc_error.code = mock.Mock()
+    getattr(mocked_client._stub, stub).side_effect = rpc_error
+    mocked_client._debug = True
 
-    with pytest.raises(grpc.RpcError):
-        getattr(mocked_display, method)(*('x',) * params)
-        # NOTE: the day I have a method with a non-string param, this will break.
+    with mock.patch.object(mocked_client, '_debug', True), pytest.raises(grpc.RpcError):
+        getattr(mocked_client, method)()
+
+
+# noinspection PyProtectedMember
+@pytest.mark.parametrize('method', [
+    'capture_tasks', 'capture_workers', 'capture', 'tasks', 'workers'
+])
+def test_client_methods_have_user_friendly_warnings(method, mocked_display, capsys):
+    with mock.patch('clearly.client.ClearlyClient._parse_pattern') as mock_parse:
+        mock_parse.return_value = None
+        getattr(mocked_display, method)()
+
+    generated = capsys.readouterr().out
+    assert 'Nothing would be selected.' in generated
 
 
 def test_client_capture_tasks(mocked_client):
     with mock.patch.object(mocked_client, 'capture') as mocked_capture:
         mocked_client.capture_tasks()
         mocked_capture.assert_called_once_with(
-            workers='.', negate_workers=True, stats=False,
-            pattern=mock.ANY, negate=mock.ANY, params=mock.ANY, success=mock.ANY, error=mock.ANY,
+            tasks=mock.ANY, mode_tasks=mock.ANY,
+            workers='!',
         )
 
 
@@ -164,136 +155,102 @@ def test_client_capture_workers(mocked_client):
     with mock.patch.object(mocked_client, 'capture') as mocked_capture:
         mocked_client.capture_workers()
         mocked_capture.assert_called_once_with(
-            pattern='.', negate=True, params=False, success=False, error=False,
-            workers=mock.ANY, negate_workers=mock.ANY, stats=mock.ANY,
+            workers=mock.ANY, mode_workers=mock.ANY,
+            tasks='!',
         )
 
 
 # noinspection PyProtectedMember
-def test_client_stats_do_print(mocked_client, capsys):
+def test_client_metrics_do_print(mocked_client, capsys):
     data = dict(task_count=1234, event_count=5678, len_tasks=2244, len_workers=333)
-    mocked_client._stub.get_stats.return_value = clearly_pb2.StatsMessage(**data)
-    mocked_client.stats()
+    mocked_client._stub.get_stats.return_value = StatsMessage(**data)
+    mocked_client.metrics()
     generated = capsys.readouterr().out
     assert all(re.search(str(x), generated) for x in data.values())
 
 
 # noinspection PyProtectedMember
-def test_client_tasks(tristate, bool1, bool2, mocked_display):
-    task = clearly_pb2.TaskMessage(
-        name='name', routing_key='routing_key', uuid='uuid', retries=2,
-        args='args', kwargs='kwargs', result='result', traceback='traceback',
-        timestamp=123.1, state='ANY', created=False,
-    )
-    mocked_display._stub.filter_tasks.return_value = (task,)
-    mocked_display.tasks(params=tristate, success=bool1, error=bool2)
-    mocked_display._display_task.assert_called_once_with(task, tristate, bool1, bool2)
+def test_client_tasks(task_message, mode_task_type, mocked_display):
+    mocked_display._stub.filter_tasks.return_value = (task_message,)
+    mocked_display.tasks(mode=mode_task_type)
+    mocked_display._display_task.assert_called_once_with(task_message, mode_task_type)
 
 
 # noinspection PyProtectedMember
-def test_client_workers(bool1, mocked_display):
-    worker = clearly_pb2.WorkerMessage(
-        hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-        sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, state='state',
-        alive=True, freq=5, last_heartbeat=234.2,
-    )
-    mocked_display._stub.filter_workers.return_value = (worker,)
-    mocked_display.workers(stats=bool1)
-    mocked_display._display_worker.assert_called_once_with(worker, bool1)
+def test_client_workers(worker_message, mode_worker_type, mocked_display):
+    mocked_display._stub.filter_workers.return_value = (worker_message,)
+    mocked_display.workers(mode=mode_worker_type)
+    mocked_display._display_worker.assert_called_once_with(worker_message, mode_worker_type)
 
 
-# noinspection PyProtectedMember
-def test_client_task(bool1, mocked_display):
-    task = clearly_pb2.TaskMessage(
-        name='name', routing_key='routing_key', uuid='uuid', retries=2,
-        args='args', kwargs='kwargs', result='result', traceback='traceback',
-        timestamp=123.1, state='state', created=False,
-    )
-    mocked_display._stub.find_task.return_value = task if bool1 else clearly_pb2.TaskMessage()
-    mocked_display.task('uuid')
-    if bool1:
-        mocked_display._display_task.assert_called_once_with(task, True, True, True)
-    else:
-        mocked_display._display_task.assert_not_called()
-
-
-@pytest.fixture(params=(None, 'traceback'))
+@pytest.fixture(params=('', 'traceback'))
 def task_tb(request):
     yield request.param
 
 
-@pytest.fixture(params=(None, '', 'False', '0', "'nice'"))
+@pytest.fixture(params=('', 'False', '0', "'nice'"))
 def task_result(request):
     yield request.param
 
 
 # noinspection PyProtectedMember
-def test_client_display_task(task_result, tristate, bool1, bool2, bool3,
-    task = clearly_pb2.TaskMessage(
-                             task_state_type, task_tb, mocked_client, capsys, strip_colors):
-        name='name', routing_key='routing_key', uuid='uuid', retries=2,
-        args='args123', kwargs='kwargs', result=task_result, traceback=task_tb,
-        timestamp=123.1, state=task_state_type, created=bool3,
-    )
+def test_client_display_task(task_message, task_result, mode_task_type, mocked_client,
+                             task_state_plus, task_tb, capsys, strip_colors):
+    task_state_type = '' if task_state_plus == '?' else task_state_plus
+    task_message.state = task_state_type
+    task_message.result, task_message.traceback = task_result, task_tb
 
-    with mock.patch('clearly.client.ClearlyClient._task_state') as m_task_state:
-        mocked_client._display_task(task, params=tristate, success=bool1, error=bool2)
+    mocked_client._display_task(task_message, mode_task_type)
     generated = strip_colors(capsys.readouterr().out)
 
-    assert task.name in generated
-    assert task.uuid in generated
+    assert task_message.name in generated
+    assert task_message.uuid in generated
 
-    if bool3:
-        assert task.routing_key in generated
-        m_task_state.assert_not_called()
+    if not task_state_type:
+        assert task_message.routing_key in generated
     else:
-        m_task_state.assert_called_once_with(task.state)
+        assert task_state_type in generated
 
-    show_result = (task.state in states.PROPAGATE_STATES and bool2) \
-        or (task.state == states.SUCCESS and bool1)
+    params, success, error = mode_task_type.spec
+    show_result = (task_message.state in task_states.PROPAGATE_STATES and error) \
+        or (task_message.state == task_states.SUCCESS and success)
 
     # params
-    first_seen = bool(tristate) and task.created
-    result = tristate is not False and show_result
+    first_seen = bool(params) and not task_state_type
+    result = params is not False and show_result
     tristate = first_seen or result
-    assert tristate == (task.args in generated)
-    assert tristate == (task.kwargs in generated)
+    assert tristate == (task_message.args in generated)
+    assert tristate == (task_message.kwargs in generated)
 
     # result
     if show_result:
         assert '==> ' + (task_result or task_tb or ':)') in generated
 
 
-@pytest.fixture(params=(None, 123456789))
-def worker_heartbeat(request):
-    yield request.param
-
-
 # noinspection PyProtectedMember
-def test_client_display_worker(bool1, bool2, worker_state_type, worker_heartbeat,
-    worker = clearly_pb2.WorkerMessage(
-                               mocked_client, capsys, strip_colors):
-        hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-        sw_ver='sw_ver', loadavg=[1.0, 2.0, 3.0], processed=5432, alive=bool2,
-        state=worker_state_type, freq=5, last_heartbeat=worker_heartbeat,
-    )
+def test_client_display_worker(worker_message, mode_worker_type, worker_state_type,
+                               bool1, bool2, mocked_client, capsys, strip_colors):
+    worker_message.state = worker_state_type
+    if bool1:
+        worker_message.heartbeats.pop()
+    if bool2:
+        worker_message.timestamp = 123.1
 
     with mock.patch('clearly.client.ClearlyClient._worker_state') as m_worker_state:
-        mocked_client._display_worker(worker, stats=bool1)
+        mocked_client._display_worker(worker_message, mode_worker_type)
     generated = strip_colors(capsys.readouterr().out)
 
     m_worker_state.assert_called_once_with(worker_state_type)
-    assert worker.hostname in generated
-    assert str(worker.pid) in generated
+    assert worker_message.hostname in generated
+    assert str(worker_message.pid) in generated
 
-    # stats
-    assert bool1 == ('sw_sys' in generated)
-    assert bool1 == ('sw_ident' in generated)
-    assert bool1 == ('sw_ver' in generated)
-    assert bool1 == ('[1.0, 2.0, 3.0]' in generated)
-
-    # alive
-    assert (bool1 and bool2) == ('heartbeat:' in generated)
+    stats, = mode_worker_type.spec
+    if stats:
+        assert 'sw_sys' in generated
+        assert 'sw_ident' in generated
+        assert 'sw_ver' in generated
+        assert '[1.0, 2.0, 3.0]' in generated
+        assert 'heartb:' in generated
 
 
 # noinspection PyProtectedMember
@@ -306,3 +263,87 @@ def test_client_task_state(task_state_type, mocked_client):
 def test_client_worker_state(worker_state_type, mocked_client):
     result = mocked_client._worker_state(worker_state_type)
     assert worker_state_type in result
+
+
+# noinspection PyProtectedMember
+@pytest.mark.parametrize('value', [
+    True, 1, object()
+])
+def test_parse_pattern_error(value, mocked_client):
+    with pytest.raises(UserWarning):
+        mocked_client._parse_pattern(value)
+
+
+# noinspection PyProtectedMember
+@pytest.mark.parametrize('value, expected', [
+    (None, PatternFilter(pattern='.', negate=False)),
+    (' ', PatternFilter(pattern='.', negate=False)),
+    ('pattern', PatternFilter(pattern='pattern', negate=False)),
+    ('  pattern   ', PatternFilter(pattern='pattern', negate=False)),
+    ('!pattern', PatternFilter(pattern='pattern', negate=True)),
+    ('! pattern', PatternFilter(pattern='pattern', negate=True)),
+    ('!', None),
+    ('!.', None),
+    ('! .  ', None),
+])
+def test_parse_pattern(value, expected, mocked_client):
+    assert mocked_client._parse_pattern(value) == expected
+
+
+# noinspection PyProtectedMember
+@pytest.mark.parametrize('value', [
+    None, '', 1, 'ALL'
+])
+def test_set_display_mode_error(value, mocked_client):
+    with pytest.raises(UserWarning):
+        mocked_client._set_display_mode(value)
+
+
+# noinspection PyProtectedMember
+@pytest.mark.parametrize('value, expected', [
+    (ModeTask.ALL, '_task_mode'),
+    (ModeWorker.STATS, '_worker_mode'),
+])
+def test_set_display_mode_ok(value, expected, mocked_client):
+    mocked_client._set_display_mode(value)
+    assert getattr(mocked_client, expected) == value
+
+
+def test_display_modes_task_indicator(mode_task_type, mocked_client, capsys):
+    mocked_client._task_mode = mode_task_type
+    mocked_client.display_modes()
+    assert '* ' + mode_task_type.name in capsys.readouterr().out
+
+
+def test_display_modes_worker_indicator(mode_worker_type, mocked_client, capsys):
+    mocked_client._worker_mode = mode_worker_type
+    mocked_client.display_modes()
+    assert '* ' + mode_worker_type.name in capsys.readouterr().out
+
+
+@pytest.mark.parametrize('to, to2', [
+    (ModeTask.ALL, ModeTask.BASIC),
+    (ModeWorker.STATS, ModeWorker.BASIC),
+])
+def test_display_modes_with_params_error(to, to2, capsys, mocked_client):
+    with mock.patch('clearly.client.client.find_mode') as mock_find_mode:
+        mock_find_mode.side_effect = lambda x: x
+        mocked_client.display_modes(to, to2)
+    assert 'Two modes of the same type?' in capsys.readouterr().out
+
+
+@pytest.mark.parametrize('to, to2, expected', [
+    (ModeTask.ALL, None, (ModeTask.ALL,)),
+    (None, ModeTask.ALL, (ModeTask.ALL,)),
+    (ModeWorker.STATS, None, (ModeWorker.STATS,)),
+    (None, ModeWorker.STATS, (ModeWorker.STATS,)),
+    (ModeTask.ALL, ModeWorker.STATS, (ModeTask.ALL, ModeWorker.STATS)),
+    (ModeWorker.STATS, ModeTask.ALL, (ModeWorker.STATS, ModeTask.ALL)),
+])
+def test_display_modes_with_params(to, to2, expected, mocked_client):
+    with mock.patch('clearly.client.client.find_mode') as mock_find_mode, \
+            mock.patch.object(mocked_client, '_set_display_mode') as mock_sdm:
+        mock_find_mode.side_effect = lambda x: x
+        mocked_client.display_modes(to, to2)
+
+    mock_sdm.assert_has_calls(call(v) for v in expected)
