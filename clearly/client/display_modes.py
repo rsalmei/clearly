@@ -41,7 +41,7 @@ class ModeTask(EnumSpecDescription):
 
 
 class ModeWorker(EnumSpecDescription):
-    BRIEF = 'timestamp, status, name and pid', False
+    BASIC = 'timestamp, status, name and pid', False
     STATS = 'BRIEF + version, load and heartbeats', True
 
 
