@@ -158,7 +158,7 @@ class ClearlyClient:
                 else:
                     print('unknown event:', realtime)
                     break
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             pass
 
     @set_user_friendly_errors
