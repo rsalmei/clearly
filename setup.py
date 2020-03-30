@@ -1,4 +1,3 @@
-# coding=utf-8
 import os
 from distutils.core import setup
 
@@ -59,7 +58,8 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    keywords='celery task queue job flower monitoring distributed asynchronous'.split(),
+    keywords='python celery distributed task queue flower monitor monitoring-tool asynchronous '
+             'real-time realtime'.split(),
     packages=find_packages(),
     data_files=[('', ['LICENSE'])],
     python_requires='>=3.5, <4',
