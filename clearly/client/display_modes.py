@@ -13,7 +13,7 @@ class EnumSpecDescription(Enum):
         obj.__spec = spec
         return obj
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return '<{}.{}: {} {!r}>'.format(self.__class__.__name__, self.name,
                                          self.value, self.__description)
 
