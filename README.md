@@ -24,7 +24,7 @@
 A major revamp has been made to improve the code and make it more mature and reliable. **Clearly** in general is way more polished, with beautiful colors and error handling, and much easier to use!
 <br>You can see it in https://github.com/rsalmei/clearly/pull/52.
 <br>The code and tests are ready!! Missing just the README... 😅
-<br>I'm super happy with the code now! And still have 100% coverage 😊
+<br>I'm super happy with the code now! And still have 100% code coverage (branch-coverage!) 😊
 
 A sneak peek? We now have **display modes**!
 ![v9 sneak peek](img/v9.png?raw=true)
