@@ -21,11 +21,12 @@
 
 **Clearly** will debut a new architecture in version 0.9, since its very near 1.0! \o/
 
-A major revamp is being made to make the code more mature, more reliable, more polished, more advanced and even faster!
-<br>You can see it in https://github.com/rsalmei/clearly/pull/52 (work in progress).
-<br>The code is almost ready, and very nice to my eyes - I'm super happy with the result! Working now on the tests, which is much work since **Clearly** has 100% coverage, and almost everything has changed... 😅
+A major revamp has been made to improve the code and make it more mature and reliable. **Clearly** in general is way more polished, with beautiful colors and error handling, and much easier to use!
+<br>You can see it in https://github.com/rsalmei/clearly/pull/52.
+<br>The code and tests are ready!! Missing just the README... 😅
+<br>I'm super happy with the code now! And still have 100% coverage 😊
 
-Sneak peek? We now have **display modes**!
+A sneak peek? We now have **display modes**!
 ![v9 sneak peek](img/v9.png?raw=true)
 
 I think this version is going to be really professional, hope you like it!
