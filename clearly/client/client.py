@@ -48,7 +48,7 @@ class ClearlyClient:
     commands and displays captured events.
 
     Attributes:
-        debug: if True, let the ugly  errors be seen, humanizes them otherwise
+        _debug: if True, let the ugly  errors be seen, humanizes them otherwise
         _stub: the rpc communication stub instance
 
     """

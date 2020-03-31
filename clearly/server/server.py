@@ -29,16 +29,16 @@ class ClearlyServer:
     the connected clients' needs, and manages the RPC communication.
 
     Attributes:
-        memory: LRU storage object to keep celery tasks and workers
-        listener: the object that listens and keeps celery events
-        dispatcher_tasks: the mechanism to dispatch tasks to clients
-        dispatcher_workers: the mechanism to dispatch workers to clients
-        rpc: the gRPC service
+        _memory: LRU storage object to keep celery tasks and workers
+        _listener: the object that listens and keeps celery events
+        _dispatcher_tasks: the mechanism to dispatch tasks to clients
+        _dispatcher_workers: the mechanism to dispatch workers to clients
+        _rpc: the gRPC service
 
     """
 
-    def __init__(self, broker: str, backend: Optional[str] = None,
-                 max_tasks: Optional[int] = None, max_workers: Optional[int] = None):
+    def __init__(self, broker: str, backend: Optional[str] = None, max_tasks: Optional[int] = None,
+                 max_workers: Optional[int] = None):  # pragma: no cover
         """Construct a Clearly Server instance.
 
         Args:
@@ -50,18 +50,18 @@ class ClearlyServer:
         """
         max_tasks, max_workers = max_tasks or 10000, max_workers or 100
         logger.info('Creating memory: max_tasks=%d; max_workers=%d', max_tasks, max_workers)
-        self.memory = State(max_tasks_in_memory=max_tasks, max_workers_in_memory=max_workers)
+        self._memory = State(max_tasks_in_memory=max_tasks, max_workers_in_memory=max_workers)
 
         queue_tasks, queue_workers = Queue(), Queue()  # hands new events to be distributed.
         try:
-            self.listener = EventListener(broker, queue_tasks, queue_workers, self.memory, backend)
+            self._listener = EventListener(broker, queue_tasks, queue_workers, self._memory, backend)
         except TimeoutError as e:
             logger.critical(e)
             sys.exit(1)
 
-        self.dispatcher_tasks = StreamingDispatcher(queue_tasks, Role.TASKS)
-        self.dispatcher_workers = StreamingDispatcher(queue_workers, Role.WORKERS)
-        self.rpc = RPCService(self.memory, self.dispatcher_tasks, self.dispatcher_workers)
+        self._dispatcher_tasks = StreamingDispatcher(queue_tasks, Role.TASKS)
+        self._dispatcher_workers = StreamingDispatcher(queue_workers, Role.WORKERS)
+        self._rpc = RPCService(self._memory, self._dispatcher_tasks, self._dispatcher_workers)
 
     def start_server(self, port: int = None, blocking: Optional[bool] = None) \
             -> Optional[grpc.Server]:  # pragma: no cover
@@ -80,7 +80,7 @@ class ClearlyServer:
         logger.info('Initiating gRPC server: port=%d', port)
 
         gserver = grpc.server(futures.ThreadPoolExecutor())
-        add_ClearlyServerServicer_to_server(self.rpc, gserver)
+        add_ClearlyServerServicer_to_server(self._rpc, gserver)
         gserver.add_insecure_port('[::]:{}'.format(port))
 
         logger.info('gRPC server ok')
