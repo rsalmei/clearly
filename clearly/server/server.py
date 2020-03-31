@@ -54,7 +54,8 @@ class ClearlyServer:
 
         queue_tasks, queue_workers = Queue(), Queue()  # hands new events to be distributed.
         try:
-            self._listener = EventListener(broker, queue_tasks, queue_workers, self._memory, backend)
+            self._listener = EventListener(broker, queue_tasks, queue_workers,
+                                           self._memory, backend)
         except TimeoutError as e:
             logger.critical(e)
             sys.exit(1)

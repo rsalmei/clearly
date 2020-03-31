@@ -1,12 +1,14 @@
 import logging
 import os
 from functools import partial
-from typing import Callable, T
+from typing import Callable, TypeVar, List
 
 logger = logging.getLogger(__name__)
 
+TV = TypeVar('TV', str, int, List[str])
 
-def get_env_param(name: str, default: T, factory: Callable[[str], T]) -> T:
+
+def get_env_param(name: str, default: TV, factory: Callable[[str], TV]) -> TV:
     """Return a named environment variable cast to the correct type, or a
     default param.
 
