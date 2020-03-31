@@ -1,177 +1,118 @@
 from unittest import mock
 
 import pytest
-from celery.events.state import Task, Worker
 
-from clearly.event_core.events import TaskData, WorkerData
-from clearly.protos import clearly_pb2
-from clearly.protos.clearly_pb2 import RealtimeEventMessage, TaskMessage
-from clearly.server import ClearlyServer
+from clearly.protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, \
+    FilterWorkersRequest, PatternFilter, RealtimeMessage, TaskMessage, WorkerMessage
+from clearly.server.server import RPCService
 
 
 @pytest.fixture
-def mocked_server():
-    with mock.patch('clearly.server._log_request'):
-        yield ClearlyServer(mock.Mock(), mock.MagicMock())
+def mocked_rpc():
+    with mock.patch('clearly.server.server.RPCService._log_request'):
+        yield RPCService(mock.Mock(), mock.MagicMock(), mock.MagicMock())
 
 
-def test_server_capture_realtime(mocked_server):
-    request = clearly_pb2.CaptureRequest(
-        tasks_capture=clearly_pb2.PatternFilter(pattern='tp', negate=True),
-        workers_capture=clearly_pb2.PatternFilter(pattern='wp', negate=False),
-    )
-    event = 'event'
-    msc = mocked_server.dispatcher.streaming_client
-    msc.return_value.__enter__.return_value.get.return_value = event
+def test_server_capture_realtime(tristate, mocked_rpc):
+    capture_data, queue_data = {}, []
+    if tristate is not True:  # enters in False and None
+        capture_data.update(tasks_capture=PatternFilter(pattern='tp', negate=True))
+        queue_data.append(TaskMessage(timestamp=123.1))
+    if tristate is not False:  # enters in True and None
+        capture_data.update(workers_capture=PatternFilter(pattern='wp', negate=False))
+        queue_data.append(WorkerMessage(timestamp=123.2))
+    request = CaptureRequest(**capture_data)
 
-    # this makes the context manager not suppress exceptions!
-    msc.return_value.__exit__.return_value = None
+    mdt = mocked_rpc.dispatcher_tasks.streaming_capture
+    mdw = mocked_rpc.dispatcher_workers.streaming_capture
 
-    with mock.patch('clearly.server.ClearlyServer._event_to_pb') as mepb:
-        mepb.return_value = 'task', TaskMessage()
-        gen = mocked_server.capture_realtime(request, None)
-        result = next(gen)
+    with mock.patch('queue.Queue.get') as mqg:
+        mqg.side_effect = queue_data
+        gen = mocked_rpc.capture_realtime(request, None)
 
-    msc.assert_called_once_with('tp', True, 'wp', False)
-    mepb.assert_called_once_with(event)
-    assert result == RealtimeEventMessage(task=TaskMessage())
-
-
-T_DATA_PB = dict(name='name', routing_key='routing_key', uuid='uuid', retries=5,
-                 args='args', kwargs='kwargs', result='result', traceback='traceback',
-                 timestamp=123, state='state')
-T_DATA = dict(pre_state='other', created=False,
-              **T_DATA_PB)
-
-W_DATA_PB = dict(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
-                 sw_ver='sw_ver', loadavg=[1, 2, 3], processed=789789,
-                 freq=5)
-W_DATA = dict(state='state', pre_state='other', created=False, alive=True, last_heartbeat=1,
-              **W_DATA_PB)
+        if tristate is not True:
+            result = next(gen)
+            mdt.assert_called_once_with(PatternFilter(pattern='tp', negate=True), mock.ANY)
+            assert result == RealtimeMessage(task=TaskMessage(timestamp=123.1))
+        if tristate is not False:
+            result = next(gen)
+            mdw.assert_called_once_with(PatternFilter(pattern='wp', negate=False), mock.ANY)
+            assert result == RealtimeMessage(worker=WorkerMessage(timestamp=123.2))
 
 
-# noinspection PyProtectedMember
-@pytest.mark.parametrize('event, key, data', [
-    (TaskData(**T_DATA), 'task', T_DATA_PB),
-    (Task(**T_DATA_PB), 'task', T_DATA_PB),
-    (WorkerData(**W_DATA), 'worker', W_DATA_PB),
-    (Worker(**W_DATA_PB), 'worker', W_DATA_PB),
-])
-def test_server_event_to_pb_valid(event, key, data, mocked_server):
-    result_key, result_obj = mocked_server._event_to_pb(event)
-    assert result_key == key
-    assert all(getattr(result_obj, k) == v
-               for k, v in data.items())
-
-
-# noinspection PyProtectedMember
-@pytest.mark.parametrize('event, key', [
-    (1, ValueError),
-    ('wrong', ValueError),
-    ({'wrong': True}, ValueError),
-])
-def test_server_event_to_pb_invalid(event, key, mocked_server):
-    with pytest.raises(key):
-        mocked_server._event_to_pb(event)
-
-
-def test_server_filter_tasks(mocked_server):
-    request = clearly_pb2.FilterTasksRequest(
-        tasks_filter=clearly_pb2.PatternFilter(pattern='tp', negate=True),
-        state_pattern='sp',
-    )
-    mlmt = mocked_server.listener.memory.tasks_by_time
+def test_server_filter_tasks(mocked_rpc):
+    request = FilterTasksRequest(tasks_filter=PatternFilter(pattern='tp', negate=True))
     task = mock.Mock()
-    mlmt.return_value = (('ignore', task),)
+    mocked_rpc.memory.tasks_by_time.return_value = (('_', task),)
 
-    with mock.patch('clearly.server.accepts') as ma, \
-            mock.patch('clearly.server.ClearlyServer._event_to_pb') as mepb:
+    with mock.patch('clearly.server.server.accept_task') as ma, \
+            mock.patch('clearly.server.server.obj_to_message') as otm:
         ma.return_value = True
-        mepb.return_value = 'asd', 35
-        gen = mocked_server.filter_tasks(request, None)
+        otm.return_value = 'asd'
+        gen = mocked_rpc.filter_tasks(request, None)
         result = next(gen)
 
-    mepb.assert_called_once_with(task)
-    assert result == 35
+    otm.assert_called_once_with(task, TaskMessage)
+    assert result == 'asd'
 
 
-def test_server_filter_tasks_empty(mocked_server):
-    mlmt = mocked_server.listener.memory.tasks_by_time
+def test_server_filter_tasks_empty(mocked_rpc):
+    mlmt = mocked_rpc.memory.tasks_by_time
     mlmt.return_value = ()
 
-    gen = mocked_server.filter_tasks(clearly_pb2.FilterTasksRequest(), None)
+    gen = mocked_rpc.filter_tasks(FilterTasksRequest(), None)
     with pytest.raises(StopIteration):
         next(gen)
 
 
-def test_server_filter_workers(mocked_server):
-    request = clearly_pb2.FilterWorkersRequest(
-        workers_filter=clearly_pb2.PatternFilter(pattern='wp', negate=True),
-    )
+def test_server_filter_workers(mocked_rpc):
+    request = FilterWorkersRequest(workers_filter=PatternFilter(pattern='wp', negate=True))
     worker = mock.Mock()
-    mocked_server.listener.memory.workers.values.return_value = (worker,)
+    mocked_rpc.memory.workers.values.return_value = (worker,)
 
-    with mock.patch('clearly.server.accepts') as ma, \
-            mock.patch('clearly.server.ClearlyServer._event_to_pb') as mepb:
+    with mock.patch('clearly.server.server.accept_worker') as ma, \
+            mock.patch('clearly.server.server.obj_to_message') as otm:
         ma.return_value = True
-        mepb.return_value = 'asd', 35
-        gen = mocked_server.filter_workers(request, None)
+        otm.return_value = 'asd'
+        gen = mocked_rpc.filter_workers(request, None)
         result = next(gen)
 
-    mepb.assert_called_once_with(worker)
-    assert result == 35
+    otm.assert_called_once_with(worker, WorkerMessage)
+    assert result == 'asd'
 
 
-def test_server_filter_workers_empty(mocked_server):
-    mocked_server.listener.memory.workers.values.return_value = ()
+def test_server_filter_workers_empty(mocked_rpc):
+    mocked_rpc.memory.workers.values.return_value = ()
 
-    gen = mocked_server.filter_workers(clearly_pb2.FilterWorkersRequest(), None)
+    gen = mocked_rpc.filter_workers(FilterWorkersRequest(), None)
     with pytest.raises(StopIteration):
         next(gen)
 
 
-@pytest.mark.parametrize('task', ['found', None])
-def test_server_find_task(task, mocked_server):
-    request = clearly_pb2.FindTaskRequest(task_uuid='a_uuid')
-    mlmtg = mocked_server.listener.memory.tasks.get
-    mlmtg.return_value = task
-
-    with mock.patch('clearly.server.ClearlyServer._event_to_pb') as mepb:
-        mepb.return_value = 'asd', 35
-        result = mocked_server.find_task(request, None)
-
-    if task:
-        mepb.assert_called_once_with(task)
-        assert result == 35
-    else:
-        mepb.assert_not_called()
-        assert isinstance(result, clearly_pb2.TaskMessage)
-
-
-def test_server_seen_tasks(mocked_server):
+def test_server_seen_tasks(mocked_rpc):
     expected = ('t1', 't2')
-    mlmtt = mocked_server.listener.memory.task_types
+    mlmtt = mocked_rpc.memory.task_types
     mlmtt.return_value = expected
 
-    result = mocked_server.seen_tasks(clearly_pb2.Empty(), None)
+    result = mocked_rpc.seen_tasks(Empty(), None)
 
     assert result.task_types == list(expected)
 
 
-def test_server_reset_tasks(mocked_server):
-    mocked_server.reset_tasks(clearly_pb2.Empty(), None)
+def test_server_reset_tasks(mocked_rpc):
+    mocked_rpc.reset_tasks(Empty(), None)
 
-    assert mocked_server.listener.memory.clear_tasks.call_count == 1
+    assert mocked_rpc.memory.clear_tasks.call_count == 1
 
 
-def test_server_get_stats(mocked_server):
-    mlm = mocked_server.listener.memory
+def test_server_get_stats(mocked_rpc):
+    mlm = mocked_rpc.memory
     mlm.task_count = 1
     mlm.event_count = 2
     mlm.tasks.__len__ = mock.Mock(return_value=3)
     mlm.workers.__len__ = mock.Mock(return_value=4)
 
-    result = mocked_server.get_stats(clearly_pb2.Empty(), None)
+    result = mocked_rpc.get_stats(Empty(), None)
 
     assert result.task_count == 1
     assert result.event_count == 2
