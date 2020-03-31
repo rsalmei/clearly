@@ -42,7 +42,7 @@ class ModeTask(EnumSpecDescription):
 
 class ModeWorker(EnumSpecDescription):
     BASIC = 'timestamp, status, name and pid', False
-    STATS = 'BRIEF + version, load and heartbeats', True
+    STATS = 'BASIC + version, load and heartbeats', True
 
 
 def find_mode(constant: Union[None, int, ModeTask, ModeWorker]) \
