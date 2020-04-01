@@ -8,15 +8,8 @@
 [![PyPI downloads](https://img.shields.io/pypi/dm/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 
 [<img align="right" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" width="217px" height="51x">](https://www.buymeacoffee.com/rsalmei)
- 
-```text
-        __                __
-  _____/ /__  ____ ______/ /_  __
- / ___/ / _ \/ __ `/ ___/ / / / /
-/ /__/ /  __/ /_/ / /  / / /_/ /
-\___/_/\___/\__,_/_/  /_/\__, /
-                        /____/
-```
+
+![Clearly logo](img/clearly_logo_small.png)
 
 ### 📌 Extra!
 
