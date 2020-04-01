@@ -7,7 +7,8 @@
 [![PyPI status](https://img.shields.io/pypi/status/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 
-
+[<img align="right" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" width="217px" height="51x">](https://www.buymeacoffee.com/rsalmei)
+ 
 ```text
         __                __
   _____/ /__  ____ ______/ /_  __
