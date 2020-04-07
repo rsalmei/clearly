@@ -27,22 +27,22 @@ class EnumSpecDescription(Enum):
 
 
 class ModeTask(EnumSpecDescription):
-    BASIC = 'name, uuid, routing key, state and retries', False, False, False
-    SENT = 'BASIC + args/kwargs on sent state', True, False, False
-    RESULT = 'BASIC + task results', False, True, False
-    ERROR = 'BASIC + task errors', False, False, True
-    OUTCOME = 'RESULT + ERROR', False, True, True
+    TASK = 'name, uuid, routing key, state and retries', False, False, False
+    SENT = 'TASK + args/kwargs on sent state', True, False, False
+    RESULT = 'TASK + result', False, True, False
     SUCCESS = 'RESULT + args/kwargs', None, True, False
+    ERROR = 'TASK + error', False, False, True
     FAILURE = 'ERROR + args/kwargs', None, False, True
-    FINISHED = 'SUCCESS + FAILURE', None, True, True
+    OUTCOME = 'RESULT + ERROR', False, True, True
+    DONE = 'SUCCESS + FAILURE', None, True, True
     THROUGH = 'SENT + SUCCESS', True, True, False
     CUTOFF = 'SENT + FAILURE', True, False, True
-    ALL = 'SENT + FINISHED', True, True, True
+    DETAILS = 'SENT + DONE', True, True, True
 
 
 class ModeWorker(EnumSpecDescription):
-    BASIC = 'name, status and pid', False
-    STATS = 'BASIC + version, load and heartbeats', True
+    WORKER = 'name, status and pid', False
+    STATS = 'WORKER + version, load and heartbeats', True
 
 
 def find_mode(constant: Union[None, int, ModeTask, ModeWorker]) \

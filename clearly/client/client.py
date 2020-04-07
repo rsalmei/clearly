@@ -64,7 +64,7 @@ class ClearlyClient:
         self._debug = debug
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self._stub = ClearlyServerStub(channel)
-        self._task_mode, self._worker_mode = ModeTask.FAILURE, ModeWorker.BASIC
+        self._task_mode, self._worker_mode = ModeTask.FAILURE, ModeWorker.WORKER
 
     def capture_tasks(self, tasks: Optional[str] = None, mode: Optional[ModeTask] = None) -> None:
         """Start capturing task events in real time, so you can instantly see exactly

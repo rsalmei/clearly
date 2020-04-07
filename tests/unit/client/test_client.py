@@ -301,7 +301,7 @@ def test_set_display_mode_error(value, mocked_client):
 
 # noinspection PyProtectedMember
 @pytest.mark.parametrize('value, expected', [
-    (ModeTask.ALL, '_task_mode'),
+    (ModeTask.SENT, '_task_mode'),
     (ModeWorker.STATS, '_worker_mode'),
 ])
 def test_set_display_mode_ok(value, expected, mocked_client):
@@ -322,8 +322,8 @@ def test_display_modes_worker_indicator(mode_worker_type, mocked_client, capsys)
 
 
 @pytest.mark.parametrize('to, to2', [
-    (ModeTask.ALL, ModeTask.BASIC),
-    (ModeWorker.STATS, ModeWorker.BASIC),
+    (ModeTask.SENT, ModeTask.TASK),
+    (ModeWorker.STATS, ModeWorker.WORKER),
 ])
 def test_display_modes_with_params_error(to, to2, capsys, mocked_client):
     with mock.patch('clearly.client.client.find_mode') as mock_find_mode:
@@ -333,12 +333,12 @@ def test_display_modes_with_params_error(to, to2, capsys, mocked_client):
 
 
 @pytest.mark.parametrize('to, to2, expected', [
-    (ModeTask.ALL, None, (ModeTask.ALL,)),
-    (None, ModeTask.ALL, (ModeTask.ALL,)),
+    (ModeTask.SENT, None, (ModeTask.SENT,)),
+    (None, ModeTask.SENT, (ModeTask.SENT,)),
     (ModeWorker.STATS, None, (ModeWorker.STATS,)),
     (None, ModeWorker.STATS, (ModeWorker.STATS,)),
-    (ModeTask.ALL, ModeWorker.STATS, (ModeTask.ALL, ModeWorker.STATS)),
-    (ModeWorker.STATS, ModeTask.ALL, (ModeWorker.STATS, ModeTask.ALL)),
+    (ModeTask.SENT, ModeWorker.STATS, (ModeTask.SENT, ModeWorker.STATS)),
+    (ModeWorker.STATS, ModeTask.SENT, (ModeWorker.STATS, ModeTask.SENT)),
 ])
 def test_display_modes_with_params(to, to2, expected, mocked_client):
     with mock.patch('clearly.client.client.find_mode') as mock_find_mode, \
