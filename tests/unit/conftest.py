@@ -53,11 +53,6 @@ def bool2(request):
     yield request.param
 
 
-@pytest.fixture(params=(True, False))
-def bool3(request):
-    yield request.param
-
-
 @pytest.fixture(params=(True, False, None))
 def tristate(request):
     yield request.param
