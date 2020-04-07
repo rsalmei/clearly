@@ -212,18 +212,18 @@ def test_client_display_task(task_message, task_result, mode_task_type, mocked_c
         assert task_state_type in generated
 
     params, success, error = mode_task_type.spec
-    show_result = (task_message.state in task_states.PROPAGATE_STATES and error) \
+    show_outcome = (task_message.state in task_states.PROPAGATE_STATES and error) \
         or (task_message.state == task_states.SUCCESS and success)
 
     # params
     first_seen = bool(params) and not task_state_type
-    result = params is not False and show_result
-    tristate = first_seen or result
-    assert tristate == (task_message.args in generated)
-    assert tristate == (task_message.kwargs in generated)
+    params_outcome = params is not False and show_outcome
+    show_params = first_seen or params_outcome
+    assert show_params == (task_message.args in generated)
+    assert show_params == (task_message.kwargs in generated)
 
     # result
-    if show_result:
+    if show_outcome:
         assert '==> ' + (task_result or task_tb or ':)') in generated
 
 

@@ -15,10 +15,10 @@ def test_find_mode_error(constant):
 
 @pytest.mark.parametrize('constant, expected', [
     (None, None),
-    *((mt, mt) for mt in ModeTask.__members__.values()),
-    *((mw, mw) for mw in ModeWorker.__members__.values()),
-    *((mt.value, mt) for mt in ModeTask.__members__.values()),
-    *((mw.value, mw) for mw in ModeWorker.__members__.values()),
+    *((c, c) for c in ModeTask.__members__.values()),
+    *((c, c) for c in ModeWorker.__members__.values()),
+    *((c.value, c) for c in ModeTask.__members__.values()),
+    *((c.value, c) for c in ModeWorker.__members__.values()),
 ])
 def test_find_mode(constant, expected):
     assert find_mode(constant) == expected
