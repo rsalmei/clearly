@@ -1,6 +1,7 @@
 import functools
+from collections import namedtuple
 from datetime import datetime
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Callable, Iterable, Optional, Union, Tuple
 
 import grpc
 from about_time import about_time
@@ -21,6 +22,8 @@ HEADER_PADDING = ' ' * HEADER_SIZE
 EMPTY = Colors.DIM(':)')
 DIM_NONE = Colors.CYAN_DIM('None')
 TRACEBACK_HIGHLIGHTER = traceback_highlighter_factory()
+
+Modes = namedtuple('Modes', 'tasks workers')
 
 
 def set_user_friendly_errors(fn: Callable[..., None]) -> Callable[..., None]:
@@ -259,6 +262,23 @@ class ClearlyClient:
         else:
             raise UserWarning('Invalid mode constant.')
         print(what, 'display mode set to:', Colors.ORANGE(to.name), Colors.YELLOW_DIM(to.value))
+    def _get_display_modes(self, modes: Union[None, int, ModeTask, ModeWorker, Tuple] = None) \
+            -> Modes:
+        if not isinstance(modes, tuple):
+            modes = (modes,)
+        elif len(modes) > 2:
+            raise UserWarning('At most one task and one worker display modes, was sent {}'
+                              .format(len(modes)))
+
+        modes = sorted(x for x in (find_mode(to) for to in modes) if x)
+        if not modes:
+            return self._modes
+        if len(modes) == 2 and isinstance(modes[0], type(modes[1])):
+            raise UserWarning('Two modes of the same type?')
+
+        if isinstance(modes[0], ModeTask):
+            return Modes(modes[0], modes[1] if len(modes) == 2 else self._modes.workers)
+        return Modes(self._modes.tasks, modes[0])
 
     @set_user_friendly_errors
     def display_modes(self, to: Union[int, ModeTask, ModeWorker] = None,
