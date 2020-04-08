@@ -2,6 +2,8 @@ from celery import Celery
 
 app = Celery('tasks', broker='amqp://localhost', backend='redis://localhost')
 app.conf.task_send_sent_event = True
+app.conf.task_serializer = 'pickle'  # to be able to demo all internal compiler goodies.
+app.conf.accept_content = ['pickle']
 
 
 @app.task(bind=True)
