@@ -337,7 +337,7 @@ class ClearlyClient:
                   end=' ')
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
-        show_outcome = (task.state in task_states.PROPAGATE_STATES and error) \
+        show_outcome = (task.state in EXCEPTION_STATES and error) \
             or (task.state == SUCCESS and success)
 
         first_seen = bool(params) and not task.state
@@ -349,14 +349,12 @@ class ClearlyClient:
                   typed_code(safe_compile_text(task.kwargs), wrap=False) or EMPTY)
 
         if show_outcome:
-            if task.result:
                 output = typed_code(safe_compile_text(task.result))
-            elif task.traceback:
-                output = TRACEBACK_HIGHLIGHTER(task.traceback) \
-                    .replace('\n', '\n' + HEADER_PADDING).strip()
+            if task.state == SUCCESS:
             else:
-                output = EMPTY
-            print(Colors.DIM('==>', HEADER_ALIGN), output)
+                outcome = TRACEBACK_HIGHLIGHTER(task.traceback) \
+                    .replace('\n', '\n' + HEADER_PADDING).strip()
+            print(Colors.DIM('==>', HEADER_ALIGN), outcome)
 
     @staticmethod
     def _display_worker(worker: WorkerMessage, mode: ModeWorker) -> None:

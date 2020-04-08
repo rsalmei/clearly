@@ -3,7 +3,7 @@ from unittest import mock
 
 import grpc
 import pytest
-from celery import states as task_states
+from celery.states import EXCEPTION_STATES, SUCCESS
 
 from clearly.client import ClearlyClient, ModeTask, ModeWorker
 from clearly.client.client import Modes
@@ -213,8 +213,8 @@ def test_client_display_task(task_message, task_result, mode_task_type, mocked_c
         assert task_state_type in generated
 
     params, success, error = mode_task_type.spec
-    show_outcome = (task_message.state in task_states.PROPAGATE_STATES and error) \
-        or (task_message.state == task_states.SUCCESS and success)
+    show_outcome = (task_message.state in EXCEPTION_STATES and error) \
+        or (task_message.state == SUCCESS and success)
 
     # params
     first_seen = bool(params) and not task_state_type
