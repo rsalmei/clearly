@@ -10,13 +10,15 @@ server-backend: ARGS=--backend redis://redishost
 server-backend: server
 
 server:
-	docker-compose run --rm --name clearly-server clearly-service server --debug amqp://rabbithost $(ARGS)
+	docker-compose run --rm --name clearly-server clearly-service \
+	    server --debug amqp://rabbithost $(ARGS)
 # 	docker run --rm -p 12223:12223 --name clearly-server -v $(shell pwd)/../../:/usr/src/clearly \
 	    --network examples_default \
 	    rsalmei/clearly server --debug amqp://rabbithost $(ARGS)
 
 client:
-	docker-compose run --rm --name clearly-client clearly-service client clearly-server
+	docker-compose run --rm --name clearly-client -e CLI_DISPLAY_MODES="7 13" clearly-service \
+	    client clearly-server
 # 	docker run --rm -ti --name clearly-client -v $(shell pwd)/../../:/usr/src/clearly \
 	    --network examples_default -v ipythonhist:/root/.ipython/profile_default/ \
 	    rsalmei/clearly client clearly-server $(ARGS)

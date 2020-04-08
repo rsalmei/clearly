@@ -15,6 +15,7 @@ from ..protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, Filt
     PatternFilter, TaskMessage, WorkerMessage
 from ..protos.clearly_pb2_grpc import ClearlyServerStub
 from ..utils.colors import Colors
+from ..utils.env_params import get_env_int_tuple
 from ..utils.safe_compiler import safe_compile_text
 from ..utils.worker_states import HEARTBEAT, ONLINE
 
@@ -70,6 +71,7 @@ class ClearlyClient:
         channel = grpc.insecure_channel('{}:{}'.format(host, port))
         self._stub = ClearlyServerStub(channel)
         self._modes = Modes(ModeTask.FAILURE, ModeWorker.WORKER)
+        self._modes = self._get_display_modes(get_env_int_tuple('CLI_DISPLAY_MODES', None))
 
     def capture_tasks(self, tasks: Optional[str] = None,
                       mode: Union[None, int, ModeTask] = None) -> None:

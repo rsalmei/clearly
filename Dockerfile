@@ -6,7 +6,8 @@ WORKDIR /usr/src/clearly
 COPY . .
 RUN pip install --no-cache-dir -e .
 
-ENV BROKER_CONNECT_TIMEOUT=5
+ENV BROKER_CONNECT_TIMEOUT 5
+ENV CLI_DISPLAY_MODES ?
 
 EXPOSE 12223
 
