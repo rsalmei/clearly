@@ -46,11 +46,12 @@ class ExpectedStateHandler:
 
     """
 
-    def __init__(self, expected_path: 'ExpectedPath'):
+    def __init__(self, expected_path: ExpectedPath):
         self.expected_path: ExpectedPath = expected_path
 
     @staticmethod
-    def __traverse(pre, target, yielding):
+    def __traverse(pre: ExpectedPath, target: str, yielding: bool) \
+            -> Generator[str, None, ExpectedPath]:
         pointer, seen = pre, [pre.name]
         while pointer.name != target:
             pointer = pointer.find(target)
