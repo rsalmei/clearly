@@ -2,7 +2,7 @@ import logging
 import signal
 import threading
 from queue import Queue
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Iterator, Optional, Tuple, Union
 
 from celery import Celery
 from celery.events import EventReceiver
@@ -131,8 +131,9 @@ class EventListener:
         (task, _), _ = self.memory.event(event)
 
         # fix or insert fields.
+        task.result_meta = None
         if task.state == SUCCESS:
-            task.result = self._derive_task_result(task)
+            task.result_meta, task.result = self._derive_task_result(task)
         yield task
 
         # fix shortcomings of `created` field: a task should be displayed as PENDING if not
@@ -158,11 +159,11 @@ class EventListener:
         logger.warning('unknown event: %s', event)
 
     # noinspection PyBroadException
-    def _derive_task_result(self, task: Task) -> str:
+    def _derive_task_result(self, task: Task) -> Tuple[str, str]:
         try:  # verify if the task result is truncated.
-            return EventListener.compile_task_result(task)
+            return 'event', EventListener.compile_task_result(task)
         except SyntaxError:  # <== this means the result is truncated.
-            error = 'no-result-backend'
+            error = 'no-backend'
         except Exception:
             logger.exception('Failed to compile task result: %s, worker: %s',
                              task.result, task.worker)
@@ -170,13 +171,13 @@ class EventListener:
 
         if self.use_result_backend:
             try:
-                return repr(self.app.AsyncResult(task.uuid).result)
+                return 'backend', repr(self.app.AsyncResult(task.uuid).result)
             except Exception:  # probably incompatible celery versions in clearly and user code.
                 logger.exception('Failed to fetch task result from result_backend: %s',
                                  task.uuid)
                 error = 'fetch-failed'
 
-        return '<{}> {}'.format(error, task.result)
+        return error, task.result
 
     @staticmethod
     def compile_task_result(task: Task) -> Any:

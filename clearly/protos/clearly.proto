@@ -15,6 +15,7 @@ message TaskMessage {
     string kwargs = 8;
     string result = 9;
     string traceback = 10;
+    string result_meta = 11;
 }
 
 message WorkerMessage {
