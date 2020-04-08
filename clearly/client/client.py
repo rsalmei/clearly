@@ -1,21 +1,22 @@
 import functools
 from collections import namedtuple
 from datetime import datetime
-from typing import Any, Callable, Iterable, Optional, Union, Tuple
+from typing import Any, Callable, Iterable, Optional, Tuple, Union
 
 import grpc
 from about_time import about_time
 from about_time.core import HandleStats
-from celery import states as task_states
+# noinspection PyProtectedMember
+from celery.states import EXCEPTION_STATES, FAILURE, REJECTED, REVOKED, SUCCESS
 
-from .display_modes import ModeTask, ModeWorker, find_mode
 from .code_highlighter import traceback_highlighter_factory, typed_code
+from .display_modes import ModeTask, ModeWorker, find_mode
 from ..protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
     PatternFilter, TaskMessage, WorkerMessage
 from ..protos.clearly_pb2_grpc import ClearlyServerStub
-from ..utils import worker_states
 from ..utils.colors import Colors
 from ..utils.safe_compiler import safe_compile_text
+from ..utils.worker_states import HEARTBEAT, ONLINE
 
 HEADER_SIZE = 8
 HEADER_PADDING, HEADER_ALIGN = ' ' * HEADER_SIZE, '>{}'.format(HEADER_SIZE)
@@ -337,7 +338,7 @@ class ClearlyClient:
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
         show_outcome = (task.state in task_states.PROPAGATE_STATES and error) \
-            or (task.state == task_states.SUCCESS and success)
+            or (task.state == SUCCESS and success)
 
         first_seen = bool(params) and not task.state
         params_outcome = params is not False and show_outcome
@@ -391,17 +392,17 @@ class ClearlyClient:
 
     @staticmethod
     def _task_state(state: str) -> None:
-        if state == task_states.SUCCESS:  # final state in BOLD
+        if state == SUCCESS:  # final state in BOLD
             return Colors.GREEN_BOLD(state, HEADER_ALIGN)
-        if state in (task_states.FAILURE, task_states.REVOKED, task_states.REJECTED):  # final too
+        if state in (FAILURE, REVOKED, REJECTED):  # final too
             return Colors.RED_BOLD(state, HEADER_ALIGN)
         return Colors.YELLOW(state, HEADER_ALIGN)  # transient states
 
     @staticmethod
     def _worker_state(state: str) -> None:
         result = state
-        if state == worker_states.HEARTBEAT:
+        if state == HEARTBEAT:
             return Colors.GREEN(result)
-        if state == worker_states.ONLINE:
+        if state == ONLINE:
             return Colors.GREEN_BOLD(result)
         return Colors.RED_BOLD(result)

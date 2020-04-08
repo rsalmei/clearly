@@ -1,6 +1,7 @@
-from typing import Tuple, Iterable, Union, Generator
+from typing import Generator, Iterable, Tuple, Union
 
-from celery import states as task_states
+# noinspection PyProtectedMember
+from celery.states import FAILURE, PENDING, RECEIVED, REJECTED, RETRY, REVOKED, STARTED, SUCCESS
 
 
 class ExpectedPath:
@@ -71,13 +72,12 @@ class ExpectedStateHandler:
 
 
 def setup_task_states() -> ExpectedStateHandler:
-    terminal = (task_states.SUCCESS, task_states.FAILURE,
-                task_states.REJECTED, task_states.REVOKED)
+    terminal = (SUCCESS, FAILURE, REJECTED, REVOKED)
 
-    pending = ExpectedPath(task_states.PENDING)
-    received = pending.to(task_states.RECEIVED)
-    received.to(task_states.STARTED) \
-        .to(terminal, task_states.RETRY) \
+    pending = ExpectedPath(PENDING)
+    received = pending.to(RECEIVED)
+    received.to(STARTED) \
+        .to(terminal, RETRY) \
         .to(pending, received)
 
     return ExpectedStateHandler(pending)

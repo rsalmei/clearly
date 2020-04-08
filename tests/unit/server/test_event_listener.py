@@ -1,14 +1,14 @@
 from itertools import chain
 from queue import Queue
 from unittest import mock
-from unittest.mock import DEFAULT, call, PropertyMock
+from unittest.mock import DEFAULT, PropertyMock, call
 
 import pytest
-from celery import states as task_states
 from celery.events.state import Task, Worker
+from celery.states import PENDING, SUCCESS
 
-from clearly.server.event_listener import EventListener
 from clearly.protos.clearly_pb2 import TaskMessage, WorkerMessage
+from clearly.server.event_listener import EventListener
 from clearly.utils import worker_states
 
 
@@ -73,7 +73,7 @@ def test_listener_process_event_custom(listener):
 
 
 def test_listener_set_task_event(task_state_type, bool1, listener):
-    with mock.patch.object(listener, '_derive_task_result') as dtr:
+    with mock.patch.object(listener, '_derive_task_result') as mock_dtr:
         listener.memory.tasks.get.return_value = Task('uuid', state='pre_state') if bool1 else None
         task = Task('uuid', state=task_state_type)
         listener.memory.event.return_value = (task, ''), ''
@@ -83,15 +83,15 @@ def test_listener_set_task_event(task_state_type, bool1, listener):
         assert task == next(gen)
 
     listener.memory.event.assert_called_once_with(dict(uuid='uuid'))
-    if task_state_type == task_states.SUCCESS:
-        dtr.assert_called_once_with(task)
+    if task_state_type == SUCCESS:
+        mock_dtr.assert_called_once_with(task)
 
     with mock.patch.object(listener, 'task_states') as ts_through:
         ts_through.states_through.return_value = (x for x in 'abc')
 
         states = list(gen)
         if not bool1:
-            if task_state_type == task_states.PENDING:
+            if task_state_type == PENDING:
                 assert states == ['']
             else:
                 assert states == [task_state_type]
