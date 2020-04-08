@@ -44,12 +44,12 @@ class EnumSpecDescription(Enum):
 
 class ModeTask(EnumSpecDescription):
     TASK = 'name, uuid, routing key, state and retries', False, False, False
-    SENT = 'TASK + args/kwargs on sent state', True, False, False
-    RESULT = 'TASK + result', False, True, False
-    SUCCESS = 'RESULT + args/kwargs', None, True, False
-    ERROR = 'TASK + error', False, False, True
-    FAILURE = 'ERROR + args/kwargs', None, False, True
+    SENT = 'TASK + args/kwargs being sent', True, False, False
+    RESULT = 'TASK + result only', False, True, False
+    ERROR = 'TASK + error only', False, False, True
     OUTCOME = 'RESULT + ERROR', False, True, True
+    SUCCESS = 'RESULT + args/kwargs', None, True, False
+    FAILURE = 'ERROR + args/kwargs', None, False, True
     DONE = 'SUCCESS + FAILURE', None, True, True
     THROUGH = 'SENT + SUCCESS', True, True, False
     CUTOFF = 'SENT + FAILURE', True, False, True
