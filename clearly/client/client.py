@@ -150,15 +150,16 @@ class ClearlyClient:
         if not tasks_filter and not workers_filter:
             raise UserWarning('Nothing would be selected.')
 
+        mode = self._get_display_modes(modes)
         request = CaptureRequest(
             tasks_capture=tasks_filter, workers_capture=workers_filter,
         )
         try:
             for realtime in self._stub.capture_realtime(request):
                 if realtime.HasField('task'):
-                    self._display_task(realtime.task, mode_tasks)
+                    self._display_task(realtime.task, mode.tasks)
                 elif realtime.HasField('worker'):
-                    self._display_worker(realtime.worker, mode_workers)
+                    self._display_worker(realtime.worker, mode.workers)
                 else:
                     print('unknown event:', realtime)
                     break
@@ -209,13 +210,14 @@ class ClearlyClient:
         if not tasks_filter:
             raise UserWarning('Nothing would be selected.')
 
+        mode = self._get_display_modes(mode)
         request = FilterTasksRequest(
             tasks_filter=tasks_filter, limit=limit, reverse=reverse
         )
 
         at = about_time(self._stub.filter_tasks(request))
         for task in at:
-            self._display_task(task, mode)
+            self._display_task(task, mode.tasks)
         ClearlyClient._fetched_info(at)
 
     @set_user_friendly_errors
@@ -236,11 +238,12 @@ class ClearlyClient:
         if not workers_filter:
             raise UserWarning('Nothing would be selected.')
 
+        mode = self._get_display_modes(mode)
         request = FilterWorkersRequest(workers_filter=workers_filter)
 
         at = about_time(self._stub.filter_workers(request))
         for worker in at:
-            self._display_worker(worker, mode)
+            self._display_worker(worker, mode.workers)
         ClearlyClient._fetched_info(at)
 
     @set_user_friendly_errors
