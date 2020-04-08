@@ -74,6 +74,7 @@ def test_listener_process_event_custom(listener):
 
 def test_listener_set_task_event(task_state_type, bool1, listener):
     with mock.patch.object(listener, '_derive_task_result') as mock_dtr:
+        mock_dtr.return_value = 1, 2
         listener.memory.tasks.get.return_value = Task('uuid', state='pre_state') if bool1 else None
         task = Task('uuid', state=task_state_type)
         listener.memory.event.return_value = (task, ''), ''
@@ -86,7 +87,7 @@ def test_listener_set_task_event(task_state_type, bool1, listener):
     if task_state_type == SUCCESS:
         mock_dtr.assert_called_once_with(task)
 
-    with mock.patch.object(listener, 'task_states') as ts_through:
+    with mock.patch.object(listener, 'gen_task_states') as ts_through:
         ts_through.states_through.return_value = (x for x in 'abc')
 
         states = list(gen)
@@ -113,13 +114,13 @@ def test_listener_set_worker_event(worker_event_type, listener):
 
 
 @pytest.mark.parametrize('compile_res, use_rb, result_backend, expected', [
-    ('ok', None, None, 'ok'),
-    (SyntaxError, False, None, '<no-result-backend> original'),
-    (SyntaxError, True, 'ok', "'ok'"),
-    (SyntaxError, True, Exception, '<fetch-failed> original'),
-    (Exception, False, None, '<compile-failed> original'),
-    (Exception, True, 'ok', "'ok'"),
-    (Exception, True, Exception, '<fetch-failed> original'),
+    ('ok', None, None, ('event', 'ok')),
+    (SyntaxError, False, None, ('no-backend', 'original')),
+    (SyntaxError, True, 'ok', ('backend', "'ok'")),
+    (SyntaxError, True, Exception, ('fetch-failed', 'original')),
+    (Exception, False, None, ('compile-failed', 'original')),
+    (Exception, True, 'ok', ('backend', "'ok'")),
+    (Exception, True, Exception, ('fetch-failed', 'original')),
 ])
 def test_listener_derive_task_result(compile_res, use_rb, result_backend, expected, listener):
     with mock.patch('clearly.server.event_listener.EventListener.compile_task_result') as ctr, \

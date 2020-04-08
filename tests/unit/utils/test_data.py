@@ -8,8 +8,8 @@ from clearly.protos.clearly_pb2 import TaskMessage, WorkerMessage
 # noinspection PyProtectedMember
 from clearly.utils.data import _accept, accept_task, accept_worker, obj_to_message
 
-TASK = dict(name='name', routing_key='routing_key', uuid='uuid', retries=5,
-            args='args', kwargs='kwargs', result='result', traceback='traceback')
+TASK = dict(name='name', routing_key='routing_key', uuid='uuid', retries=5, args='args',
+            kwargs='kwargs', result='result', traceback='traceback', result_meta='meta')
 
 WORKER = dict(hostname='hostname', pid=12000, sw_sys='sw_sys', sw_ident='sw_ident',
               sw_ver='sw_ver', loadavg=[1., 2., 3.], processed=789789, freq=5, heartbeats=[1])
