@@ -13,7 +13,7 @@ app.conf.resultrepr_maxsize = 100 * 1024  # to not truncate args and kwargs unti
 def function_test(self, retries, **kwargs):
     if retries > self.request.retries:
         raise self.retry(countdown=2)
-    return 'this is the result'
+    return kwargs.get('result', 'this is the result')
 
 
 @app.task
