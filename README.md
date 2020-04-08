@@ -1,3 +1,9 @@
+[<img align="right" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" width="217px" height="51x">](https://www.buymeacoffee.com/rsalmei)
+
+![Clearly logo](img/clearly_logo_small.png)
+
+## Clearly see and debug your celery pool in real time!
+
 [![Travis](https://img.shields.io/travis/rsalmei/clearly.svg)]()
 [![Coverage Status](https://coveralls.io/repos/github/rsalmei/clearly/badge.svg?branch=master)](https://coveralls.io/github/rsalmei/clearly?branch=master)
 [![codecov](https://codecov.io/gh/rsalmei/clearly/branch/master/graph/badge.svg)](https://codecov.io/gh/rsalmei/clearly)
@@ -7,16 +13,22 @@
 [![PyPI status](https://img.shields.io/pypi/status/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/clearly.svg)](https://pypi.python.org/pypi/clearly/)
 
-```text
-        __                __
-  _____/ /__  ____ ______/ /_  __
- / ___/ / _ \/ __ `/ ___/ / / / /
-/ /__/ /  __/ /_/ / /  / / /_/ /
-\___/_/\___/\__,_/_/  /_/\__, /
-                        /____/
-```
+> ### 📌 Extra!
+> 
+> **Clearly** will debut a new architecture in version 0.9, since its very near 1.0! \o/
+> 
+> A major revamp has been made to improve the code and make it more mature and reliable. **Clearly** is now way more polished in general, with beautiful colors and error handling, and is easier to use!
+<br>You can see the _Pull request_ in https://github.com/rsalmei/clearly/pull/52 - the code and tests are ready, missing only the README...
+<br>I'm super happy with this new code! And still have 100% code coverage (branch-coverage!) 😲
+> 
+> I think this version is going to be really professional, I've put much effort in this, hope you like it!
+<br>And if you do, you can now buy me a coffee 😊! Look for the orange button at the top.
+<br>Or help **Clearly** gain more momentum!! Post it in your tweeter, write a blog post about it and/or recommend it!
+> 
+> A sneak peek? We now have **display modes**, much easier to use than _params, success and error_!
+> ![v9 sneak peek](img/v9.png?raw=true)
 
-## Clearly see and debug your celery pool in real time!
+---
 
 Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [flower](https://github.com/mher/flower)? You'll probably like **Clearly**! 👍
 
