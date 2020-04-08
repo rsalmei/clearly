@@ -7,7 +7,7 @@ import grpc
 from about_time import about_time
 from about_time.core import HandleStats
 # noinspection PyProtectedMember
-from celery.states import FAILURE, PROPAGATE_STATES, REJECTED, REVOKED, SUCCESS
+from celery.states import FAILURE, PROPAGATE_STATES, REJECTED, RETRY, REVOKED, SUCCESS
 
 from .code_highlighter import traceback_highlighter_factory, typed_code
 from .display_modes import ModeTask, ModeWorker, find_mode
@@ -398,6 +398,8 @@ class ClearlyClient:
             return Colors.GREEN_BOLD(state, HEADER_ALIGN)
         if state in (FAILURE, REVOKED, REJECTED):  # final too
             return Colors.RED_BOLD(state, HEADER_ALIGN)
+        if state == RETRY:  # transient state with a failure.
+            return Colors.ORANGE(state, HEADER_ALIGN)
         return Colors.YELLOW(state, HEADER_ALIGN)  # transient states
 
     @staticmethod
