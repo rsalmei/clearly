@@ -48,14 +48,14 @@ class EventListener:
             backend: the result backend being used by the celery system.
 
         """
-        logger.info('Creating %s: broker=%s', EventListener.__name__, broker)
+        logger.info('Creating %s', EventListener.__name__)
+
+        self.queue_tasks, self.queue_workers, self.memory = queue_tasks, queue_workers, memory
+        self.use_result_backend = bool(backend)
 
         self.app = Celery(broker=broker, backend=backend)
-        self.queue_tasks, self.queue_workers, self.memory = queue_tasks, queue_workers, memory
-
-        from celery.backends.base import DisabledBackend
-        self.use_result_backend = not isinstance(self.app.backend, DisabledBackend)
-        logger.info('Detected result backend: %s', self.use_result_backend and backend)
+        logger.info('broker : %s', self.app.pool.connection.as_uri())
+        logger.info('backend: %s', self.app.backend.as_uri())
 
         # fill missing gaps in states.
         self.task_states: ExpectedStateHandler = setup_task_states()
@@ -84,7 +84,7 @@ class EventListener:
         self._listener_thread.start()
 
         if not self._wait_event.wait(timeout=BROKER_CONNECT_TIMEOUT):
-            raise TimeoutError('Broker is unreachable')
+            raise TimeoutError('Could not connect to broker.')
         self._wait_event.clear()
 
     def __stop(self) -> None:  # pragma: no cover
