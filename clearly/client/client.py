@@ -349,8 +349,10 @@ class ClearlyClient:
                   typed_code(safe_compile_text(task.kwargs), wrap=False) or EMPTY)
 
         if show_outcome:
-                output = typed_code(safe_compile_text(task.result))
             if task.state == SUCCESS:
+                result = safe_compile_text(task.result)
+                outcome = ' '.join((Colors.CYAN_DIM('<{}>'.format(task.result_meta)),
+                                    EMPTY if result is None else typed_code(result)))
             else:
                 outcome = TRACEBACK_HIGHLIGHTER(task.traceback) \
                     .replace('\n', '\n' + HEADER_PADDING).strip()

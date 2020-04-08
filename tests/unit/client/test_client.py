@@ -30,7 +30,7 @@ def task_message():
     yield TaskMessage(
         name='name', routing_key='routing_key', uuid='uuid', retries=2,
         args='args', kwargs='kwargs', result='result', traceback='traceback',
-        timestamp=123.1, state='ANY',
+        timestamp=123.1, state='ANY', result_meta='meta',
     )
 
 
@@ -184,22 +184,16 @@ def test_client_workers(worker_message, mode_worker_type, mocked_display):
     mocked_display._display_worker.assert_called_once_with(worker_message, mode_worker_type)
 
 
-@pytest.fixture(params=('', 'traceback'))
-def task_tb(request):
-    yield request.param
-
-
-@pytest.fixture(params=('', 'False', '0', "'nice'"))
-def task_result(request):
-    yield request.param
-
-
 # noinspection PyProtectedMember
-def test_client_display_task(task_message, task_result, mode_task_type, mocked_client,
-                             task_state_plus, task_tb, capsys, strip_colors):
-    task_state_type = '' if task_state_plus == '?' else task_state_plus
-    task_message.state = task_state_type
-    task_message.result, task_message.traceback = task_result, task_tb
+def test_client_display_task(task_message, mode_task_type, mocked_client,
+                             task_state_plus_2, capsys, strip_colors):
+    if task_state_plus_2 == '?1':
+        task_state_type = task_message.state = ''
+    elif task_state_plus_2 == '?2':
+        task_state_type = task_message.state = SUCCESS
+        task_message.result = str(None)
+    else:
+        task_state_type = task_message.state = task_state_plus_2
 
     mocked_client._display_task(task_message, mode_task_type)
     generated = strip_colors(capsys.readouterr().out)
@@ -223,9 +217,17 @@ def test_client_display_task(task_message, task_result, mode_task_type, mocked_c
     assert show_params == (task_message.args in generated)
     assert show_params == (task_message.kwargs in generated)
 
-    # result
+    # outcome
     if show_outcome:
-        assert '==> ' + (task_result or task_tb or ':)') in generated
+        if task_state_type == SUCCESS:
+            if task_message.result == str(None):
+                assert '==> <meta> :)' in generated
+            else:
+                assert '==> <meta> \'result\'' in generated
+        elif task_state_type in EXCEPTION_STATES:
+            assert '==> traceback' in generated
+    else:
+        assert '==>' not in generated
 
 
 # noinspection PyProtectedMember
