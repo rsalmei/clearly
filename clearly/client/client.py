@@ -336,8 +336,9 @@ class ClearlyClient:
             return
         return PatternFilter(pattern=pattern, negate=negate)
 
-    def _display_task(self, task: TaskMessage, mode: ModeTask) -> None:
-        params, success, error = (mode or self._task_mode).spec
+    @staticmethod
+    def _display_task(task: TaskMessage, mode: ModeTask) -> None:
+        params, success, error = mode.spec
         ts = datetime.fromtimestamp(task.timestamp)
         print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
         if not task.state:
@@ -376,8 +377,9 @@ class ClearlyClient:
                 output = EMPTY
             print(Colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
 
-    def _display_worker(self, worker: WorkerMessage, mode: ModeWorker) -> None:
-        stats, = (mode or self._worker_mode).spec
+    @staticmethod
+    def _display_worker(worker: WorkerMessage, mode: ModeWorker) -> None:
+        stats, = mode.spec
         if worker.timestamp:
             ts = datetime.fromtimestamp(worker.timestamp)
             print(Colors.DIM(ts.strftime('%H:%M:%S.%f')[:-3]), end=' ')
