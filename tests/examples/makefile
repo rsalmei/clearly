@@ -22,10 +22,13 @@ client:
 	    rsalmei/clearly client clearly-server $(ARGS)
 
 worker:
-	celery worker -A user_code.worker -E --loglevel=info --heartbeat-interval 60
+	docker-compose run --rm --name worker user-app \
+	    celery worker -A user_code.worker -E --loglevel=info --heartbeat-interval 60
 
 publisher-group:
-	ipython -m user_code.publisher_group
+	docker-compose run --rm --name publisher user-app \
+	    ipython -m user_code.publisher_group
 
 publisher-demo:
-	ipython -m user_code.publisher_demo
+	docker-compose run --rm --name publisher user-app \
+    	ipython -m user_code.publisher_demo
