@@ -259,14 +259,6 @@ class ClearlyClient:
         self._stub.reset_tasks(Empty())
         print(Colors.BLUE('Ok'))
 
-    def _set_display_mode(self, to: Union[int, ModeTask, ModeWorker]) -> None:
-        if isinstance(to, ModeTask):
-            self._task_mode, what = to, 'Task'
-        elif isinstance(to, ModeWorker):
-            self._worker_mode, what = to, 'Worker'
-        else:
-            raise UserWarning('Invalid mode constant.')
-        print(what, 'display mode set to:', Colors.ORANGE(to.name), Colors.YELLOW_DIM(to.value))
     def _get_display_modes(self, modes: Union[None, int, ModeTask, ModeWorker, Tuple] = None) \
             -> Modes:
         if not isinstance(modes, tuple):
@@ -286,30 +278,20 @@ class ClearlyClient:
         return Modes(self._modes.tasks, modes[0])
 
     @set_user_friendly_errors
-    def display_modes(self, to: Union[int, ModeTask, ModeWorker] = None,
-                      to2: Union[int, ModeTask, ModeWorker] = None) -> None:
-        """Show available display modes, including the currently selected one.
-        Also change the current mode, just send one or both task and worker display modes.
-        See that constant beside a mode? You can rapidly set a mode with it!
+    def display_modes(self, modes: Union[None, int, ModeTask, ModeWorker, Tuple] = None) -> None:
+        """Show available display modes, including the currently selected ones, or
+        change the current task/worker modes, sending one or two arguments of any type.
+        See that constant number beside modes? You can rapidly set modes with them!
 
         Args:
-            to: a display mode to set, any mode is accepted, task or worker
-                even their constants are accepted!
-            to2: the same, use to set both task and worker modes in one call
-
-        Returns:
+            modes: a display mode to set, either task or worker, or their constants
+                also a tuple, to set both display modes in one call
 
         """
-        to, to2 = find_mode(to), find_mode(to2)
-        if to or to2:
-            if to and to2 and isinstance(to2, type(to)):
-                raise UserWarning('Two modes of the same type?')
-            self._set_display_mode(to or to2)
-            if to and to2:
-                self._set_display_mode(to2)
-            return
+        if modes:
+            self._modes = self._get_display_modes(modes)
 
-        modes = ('tasks', ModeTask, self._task_mode), ('workers', ModeWorker, self._worker_mode)
+        modes = ('tasks', ModeTask, self._modes.tasks), ('workers', ModeWorker, self._modes.workers)
         for title, klass, var_mode in modes:
             print(Colors.BLUE(title))
             for d in klass:
