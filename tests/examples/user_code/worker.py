@@ -9,10 +9,10 @@ app.conf.resultrepr_maxsize = 100 * 1024  # to not truncate args and kwargs unti
 # http://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.resultrepr_maxsize
 
 
-@app.task(bind=True, max_retries=3)
+@app.task(bind=True, max_retries=2)
 def function_test(self, retries, **kwargs):
     if retries > self.request.retries:
-        raise self.retry(countdown=2)
+        raise self.retry(countdown=1)
     return kwargs.get('result', 'this is the result')
 
 
