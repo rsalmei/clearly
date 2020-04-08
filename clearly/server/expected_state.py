@@ -1,4 +1,4 @@
-from typing import Tuple, Iterable, Optional, Union
+from typing import Tuple, Iterable, Union, Generator
 
 from celery import states as task_states
 
@@ -13,7 +13,7 @@ class ExpectedPath:
         return '<{}: {}>'.format(self.__class__.__name__, self.name)
 
     def to(self, names: Union[str, 'ExpectedPath', Tuple[Union[str, 'ExpectedPath'], ...]],
-           default: Optional[str] = None) -> 'ExpectedPath':
+           default: Union[None, str, 'ExpectedPath'] = None) -> 'ExpectedPath':
         if not isinstance(names, tuple):
             names = (names,)
         paths = tuple(ExpectedPath(name) if isinstance(name, str) else name
