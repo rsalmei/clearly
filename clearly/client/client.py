@@ -70,7 +70,8 @@ class ClearlyClient:
         self._stub = ClearlyServerStub(channel)
         self._modes = Modes(ModeTask.FAILURE, ModeWorker.WORKER)
 
-    def capture_tasks(self, tasks: Optional[str] = None, mode: Optional[ModeTask] = None) -> None:
+    def capture_tasks(self, tasks: Optional[str] = None,
+                      mode: Union[None, int, ModeTask] = None) -> None:
         """Start capturing task events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
@@ -88,7 +89,7 @@ class ClearlyClient:
                      '^trigger|^email' to find values starting with any of those words
                      'trigger.*123456' to find values with those words in that sequence
                      '!^trigger|^email' to filter values not starting with both those words
-            mode: the display mode to present results
+            mode: an optional display mode to present data
 
         See Also:
             ClearlyClient#display_modes()
@@ -97,7 +98,7 @@ class ClearlyClient:
         self.capture(tasks=tasks, mode_tasks=mode, workers='!')
 
     def capture_workers(self, workers: Optional[str] = None,
-                        mode: Optional[ModeWorker] = None) -> None:
+                        mode: Union[None, int, ModeWorker] = None) -> None:
         """Start capturing worker events in real time, so you can instantly see exactly
         what your workers states are. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
@@ -113,7 +114,7 @@ class ClearlyClient:
                 ex.: 'email' to find values containing that word anywhere
                      'service|priority' to find values containing any of those words
                      '!service|priority' to find values not containing both those words
-            mode: the display mode to present results
+            mode: an optional display mode to present data
 
         See Also:
             ClearlyClient#display_modes()
@@ -135,8 +136,8 @@ class ClearlyClient:
         Args:
             tasks: the pattern to filter tasks
             workers: the pattern to filter workers
-            mode_tasks: the display mode to present results
-            mode_workers: the display mode to present results
+            modes: optional display modes to present data
+                send one or a tuple, as described in display_modes()
 
         See Also:
             ClearlyClient#capture_tasks()
@@ -186,7 +187,7 @@ class ClearlyClient:
               '\tworkers', Colors.RED(stats.len_workers))
 
     @set_user_friendly_errors
-    def tasks(self, tasks: Optional[str] = None, mode: Optional[ModeTask] = None,
+    def tasks(self, tasks: Optional[str] = None, mode: Union[None, int, ModeTask] = None,
               limit: Optional[int] = None, reverse: bool = True) -> None:
         """Fetch current data from past tasks.
 
@@ -196,7 +197,7 @@ class ClearlyClient:
 
         Args:
             tasks: the pattern to filter tasks
-            mode: the display mode to present results
+            mode: an optional display mode to present data
             limit: the maximum number of events to fetch, fetches all if None or 0 (default)
             reverse: if True (default), shows the most recent first
 
@@ -219,12 +220,13 @@ class ClearlyClient:
         ClearlyClient._fetched_info(at)
 
     @set_user_friendly_errors
-    def workers(self, workers: Optional[str] = None, mode: Optional[ModeWorker] = None) -> None:
+    def workers(self, workers: Optional[str] = None,
+                mode: Union[None, int, ModeWorker] = None) -> None:
         """Fetch current data from known workers.
         
         Args:
             workers: the pattern to filter workers
-            mode: the display mode to present results
+            mode: an optional display mode to present data
 
         See Also:
             ClearlyClient#capture_workers()
