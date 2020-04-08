@@ -15,4 +15,4 @@ EXPOSE 12223
 # "clearlys" to suggest, like the source dir or the egg-info.
 WORKDIR /
 
-ENTRYPOINT [ "clearly"]
+ENTRYPOINT ["clearly"]
