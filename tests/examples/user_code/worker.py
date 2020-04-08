@@ -6,11 +6,11 @@ app.conf.task_serializer = 'pickle'  # to be able to demo all internal compiler 
 app.conf.accept_content = ['pickle']
 
 
-@app.task(bind=True)
+@app.task(bind=True, max_retries=3)
 def function_test(self, retries, **kwargs):
     if retries > self.request.retries:
-        raise self.retry(countdown=1)
-    return kwargs.get('value', -1)
+        raise self.retry(countdown=2)
+    return 'this is the result'
 
 
 @app.task
