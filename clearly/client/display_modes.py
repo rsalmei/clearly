@@ -53,7 +53,7 @@ class ModeTask(EnumSpecDescription):
     DONE = 'SUCCESS + FAILURE', None, True, True
     THROUGH = 'SENT + SUCCESS', True, True, False
     CUTOFF = 'SENT + FAILURE', True, False, True
-    DETAILS = 'SENT + DONE', True, True, True
+    ALL = 'SENT + DONE', True, True, True
 
 
 class ModeWorker(EnumSpecDescription):
