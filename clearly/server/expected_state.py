@@ -56,7 +56,7 @@ class ExpectedStateHandler:
         while pointer.name != target:
             pointer = pointer.find(target)
             if pointer.name in seen:
-                raise ValueError('impossible to find from {}'.format(pre))
+                raise ValueError('impossible to go from {} to {}'.format(pre.name, target))
             seen.append(pointer.name)
             if yielding:
                 yield pointer.name
