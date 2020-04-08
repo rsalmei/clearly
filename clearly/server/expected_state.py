@@ -9,6 +9,9 @@ class ExpectedPath:
         self.possibles = ()
         self.default = None
 
+    def __repr__(self):  # pragma: no cover
+        return '<{}: {}>'.format(self.__class__.__name__, self.name)
+
     def to(self, names: Union[str, 'ExpectedPath', Tuple[Union[str, 'ExpectedPath'], ...]],
            default: Optional[str] = None) -> 'ExpectedPath':
         if not isinstance(names, tuple):
