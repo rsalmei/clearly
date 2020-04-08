@@ -1,12 +1,12 @@
 import re
 from unittest import mock
-from unittest.mock import call
 
 import grpc
 import pytest
 from celery import states as task_states
 
 from clearly.client import ClearlyClient, ModeTask, ModeWorker
+from clearly.client.client import Modes
 from clearly.protos.clearly_pb2 import Empty, PatternFilter, RealtimeMessage, SeenTasksMessage, \
     StatsMessage, TaskMessage, WorkerMessage
 
@@ -64,7 +64,7 @@ def test_client_seen_tasks_do_print(mocked_client, capsys):
 def test_client_capture_task(task_message, mode_task_type, mocked_display):
     mocked_display._stub.capture_realtime.return_value = \
         (RealtimeMessage(task=task_message),)
-    mocked_display.capture(mode_tasks=mode_task_type)
+    mocked_display.capture(modes=mode_task_type)
     mocked_display._display_task.assert_called_once_with(task_message, mode_task_type)
 
 
@@ -73,13 +73,14 @@ def test_client_capture_ignore_unknown(mocked_display):
     mocked_display._stub.capture_realtime.return_value = (RealtimeMessage(),)
     mocked_display.capture()
     mocked_display._display_task.assert_not_called()
+    mocked_display._display_worker.assert_not_called()
 
 
 # noinspection PyProtectedMember
 def test_client_capture_worker(worker_message, mode_worker_type, mocked_display):
     mocked_display._stub.capture_realtime.return_value = \
         (RealtimeMessage(worker=worker_message),)
-    mocked_display.capture(mode_workers=mode_worker_type)
+    mocked_display.capture(modes=mode_worker_type)
     mocked_display._display_worker.assert_called_once_with(worker_message, mode_worker_type)
 
 
@@ -146,7 +147,7 @@ def test_client_capture_tasks(mocked_client):
     with mock.patch.object(mocked_client, 'capture') as mocked_capture:
         mocked_client.capture_tasks()
         mocked_capture.assert_called_once_with(
-            tasks=mock.ANY, mode_tasks=mock.ANY,
+            tasks=mock.ANY, modes=mock.ANY,
             workers='!',
         )
 
@@ -155,7 +156,7 @@ def test_client_capture_workers(mocked_client):
     with mock.patch.object(mocked_client, 'capture') as mocked_capture:
         mocked_client.capture_workers()
         mocked_capture.assert_called_once_with(
-            workers=mock.ANY, mode_workers=mock.ANY,
+            workers=mock.ANY, modes=mock.ANY,
             tasks='!',
         )
 
@@ -310,13 +311,13 @@ def test_set_display_mode_ok(value, expected, mocked_client):
 
 
 def test_display_modes_task_indicator(mode_task_type, mocked_client, capsys):
-    mocked_client._task_mode = mode_task_type
+    mocked_client._modes = Modes(mode_task_type, ModeWorker.WORKER)
     mocked_client.display_modes()
     assert '* ' + mode_task_type.name in capsys.readouterr().out
 
 
 def test_display_modes_worker_indicator(mode_worker_type, mocked_client, capsys):
-    mocked_client._worker_mode = mode_worker_type
+    mocked_client._modes = Modes(ModeTask.TASK, mode_worker_type)
     mocked_client.display_modes()
     assert '* ' + mode_worker_type.name in capsys.readouterr().out
 
