@@ -2,7 +2,7 @@
 
 ![Clearly logo](img/clearly_logo_small.png?raw=true)
 
-## Clearly see and debug your celery pool in real time!
+## Clearly see and debug your celery cluster in real time!
 
 [![Travis](https://img.shields.io/travis/rsalmei/clearly.svg)]()
 [![Coverage Status](https://coveralls.io/repos/github/rsalmei/clearly/badge.svg?branch=master)](https://coveralls.io/github/rsalmei/clearly?branch=master)
@@ -19,65 +19,69 @@ Do you use [celery](http://www.celeryproject.org), and monitor your tasks with [
 #### `Clearly` is a **real time** monitor for your celery tasks and workers!
 
 While I do like _flower_, to me it's not been totally up to the task (pun intended :).
-<br>Why is that? _flower_ needs page refreshes, filters only one task type at a time, displays results as plain strings without any formatting or syntax-coloring, and on top of that also truncates them!
+<br>Why is that? _flower_ needs page refreshes, filters only one task type at a time, displays results as plain strings without any formatting or syntax highlighting, and on top of that also truncates them!
 
-And `clearly` is _actually_ real time, has multiple simultaneous filters, a beautiful syntax coloring system, an advanced formating system that shows parameters and results just as ipython would, has complete un-truncated results and is very easy to use! 😃
-<br>Also it installs very easily with a docker image!
+And `clearly` is _actually_ real time, has multiple simultaneous filters, a beautiful syntax highlighting system, an advanced formating system that shows parameters, results and tracebacks just as an ipython would, has complete un-truncated results and is very easy to use! 😃
+<br>Also you can install it very easily with a docker image!
 
-It's great to actually see in _real time_ what's going on in your celery workers, in a totally new way! So it's very nice for inspecting, debugging, and even demonstrating your company async-superpowers (put `clearly` on a big screen TV showing all tasks of your production environment)!
+It's great to actually see in a totally _real time way_ what's going on in your celery workers! So it's very nice for inspecting, debugging, and even demonstrating your company async-superpowers (put `clearly` on a big screen TV showing all tasks of your production environment 😜)!
 
-`Clearly` is composed of a server, which collects real time events from the celery pool, generates missing states, and streams filtered data to connected clients; and a client, which you use to send filter commands and display both real time and persisted data. They communicate with each other via gRPC and ProtocolBuffers.
+`Clearly` is composed of a server, which collects real time events from the celery cluster, generates missing states, and streams filtered data to connected clients; and a client, which you use to send filter commands and display both real time and persisted data. They communicate with each other via gRPC and ProtocolBuffers.
 
 See what `clearly` looks like:
 ![very cool](img/clearly_highlights.png?raw=true)
 
 
----
-
 > ### 📌 New version!
 > 
 > **Clearly** has received a major revamp in version 0.9, since its very near 1.0! \o/
 > 
-> All code has been revisited, which took 170 commits, 68 files changed and ~2700 additions! **Clearly** is now more mature, more reliable and way more polished in general, with beautiful colors, complete error handling, and is even easier to use!
+> All code has been revisited, which took ~170 commits, ~70 files changed and ~2700 additions! `Clearly` is now more mature, more reliable and way more polished in general, with beautiful colors and complete error handling, making this new `Clearly` way more pleasant to use!
 >
-> And there's also the unit tests, which were greatly streamlined. The suite has decreased from ~2600 tests to less than 700, while keeping 100% code coverage (branch-coverage)! The _PR_ is in https://github.com/rsalmei/clearly/pull/52 if you'd like to see it.
+> And there's also the unit tests, which were greatly streamlined. The suite has gone from ~2600 tests down to less than 700, while keeping 100% code coverage (branch-coverage)! The _PR_ is in https://github.com/rsalmei/clearly/pull/52 if you'd like to see it.
 > 
-> After five weeks full-time of a one-man hard work, this endeavor is done. If you appreciate my work please buy me a coffee 😊! (the button is on the top-right corner)
+> This endeavor has taken five weeks of full-time work, and demanded a great effort. If you appreciate my work, you could buy me a coffee 😊, I would really appreciate that! _(the button is on the top-right corner)_
 > 
-> Also please help **Clearly** gain more momentum! Post about it in your tweeter, write a blog post about it or just recommend it!
+> Also please help `Clearly` gain more momentum! Tweet about it, write a blog post about it or just recommend it!
 >
 > Enjoy!
 
 ---
 
+## Features
 
-## Requirements
+`clearly` enables you to:
+- Be informed of any and all tasks running, failing or just being enqueued, both in real time and persisted;
+    - if you enable `task_send_sent_event` in your code, you can track tasks even before they get into a worker!
+- Be informed of workers availability, knowing immediately if any goes down or up;
+- Filter tasks any way you want by several fields, both in real time and persisted;
+- Debug the actual parameters the tasks were called with, and analyze their outcome, such as success results or failure tracebacks and retries;
+- _Clearly_ see all types and representations of these parameters/outcomes with an advanced formatting system and syntax highlighting;
+- Analyze metrics of your system.
+
+
+#### `Clearly` is
+
+- compatible with any version of celery, from 3.1 to 4.4+;
+- aware of your result backend, using it if available to retrieve tasks' results;
+- running inside docker, so anyone with any version of python can use it! 👏
+
+
+#### `Clearly` is not
+
+- an administration tool for celery clusters, it is specialized in monitoring.
+
+---
+
+## Get `clearly` the docker way
+
+### Requirements
 
 To use `clearly`, you just have to:
 - enable *Events* in your celery workers (`celery worker -E`)
 
 and you're good to go!
 
-Highlights:
-- compatible with any version of celery, from 3.1 to 4.4+
-- a result backend is not mandatory (but used if available)
-- `clearly` now runs inside docker, so anyone with any python version can use it! 👏
-
-
-## Features
-
-`clearly` enables you to:
-- Be informed of any and all tasks being handled, regardless of running, failing or just being enqueued, in real time;
-    - if you enable `task_send_sent_event` in your publisher software, you can track tasks even before they get into a worker!
-- Know the workers available and be notified immediately if any goes down or up;
-- Filter the tasks any way you want, by several fields, both capturing in real time or searching persisted ones;
-- Inspect the actual parameters the tasks were called with;
-- See and analyze the outcome of these tasks, such as success results or failure tracebacks;
-- _Clearly_ see all types and representations of the parameters/outcomes of the tasks with an advanced formatting system with syntax highlighting;
-- Analyze stats of your system.
-
-
-## Get `clearly` the docker way
 
 ### Start the server
 
@@ -102,7 +106,6 @@ $ docker run --rm -ti --name clearly-client -v ipythonhist:/root/.ipython/profil
 
 That's it, you're good to go! \o/
 
----
 
 <details>
 <summary>What, you really need to use it inside your own REPL?</summary>
@@ -123,7 +126,7 @@ That's it, you're good to go! \o/
 > <details>
 > <summary>Just a quickie debug?</summary>
 >
-> > _Clearly Client_ used to not need any server, which was convenient but had several shortcomings, like losing all history when closed, and receiving every single event from the celery pool for each new client, which stressed the broker way more.
+> > _Clearly Client_ used to not need any server, which was convenient but had several shortcomings, like losing all history when closed, and receiving every single event from the celery cluster for each new client, which stressed the broker way more.
 > But if you'd like to use it quickly like that, be it to just assert something or to trial `clearly` before committing, you still can. Just start the server in-process:
 > >
 > > ```python
@@ -165,8 +168,9 @@ That's it, you're good to go! \o/
 > </details>
 </details>
 
+---
 
-## How to use
+## How to use it
 
 So, you are ready to see tasks popping up in your screen faster than you can see? (Remember to filter them!)
 
@@ -179,7 +183,7 @@ clearlycli.capture()
 
 ![capture](img/clearly_capture.png?raw=true)
 
-This will show all activity in the pool, both tasks and workers events.
+This will show all activity in the celery cluster, both tasks and workers events.
 
 At any moment, you can CTRL+C out of the capturing client, and rest assured the server continues to gather all updates seamlessly.
 
@@ -198,6 +202,7 @@ Display modes configure the level of detail you want to see. Things like to show
 
 To change a display mode, just call the same method with the enum value or the constant beside it. You can also change both task and worker mode in one call, or configure the default directly in the `docker run` env.
 
+---
 
 ## How `clearly` works
 
@@ -218,8 +223,9 @@ If you enable `task_send_sent_event`, all triggered tasks show up immediately on
 
 The memory consumption for server persisted tasks, although very optimized, must of course be limited. By default it stores 10,000 tasks and 100 workers at a time, and is configurable.
 
+---
 
-## API Reference
+## Client commands Reference
 
 ```python
 def capture_tasks(self, tasks: Optional[str] = None,
@@ -296,7 +302,7 @@ def capture(self, tasks: Optional[str] = None, workers: Optional[str] = None,
 
 def metrics(self) -> None:
     """List some metrics about the capturing system itself, which of course
-    reflects the actual celery pool being monitored.
+    reflects the actual celery cluster being monitored.
 
     Shows:
         Tasks processed: number of tasks processed, including retries
@@ -347,6 +353,7 @@ def reset(self) -> None:
     """Reset all captured tasks."""
 ```
 
+---
 
 ## Hints to extract the most out of it
 
@@ -354,19 +361,25 @@ def reset(self) -> None:
 - if you're using [django](https://www.djangoproject.com/) and [django-extensions](https://github.com/django-extensions/django-extensions), put in your settings a `SHELL_PLUS_POST_IMPORT` to auto import `clearly`! Just create a module to initialize a `clearlycli` instance for the django `shell_plus` and you're good to go. It's really nice to have `Clearly` always ready to be used, without importing or configuring anything, and quickly see what's going on with your tasks, even in production :)
 - the more you filter, the less you'll have to analyze and debug! A production environment can have an overwhelmingly high number of tasks, like thousands of tasks per minute, so filter wisely.
 
+---
 
-## To do
+## Maybe some day
 
 - ~~support python 3;~~
 - ~~split `Clearly` client and server, to allow an always-on server to run, with multiple clients connecting, without any of the shortcomings;~~
 - ~~remove python 2 support~~
 - ~~dockerize the server, to make its deploy way easier;~~
-- include a script mode on client, to be able to call it right from the shell;
+- include a client command line mode, to be able to call it right from the shell;
+- make the search pattern apply to args and kwargs too;
+- support to constrain search pattern to only some fields;
+- ability to hide sensitive information, directly in event listener;
+- secure connection between server and client;
 - any other ideas welcome!
 
+---
 
 ## Changelog:
-- 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; worker states reengineered, and heartbeats now get through to the client; unified the streaming and persisted events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from +2500 tests down to sub 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
+- 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; worker states reengineered, and heartbeats now get through to the client; unified the streaming and persisted events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
 - 0.8.3: extended user friendliness of gRPC errors to all client rpc methods; last version to support Python 3.5
 - 0.8.2: reduce docker image size; user friendlier gRPC errors on client capture (with --debug to raise actual exception); nicer client autocomplete (no clearly package or clearly dir are shown)
 - 0.8.1: keep un-truncate engine from breaking when very distant celery versions are used in publisher and server sides
@@ -383,10 +396,12 @@ def reset(self) -> None:
 - 0.2.0: support standard celery events
 - 0.1.4: last version that doesn't use events
 
+---
 
 ## License
 This software is licensed under the MIT License. See the LICENSE file in the top distribution directory for the full license text.
 
+---
 
 ## Did you like it?
 
