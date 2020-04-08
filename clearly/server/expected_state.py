@@ -27,10 +27,10 @@ class ExpectedPath:
         for n in self.possibles:
             if n.name == name:
                 return n
-        if len(self.possibles) == 1:
-            return self.possibles[0]
         if self.default:
             return self.default
+        if len(self.possibles) == 1:
+            return self.possibles[0]
         raise UserWarning('unknown name {} in {}'.format(name, self.name))
 
 
