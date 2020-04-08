@@ -17,6 +17,22 @@ class EnumSpecDescription(Enum):
         return '<{}.{}: {} {!r}>'.format(self.__class__.__name__, self.name,
                                          self.value, self.__description)
 
+    def __lt__(self, other):  # pragma: no cover
+        if issubclass(self.__class__, EnumSpecDescription):
+            return self.value < other.value
+
+    def __le__(self, other):  # pragma: no cover
+        if issubclass(self.__class__, EnumSpecDescription):
+            return self.value <= other.value
+
+    def __gt__(self, other):  # pragma: no cover
+        if issubclass(self.__class__, EnumSpecDescription):
+            return self.value > other.value
+
+    def __ge__(self, other):  # pragma: no cover
+        if issubclass(self.__class__, EnumSpecDescription):
+            return self.value >= other.value
+
     @property
     def spec(self):
         return self.__spec
