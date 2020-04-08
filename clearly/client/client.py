@@ -7,7 +7,7 @@ import grpc
 from about_time import about_time
 from about_time.core import HandleStats
 # noinspection PyProtectedMember
-from celery.states import EXCEPTION_STATES, FAILURE, REJECTED, REVOKED, SUCCESS
+from celery.states import FAILURE, PROPAGATE_STATES, REJECTED, REVOKED, SUCCESS
 
 from .code_highlighter import traceback_highlighter_factory, typed_code
 from .display_modes import ModeTask, ModeWorker, find_mode
@@ -337,7 +337,7 @@ class ClearlyClient:
                   end=' ')
             print(Colors.BLUE(task.name), Colors.DIM(task.uuid))
 
-        show_outcome = (task.state in EXCEPTION_STATES and error) \
+        show_outcome = (task.state in PROPAGATE_STATES and error) \
             or (task.state == SUCCESS and success)
 
         first_seen = bool(params) and not task.state
