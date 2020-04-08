@@ -308,7 +308,7 @@ def test_display_modes_worker_indicator(mode_worker_type, mocked_client, capsys)
 def test_display_modes_set_params(mocked_client):
     with mock.patch.object(mocked_client, '_get_display_modes') as mock_gdm:
         mocked_client.display_modes(1)
-    mock_gdm.assert_called_once_with(1)
+    mock_gdm.assert_called_once_with((1,))
     # noinspection PyProtectedMember
     assert mocked_client._modes == mock_gdm()
 

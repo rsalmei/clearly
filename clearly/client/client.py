@@ -265,7 +265,7 @@ class ClearlyClient:
         if not isinstance(modes, tuple):
             modes = (modes,)
         elif len(modes) > 2:
-            raise UserWarning('At most one task and one worker display modes, was sent {}'
+            raise UserWarning('At most two display modes, was sent {}'
                               .format(len(modes)))
 
         modes = sorted(x for x in (find_mode(to) for to in modes) if x)
@@ -279,14 +279,14 @@ class ClearlyClient:
         return Modes(self._modes.tasks, modes[0])
 
     @set_user_friendly_errors
-    def display_modes(self, modes: Union[None, int, ModeTask, ModeWorker, Tuple] = None) -> None:
+    def display_modes(self, *modes: Union[None, int, ModeTask, ModeWorker, Tuple]) -> None:
         """Show available display modes, including the currently selected ones, or
         change the current task/worker modes, sending one or two arguments of any type.
         See that constant number beside modes? You can rapidly set modes with them!
 
         Args:
-            modes: a display mode to set, either task or worker, or their constants
-                also a tuple, to set both display modes in one call
+            modes: a display mode to set, either task or worker, or its constant number
+                send two to set both display modes in one call
 
         """
         if modes:
