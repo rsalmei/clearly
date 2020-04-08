@@ -18,7 +18,7 @@ from ..utils.colors import Colors
 from ..utils.safe_compiler import safe_compile_text
 
 HEADER_SIZE = 8
-HEADER_PADDING = ' ' * HEADER_SIZE
+HEADER_PADDING, HEADER_ALIGN = ' ' * HEADER_SIZE, '>{}'.format(HEADER_SIZE)
 EMPTY = Colors.DIM(':)')
 DIM_NONE = Colors.CYAN_DIM('None')
 TRACEBACK_HIGHLIGHTER = traceback_highlighter_factory()
@@ -342,12 +342,10 @@ class ClearlyClient:
         first_seen = bool(params) and not task.state
         params_outcome = params is not False and show_outcome
         if first_seen or params_outcome:
-            print(Colors.DIM('{:>{}}'.format('args:', HEADER_SIZE)),
-                  typed_code(safe_compile_text(task.args),
-                             wrap=False) or EMPTY)
-            print(Colors.DIM('{:>{}}'.format('kwargs:', HEADER_SIZE)),
-                  typed_code(safe_compile_text(task.kwargs),
-                             wrap=False) or EMPTY)
+            print(Colors.DIM('args:', HEADER_ALIGN),
+                  typed_code(safe_compile_text(task.args), wrap=False) or EMPTY)
+            print(Colors.DIM('kwargs:', HEADER_ALIGN),
+                  typed_code(safe_compile_text(task.kwargs), wrap=False) or EMPTY)
 
         if show_outcome:
             if task.result:
@@ -357,7 +355,7 @@ class ClearlyClient:
                     .replace('\n', '\n' + HEADER_PADDING).strip()
             else:
                 output = EMPTY
-            print(Colors.DIM('{:>{}}'.format('==>', HEADER_SIZE)), output)
+            print(Colors.DIM('==>', HEADER_ALIGN), output)
 
     @staticmethod
     def _display_worker(worker: WorkerMessage, mode: ModeWorker) -> None:
@@ -370,15 +368,15 @@ class ClearlyClient:
               Colors.YELLOW_DIM(str(worker.pid)))
 
         if stats:
-            print(Colors.DIM('{:>{}}'.format('sw:', HEADER_SIZE)),
+            print(Colors.DIM('sw:', HEADER_ALIGN),
                   Colors.CYAN_DIM(' '.join((worker.sw_sys, worker.sw_ident))),
                   Colors.ORANGE(worker.sw_ver))
-            print(Colors.DIM('{:>{}}'.format('load:', HEADER_SIZE)),
+            print(Colors.DIM('load:', HEADER_ALIGN),
                   ClearlyClient._item_list(worker.loadavg),
                   Colors.DIM('processed:'), worker.processed or DIM_NONE)
             heartbeats = [datetime.fromtimestamp(x).strftime('%H:%M:%S.%f')[:-3]
                           for x in worker.heartbeats or []]
-            print(Colors.DIM('{:>{}}'.format('heartb:', HEADER_SIZE)),
+            print(Colors.DIM('heartb:', HEADER_ALIGN),
                   '{}{}'.format(Colors.ORANGE(worker.freq),
                                 Colors.DIM('s')),
                   ClearlyClient._item_list(heartbeats))
@@ -393,12 +391,11 @@ class ClearlyClient:
 
     @staticmethod
     def _task_state(state: str) -> None:
-        result = '{:>{}}'.format(state, HEADER_SIZE)
         if state == task_states.SUCCESS:  # final state in BOLD
-            return Colors.GREEN_BOLD(result)
+            return Colors.GREEN_BOLD(state, HEADER_ALIGN)
         if state in (task_states.FAILURE, task_states.REVOKED, task_states.REJECTED):  # final too
-            return Colors.RED_BOLD(result)
-        return Colors.YELLOW(result)  # transient states
+            return Colors.RED_BOLD(state, HEADER_ALIGN)
+        return Colors.YELLOW(state, HEADER_ALIGN)  # transient states
 
     @staticmethod
     def _worker_state(state: str) -> None:
