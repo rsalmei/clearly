@@ -95,7 +95,7 @@ class ClearlyClient:
             ClearlyClient#display_modes()
 
         """
-        self.capture(tasks=tasks, mode_tasks=mode, workers='!')
+        self.capture(tasks=tasks, modes=mode, workers='!')
 
     def capture_workers(self, workers: Optional[str] = None,
                         mode: Union[None, int, ModeWorker] = None) -> None:
@@ -120,12 +120,11 @@ class ClearlyClient:
             ClearlyClient#display_modes()
 
         """
-        self.capture(workers=workers, mode_workers=mode, tasks='!')
+        self.capture(workers=workers, modes=mode, tasks='!')
 
     @set_user_friendly_errors
     def capture(self, tasks: Optional[str] = None, workers: Optional[str] = None,
-                mode_tasks: Optional[ModeTask] = None,
-                mode_workers: Optional[ModeWorker] = None) -> None:
+                modes: Union[None, int, ModeTask, ModeWorker, Tuple] = None) -> None:
         """Start capturing all events in real time, so you can instantly see exactly
         what your publishers and workers are doing. Filter as much as you can to find
         what you need, and don't worry as the Clearly Server will still seamlessly
