@@ -10,7 +10,7 @@ server-backend: ARGS=--backend redis://redishost
 server-backend: server
 
 server:
-	docker-compose run --rm --name clearly-server clearly-service server --debug amqp://rabbithost $(ARGS)
+	docker-compose run --rm --name clearly-server clearly-service server --debug amqp://rabbithost
 # 	docker run --rm -p 12223:12223 --name clearly-server -v $(shell pwd)/../../:/usr/src/clearly \
 	    --network examples_default \
 	    rsalmei/clearly server --debug amqp://rabbithost $(ARGS)
@@ -22,10 +22,10 @@ client:
 	    rsalmei/clearly client clearly-server $(ARGS)
 
 worker:
-	celery worker -A user_code.tasks -E --loglevel=info --heartbeat-interval 10 $(ARGS)
+	celery worker -A user_code.worker -E --loglevel=info --heartbeat-interval 60
 
-publisher:
-	ipython -m user_code.publisher
+publisher-group:
+	ipython -m user_code.publisher_group
 
-ipublisher:
-	ipython -mi user_code.publisher
+publisher-demo:
+	ipython -m user_code.publisher_demo
