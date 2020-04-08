@@ -10,7 +10,7 @@ server-backend: ARGS=--backend redis://redishost
 server-backend: server
 
 server:
-	docker-compose run --rm --name clearly-server clearly-service server --debug amqp://rabbithost
+	docker-compose run --rm --name clearly-server clearly-service server --debug amqp://rabbithost $(ARGS)
 # 	docker run --rm -p 12223:12223 --name clearly-server -v $(shell pwd)/../../:/usr/src/clearly \
 	    --network examples_default \
 	    rsalmei/clearly server --debug amqp://rabbithost $(ARGS)
