@@ -291,25 +291,6 @@ def test_parse_pattern(value, expected, mocked_client):
     assert mocked_client._parse_pattern(value) == expected
 
 
-# noinspection PyProtectedMember
-@pytest.mark.parametrize('value', [
-    None, '', 1, 'ALL'
-])
-def test_set_display_mode_error(value, mocked_client):
-    with pytest.raises(UserWarning):
-        mocked_client._set_display_mode(value)
-
-
-# noinspection PyProtectedMember
-@pytest.mark.parametrize('value, expected', [
-    (ModeTask.SENT, '_task_mode'),
-    (ModeWorker.STATS, '_worker_mode'),
-])
-def test_set_display_mode_ok(value, expected, mocked_client):
-    mocked_client._set_display_mode(value)
-    assert getattr(mocked_client, expected) == value
-
-
 def test_display_modes_task_indicator(mode_task_type, mocked_client, capsys):
     mocked_client._modes = Modes(mode_task_type, ModeWorker.WORKER)
     mocked_client.display_modes()
