@@ -2,7 +2,8 @@ from unittest import mock
 
 import pytest
 
-from clearly.utils.env_params import get_env_param, get_env_int, get_env_list, get_env_str
+from clearly.utils.env_params import get_env_int, get_env_int_tuple, get_env_tuple, get_env_param, \
+    get_env_str
 
 
 def test_retrieve_correct_var():
@@ -12,18 +13,26 @@ def test_retrieve_correct_var():
 
 
 @pytest.mark.parametrize('value, func, expected', [
-    ('123', get_env_int, 123),
-    ('123', get_env_list, ['123']),
     ('123', get_env_str, '123'),
-    ('cool', get_env_int, None),
-    ('cool', get_env_list, ['cool']),
+    ('123', get_env_int, 123),
+    ('123', get_env_tuple, ('123',)),
+    ('123', get_env_int_tuple, (123,)),
     ('cool', get_env_str, 'cool'),
-    ('very cool', get_env_int, None),
-    ('very cool', get_env_list, ['very', 'cool']),
+    ('cool', get_env_int, None),
+    ('cool', get_env_tuple, ('cool',)),
+    ('cool', get_env_int_tuple, None),
+    ('12 34', get_env_str, '12 34'),
+    ('12 34', get_env_int, None),
+    ('12 34', get_env_tuple, ('12', '34',)),
+    ('12 34', get_env_int_tuple, (12, 34,)),
     ('very cool', get_env_str, 'very cool'),
-    (None, get_env_int, None),
-    (None, get_env_list, None),
+    ('very cool', get_env_int, None),
+    ('very cool', get_env_tuple, ('very', 'cool',)),
+    ('very cool', get_env_int_tuple, None),
     (None, get_env_str, None),
+    (None, get_env_int, None),
+    (None, get_env_tuple, None),
+    (None, get_env_int_tuple, None),
 ])
 def test_convert_values(value, func, expected):
     with mock.patch('os.getenv') as mocked_getenv:

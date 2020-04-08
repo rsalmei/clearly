@@ -30,4 +30,5 @@ def get_env_param(name: str, default: TV, factory: Callable[[str], TV]) -> TV:
 
 get_env_str = partial(get_env_param, factory=str)
 get_env_int = partial(get_env_param, factory=int)
-get_env_list = partial(get_env_param, factory=lambda x: x.split())
+get_env_tuple = partial(get_env_param, factory=lambda x: tuple(x.split()))
+get_env_int_tuple = partial(get_env_param, factory=lambda x: tuple(int(y) for y in x.split()))
