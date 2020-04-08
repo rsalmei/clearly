@@ -33,7 +33,7 @@ class EventListener:
         queue_workers: to send to the streaming dispatcher responsible for workers
         memory: LRU storage object to keep tasks and workers
         use_result_backend: if True, there's a result backend to fetch results from
-        task_states: object that fills missing tasks' states
+        gen_task_states: object that fills missing tasks' states
 
     """
 
@@ -58,7 +58,7 @@ class EventListener:
         logger.info('backend: %s', self.app.backend.as_uri())
 
         # fill missing gaps in states.
-        self.task_states: ExpectedStateHandler = setup_task_states()
+        self.gen_task_states: ExpectedStateHandler = setup_task_states()
 
         # running engine (should be asyncio in the future)
         self._listener_thread: Optional[threading.Thread] = None
@@ -142,7 +142,7 @@ class EventListener:
             yield '' if task.state == PENDING else task.state  # empty state will mean new.
             return
 
-        yield from self.task_states.states_through(pre_state, task.state)
+        yield from self.gen_task_states.states_through(pre_state, task.state)
 
     def _set_worker_event(self, event: dict) -> Iterator[Union[Worker, str]]:
         (worker, _), _ = self.memory.event(event)
