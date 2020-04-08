@@ -303,29 +303,45 @@ def test_display_modes_worker_indicator(mode_worker_type, mocked_client, capsys)
     assert '* ' + mode_worker_type.name in capsys.readouterr().out
 
 
-@pytest.mark.parametrize('to, to2', [
+def test_display_modes_set_params(mocked_client):
+    with mock.patch.object(mocked_client, '_get_display_modes') as mock_gdm:
+        mocked_client.display_modes(1)
+    mock_gdm.assert_called_once_with(1)
+    # noinspection PyProtectedMember
+    assert mocked_client._modes == mock_gdm()
+
+
+@pytest.mark.parametrize('modes', [
     (ModeTask.SENT, ModeTask.TASK),
     (ModeWorker.STATS, ModeWorker.WORKER),
+    (ModeTask.SENT, ModeWorker.STATS, ModeWorker.STATS),
 ])
-def test_display_modes_with_params_error(to, to2, capsys, mocked_client):
+def test_get_display_modes_error(modes, mocked_client):
+    with mock.patch('clearly.client.client.find_mode') as mock_find_mode, \
+            pytest.raises(UserWarning):
+        mock_find_mode.side_effect = lambda x: x
+        # noinspection PyProtectedMember
+        mocked_client._get_display_modes(modes)
+
+
+@pytest.mark.parametrize('modes, expected', [
+    (None, (ModeTask.TASK, ModeWorker.WORKER)),
+    ((None,), (ModeTask.TASK, ModeWorker.WORKER)),
+    ((None, None), (ModeTask.TASK, ModeWorker.WORKER)),
+    (ModeTask.SENT, (ModeTask.SENT, ModeWorker.WORKER)),
+    ((ModeTask.SENT,), (ModeTask.SENT, ModeWorker.WORKER)),
+    ((ModeTask.SENT, None), (ModeTask.SENT, ModeWorker.WORKER)),
+    ((None, ModeTask.SENT), (ModeTask.SENT, ModeWorker.WORKER)),
+    (ModeWorker.STATS, (ModeTask.TASK, ModeWorker.STATS)),
+    ((ModeWorker.STATS,), (ModeTask.TASK, ModeWorker.STATS)),
+    ((ModeWorker.STATS, None), (ModeTask.TASK, ModeWorker.STATS)),
+    ((None, ModeWorker.STATS), (ModeTask.TASK, ModeWorker.STATS)),
+    ((ModeTask.SENT, ModeWorker.STATS), (ModeTask.SENT, ModeWorker.STATS)),
+    ((ModeWorker.STATS, ModeTask.SENT), (ModeTask.SENT, ModeWorker.STATS)),
+])
+def test_get_display_modes_ok(modes, expected, mocked_client):
+    mocked_client._modes = Modes(ModeTask.TASK, ModeWorker.WORKER)  # known defaults.
     with mock.patch('clearly.client.client.find_mode') as mock_find_mode:
         mock_find_mode.side_effect = lambda x: x
-        mocked_client.display_modes(to, to2)
-    assert 'Two modes of the same type?' in capsys.readouterr().out
-
-
-@pytest.mark.parametrize('to, to2, expected', [
-    (ModeTask.SENT, None, (ModeTask.SENT,)),
-    (None, ModeTask.SENT, (ModeTask.SENT,)),
-    (ModeWorker.STATS, None, (ModeWorker.STATS,)),
-    (None, ModeWorker.STATS, (ModeWorker.STATS,)),
-    (ModeTask.SENT, ModeWorker.STATS, (ModeTask.SENT, ModeWorker.STATS)),
-    (ModeWorker.STATS, ModeTask.SENT, (ModeWorker.STATS, ModeTask.SENT)),
-])
-def test_display_modes_with_params(to, to2, expected, mocked_client):
-    with mock.patch('clearly.client.client.find_mode') as mock_find_mode, \
-            mock.patch.object(mocked_client, '_set_display_mode') as mock_sdm:
-        mock_find_mode.side_effect = lambda x: x
-        mocked_client.display_modes(to, to2)
-
-    mock_sdm.assert_has_calls(call(v) for v in expected)
+        # noinspection PyProtectedMember
+        assert mocked_client._get_display_modes(modes) == expected
