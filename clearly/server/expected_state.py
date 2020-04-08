@@ -71,14 +71,13 @@ class ExpectedStateHandler:
 
 
 def setup_task_states() -> ExpectedStateHandler:
+    terminal = (task_states.SUCCESS, task_states.FAILURE,
+                task_states.REJECTED, task_states.REVOKED)
+
     pending = ExpectedPath(task_states.PENDING)
     received = pending.to(task_states.RECEIVED)
-    received \
-        .to(task_states.STARTED) \
-        .to((task_states.SUCCESS,
-             task_states.FAILURE,
-             task_states.REJECTED,
-             task_states.REVOKED,), task_states.RETRY) \
-        .to(received)
+    received.to(task_states.STARTED) \
+        .to(terminal, task_states.RETRY) \
+        .to(pending, received)
 
     return ExpectedStateHandler(pending)
