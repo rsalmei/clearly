@@ -36,7 +36,7 @@ See what `clearly` looks like:
 > 
 > **Clearly** has received a major revamp in version 0.9, since its very near 1.0! \o/
 > 
-> All code has been revisited, which took ~170 commits, ~70 files changed and ~2700 additions! `Clearly` is now more mature, more reliable and way more polished in general, with beautiful colors and complete error handling, making this new `Clearly` way more pleasant to use!
+> All code has been revisited and several new features were implemented, which took ~170 commits, ~70 files changed and ~2700 additions! `Clearly` is now more mature, more reliable and way more polished in general, with beautiful colors and complete error handling, making this new `Clearly` way more pleasant to use!
 >
 > And there's also the unit tests, which were greatly streamlined. The suite has gone from ~2600 tests down to less than 700, while keeping 100% code coverage (branch-coverage)! The _PR_ is in https://github.com/rsalmei/clearly/pull/52 if you'd like to see it.
 > 
@@ -50,13 +50,13 @@ See what `clearly` looks like:
 
 ## Features
 
-`clearly` enables you to:
+`Clearly` enables you to:
 - Be informed of any and all tasks running, failing or just being enqueued, both in real time and stored;
     - if you enable `task_send_sent_event` in your code, you can track tasks even before they get into a worker!
 - Be informed of workers availability, knowing immediately if any goes down or up;
 - Filter tasks any way you want by several fields, both in real time and stored;
 - Debug the actual parameters the tasks were called with, and analyze their outcome, such as success results or failure tracebacks and retries;
-- _Clearly_ see all types and representations of these parameters/outcomes with an advanced formatting system and syntax highlighting;
+- All types and representations of those parameters and outcomes can be _clearly_ seen with the advanced formatting system and syntax highlighting;
 - Analyze metrics of your system.
 
 
@@ -406,7 +406,7 @@ def metrics(self) -> None:
 - ~~split `Clearly` client and server, to allow an always-on server to run, with multiple clients connecting, without any of the shortcomings;~~
 - ~~remove python 2 support~~
 - ~~dockerize the server, to make its deploy way easier;~~
-- include a client command line mode, to be able to call it right from the shell;
+- improve the client command line, to be able to call `capture()` and others right from the shell;
 - make the search pattern apply to args and kwargs too;
 - support to constrain search pattern to only some fields;
 - ability to hide sensitive information, directly in event listener;
@@ -416,8 +416,8 @@ def metrics(self) -> None:
 ---
 
 ## Changelog:
-- 0.9.1: fix reset() breaking protobuf serialization; also rename it to reset_tasks()
-- 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; worker states reengineered, and heartbeats now get through to the client; unified the streaming and stored events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
+- 0.9.1: fix `reset()` breaking protobuf serialization; also rename it to `reset_tasks()`
+- 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; server log filters passwords from both broker and result backend; worker states reengineered, and heartbeats now get through to the client; unified the streaming and stored events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
 - 0.8.3: extended user friendliness of gRPC errors to all client rpc methods; last version to support Python 3.5
 - 0.8.2: reduce docker image size; user friendlier gRPC errors on client capture (with --debug to raise actual exception); nicer client autocomplete (no clearly package or clearly dir are shown)
 - 0.8.1: keep un-truncate engine from breaking when very distant celery versions are used in publisher and server sides
