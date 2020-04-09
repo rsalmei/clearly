@@ -177,22 +177,25 @@ So, you are ready to see tasks popping up in your screen faster than you can see
 
 ### Grab them
 
+#### In real time ⚡️
 ```python
-# in real time.
 clearlycli.capture()
 clearlycli.capture_tasks()
 clearlycli.capture_workers()
+```
 
-# past, stored events.
+#### Past, stored events 🗄
+```python
 clearlycli.tasks()
 clearlycli.workers()
 ```
 
-Example using the `capture()` method, which will show all activity in the celery cluster, including both tasks and workers.
+Example using the `capture()` method, which will show all real time activity in the celery cluster, including both tasks and workers.
 
 ![capture](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_capture.png)
 
-The real time method variants block to receive streaming events from the server. At any moment, you can CTRL+C out them, and rest assured the server will continue to gather all events seamlessly. It's just _this_ client that will stop receiving them. The `capture_tasks()` and `capture_workers()` methods should already be clear.
+The real time method variants block to receive streaming events from the server.
+<br>At any moment, you can CTRL+C out them, and rest assured the server will continue to gather all events seamlessly, it's just this client that will stop _receiving_ them. The `capture_tasks()` and `capture_workers()` methods receive only its respective real time events.
 <br>The `tasks()` and `workers()` methods operates similarly, but retrieving only stored events without blocking.
 
 The client will display those events in a format configured by the corresponding Display Mode.
@@ -218,11 +221,11 @@ clearlycli.display_modes(2, 13)  # has the same effect, but easier on the finger
 You can also change only one display mode at a time (just call with one argument).
 
 ```python
-clearlycli.display_modes(5)  # sets the task display mode to ModeTask.SUCCESS
-clearlycli.display_modes(12)  # sets the worker display mode to ModeWorker.WORKER (the basic one)
+clearlycli.display_modes(ModeTask.SUCCESS)  # the same as calling with (5)
+clearlycli.display_modes(12)  # sets the worker display mode to ModeWorker.WORKER
 ```
 
-And even configure the default directly in the `docker run` env: just include a `-e CLI_DISPLAY_MODES="..."`, with one or two **constant number** (the enum constants are not accepted here).
+And even configure the default directly in the `docker run` env: just include a `-e CLI_DISPLAY_MODES="..."`, with one or two _constant numbers_ (the enum constants are not accepted here).
 
 
 ### Seen tasks, metrics and reset tasks
