@@ -206,6 +206,7 @@ class RPCService(ClearlyServerServicer):
 
         """
         RPCService._log_request(request, context)
+
         result = SeenTasksMessage()
         result.task_types.extend(self.memory.task_types())
         return result
@@ -213,17 +214,19 @@ class RPCService(ClearlyServerServicer):
     def reset_tasks(self, request, context):
         """Resets all captured tasks."""
         RPCService._log_request(request, context)
+
         self.memory.clear_tasks()
         return Null()
 
-    def get_stats(self, request, context):
-        """Returns the server statistics.
+    def get_metrics(self, request, context):
+        """Returns the server metrics.
 
         Returns:
             clearly_pb2.StatsMessage
 
         """
         RPCService._log_request(request, context)
+
         m = self.memory
         return StatsMessage(
             task_count=m.task_count,

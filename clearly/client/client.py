@@ -170,26 +170,6 @@ class ClearlyClient:
             pass
 
     @set_user_friendly_errors
-    def metrics(self) -> None:
-        """List some metrics about the capturing system itself, which of course
-        reflects the actual celery pool being monitored.
-
-        Shows:
-            Tasks processed: number of tasks processed, including retries
-            Events processed: number of events processed, including workers and heartbeats
-            Tasks stored: number of unique tasks processed
-            Workers stored: number of unique workers seen
-
-        """
-        stats = self._stub.get_stats(Empty())
-        print(Colors.DIM('Processed:'),
-              '\ttasks', Colors.RED(stats.task_count),
-              '\tevents', Colors.RED(stats.event_count))
-        print(Colors.DIM('Stored:'),
-              '\ttasks', Colors.RED(stats.len_tasks),
-              '\tworkers', Colors.RED(stats.len_workers))
-
-    @set_user_friendly_errors
     def tasks(self, tasks: Optional[str] = None, mode: Union[None, int, ModeTask] = None,
               limit: Optional[int] = None, reverse: bool = True) -> None:
         """Fetch current data from past tasks.
@@ -261,6 +241,25 @@ class ClearlyClient:
         """Reset stored tasks."""
         self._stub.reset_tasks(Null())
         print(Colors.BLUE('Ok'))
+
+    @set_user_friendly_errors
+    def metrics(self) -> None:
+        """List some metrics about the celery cluster and Clearly itself.
+
+        Shows:
+            Tasks processed: actual number of tasks processed, including retries
+            Events processed: total number of events processed
+            Tasks stored: number of currently stored tasks
+            Workers stored: number of workers seen, including offline
+
+        """
+        stats = self._stub.get_metrics(Null())
+        print(Colors.DIM('Processed:'),
+              '\ttasks', Colors.RED(stats.task_count),
+              '\tevents', Colors.RED(stats.event_count))
+        print(Colors.DIM('Stored:'),
+              '\ttasks', Colors.RED(stats.len_tasks),
+              '\tworkers', Colors.RED(stats.len_workers))
 
     def _get_display_modes(self, modes: Union[None, int, ModeTask, ModeWorker, Tuple] = None) \
             -> Modes:

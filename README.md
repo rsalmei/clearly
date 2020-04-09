@@ -300,18 +300,6 @@ def capture(self, tasks: Optional[str] = None, workers: Optional[str] = None,
 
     """
 
-def metrics(self) -> None:
-    """List some metrics about the capturing system itself, which of course
-    reflects the actual celery cluster being monitored.
-
-    Shows:
-        Tasks processed: number of tasks processed, including retries
-        Events processed: number of events processed, including workers and heartbeats
-        Tasks stored: number of unique tasks processed
-        Workers stored: number of unique workers seen
-
-    """
-
 def tasks(self, tasks: Optional[str] = None, mode: Union[None, int, ModeTask] = None,
           limit: Optional[int] = None, reverse: bool = True) -> None:
     """Fetch current data from past tasks.
@@ -351,6 +339,17 @@ def seen_tasks(self) -> None:
 
 def reset_tasks(self) -> None:
     """Reset stored tasks."""
+
+def metrics(self) -> None:
+    """List some metrics about the celery cluster and Clearly itself.
+
+    Shows:
+        Tasks processed: actual number of tasks processed, including retries
+        Events processed: total number of events processed
+        Tasks stored: number of currently stored tasks
+        Workers stored: number of workers seen, including offline
+
+    """
 ```
 
 ---
