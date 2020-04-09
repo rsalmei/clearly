@@ -2,8 +2,8 @@ from unittest import mock
 
 import pytest
 
-from clearly.protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, \
-    FilterWorkersRequest, PatternFilter, RealtimeMessage, TaskMessage, WorkerMessage
+from clearly.protos.clearly_pb2 import CaptureRequest, FilterTasksRequest, FilterWorkersRequest, \
+    Null, PatternFilter, RealtimeMessage, TaskMessage, WorkerMessage
 from clearly.server.server import RPCService
 
 
@@ -94,13 +94,13 @@ def test_server_seen_tasks(mocked_rpc):
     mlmtt = mocked_rpc.memory.task_types
     mlmtt.return_value = expected
 
-    result = mocked_rpc.seen_tasks(Empty(), None)
+    result = mocked_rpc.seen_tasks(Null(), None)
 
     assert result.task_types == list(expected)
 
 
 def test_server_reset_tasks(mocked_rpc):
-    mocked_rpc.reset_tasks(Empty(), None)
+    mocked_rpc.reset_tasks(Null(), None)
 
     assert mocked_rpc.memory.clear_tasks.call_count == 1
 
@@ -112,7 +112,7 @@ def test_server_get_stats(mocked_rpc):
     mlm.tasks.__len__ = mock.Mock(return_value=3)
     mlm.workers.__len__ = mock.Mock(return_value=4)
 
-    result = mocked_rpc.get_stats(Empty(), None)
+    result = mocked_rpc.get_metrics(Null(), None)
 
     assert result.task_count == 1
     assert result.event_count == 2
