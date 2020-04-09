@@ -175,17 +175,25 @@ That's it, you're good to go! \o/
 So, you are ready to see tasks popping up in your screen faster than you can see? (Remember to filter them!)
 
 
-### Grab them in real time
+### Grab them
 
 ```python
+# in real time.
 clearlycli.capture()
+clearlycli.capture_tasks()
+clearlycli.capture_workers()
+
+# past, stored events.
+clearlycli.tasks()
+clearlycli.workers()
 ```
+
+Example using the `capture()` method, which will show all activity in the celery cluster, including both tasks and workers.
 
 ![capture](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_capture.png)
 
-This will show all activity in the celery cluster, both tasks and workers events.
-
-At any moment, you can CTRL+C out of the capturing client, and rest assured the server continues to gather all updates seamlessly.
+The real time method variants block to receive streaming events from the server. At any moment, you can CTRL+C out them, and rest assured the server will continue to gather all events seamlessly. It's just _this_ client that will stop receiving them. The `capture_tasks()` and `capture_workers()` methods should already be clear.
+<br>The `tasks()` and `workers()` methods operates similarly, but retrieving only stored events without blocking.
 
 The client will display those events in a format configured by the corresponding Display Mode.
 
@@ -196,11 +204,38 @@ The client will display those events in a format configured by the corresponding
 clearlycli.display_modes()
 ```
 
-Display modes configure the level of detail you want to see. Things like to show parameters or not, to show exceptions with or without parameters, to show tasks results, etc.
+Display modes specify the level of details you want to see. Things like to show or not arguments being sent, to show exceptions, with or without arguments, to show tasks' results, etc.
 
 ![display modes](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_display_modes.png)
 
-To change a display mode, just call the same method with the enum value or the constant beside it. You can also change both task and worker mode in one call, or configure the default directly in the `docker run` env.
+To change a display mode, just call the same method with the constant number beside it or the enum constant.
+
+```python
+clearlycli.display_modes(ModeTask.RESULT, ModeWorker.STATS)  # the enums are automatically imported
+clearlycli.display_modes(2, 13)  # has the same effect, but easier on the fingers
+```
+
+You can also change only one display mode at a time (just call with one argument).
+
+```python
+clearlycli.display_modes(5)  # sets the task display mode to ModeTask.SUCCESS
+clearlycli.display_modes(12)  # sets the worker display mode to ModeWorker.WORKER (the basic one)
+```
+
+And even configure the default directly in the `docker run` env: just include a `-e CLI_DISPLAY_MODES="..."`, with one or two **constant number** (the enum constants are not accepted here).
+
+
+### Seen tasks, metrics and reset tasks
+
+```python
+clearlycli.seen_tasks()  # prints all seen task types
+clearlycli.metrics()  # prints some metrics about the celery cluster and Clearly itself
+clearlycli.reset_tasks()  # resets stored tasks
+```
+
+This section should be pretty self-explanatory.
+
+![seen metrics](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_seen_metrics.png)
 
 ---
 
@@ -378,6 +413,7 @@ def metrics(self) -> None:
 ---
 
 ## Changelog:
+- 0.9.1: fix reset() breaking protobuf serialization; also rename it to reset_tasks()
 - 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; worker states reengineered, and heartbeats now get through to the client; unified the streaming and stored events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
 - 0.8.3: extended user friendliness of gRPC errors to all client rpc methods; last version to support Python 3.5
 - 0.8.2: reduce docker image size; user friendlier gRPC errors on client capture (with --debug to raise actual exception); nicer client autocomplete (no clearly package or clearly dir are shown)
