@@ -10,13 +10,18 @@ services:
   rabbithost:
     image: rabbitmq:management-alpine
     ports:
-      - 5672:5672
       - 15672:15672
 
   redishost:
     image: redis:alpine
-    ports:
-      - 6379:6379
+
+  user-app:
+    image: user-app
+    build:
+      context: ./user_code/
+    volumes:
+      - ./user_code/:/usr/src/user_app/user_code/
+    working_dir: /usr/src/user_app
 
 volumes:
   ipythonhist:

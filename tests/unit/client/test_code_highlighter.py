@@ -4,9 +4,8 @@ from decimal import Decimal
 
 import pytest
 
-from clearly.code_highlighter import typed_code
-from clearly.safe_compiler import CallDescriptor
-from clearly.utils.colors import strip_colors
+from clearly.client.code_highlighter import typed_code
+from clearly.utils.safe_compiler import CallDescriptor
 
 
 @pytest.mark.parametrize('obj, text', [
@@ -93,6 +92,6 @@ from clearly.utils.colors import strip_colors
        CallDescriptor('f2', None, {'ignore': {'y', 'x'}})]),
      "(Decimal('3.50'), [f1(True, ok=0), f2(ignore={'x', 'y'})])"),
 ])
-def test_code_highlighter_generic(obj, text):
+def test_code_highlighter_generic(obj, text, strip_colors):
     generated = typed_code(obj)
     assert strip_colors(generated) == text

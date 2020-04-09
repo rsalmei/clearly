@@ -2,26 +2,7 @@ import pytest
 # noinspection PyProtectedMember
 from celery.states import FAILURE, PENDING, RECEIVED, REJECTED, RETRY, REVOKED, STARTED, SUCCESS
 
-from clearly.expected_state import setup_task_states, setup_worker_states
-from clearly.utils.worker_states import OFFLINE, ONLINE
-
-
-@pytest.mark.parametrize('state_initial, state, expected', [
-    (OFFLINE, 'orange', ValueError),
-    ('banana', ONLINE, ValueError),
-    ('banana', 'orange', ValueError),
-    (OFFLINE, OFFLINE, []),
-    (OFFLINE, ONLINE, [ONLINE]),
-    (ONLINE, ONLINE, []),
-    (ONLINE, OFFLINE, [OFFLINE]),
-])
-def test_expected_states_worker(state_initial, state, expected):
-    states = setup_worker_states()
-    if isinstance(expected, list):
-        assert list(states.states_through(state_initial, state)) == expected
-    else:
-        with pytest.raises(expected):
-            list(states.states_through(state_initial, state))
+from clearly.server.expected_state import setup_task_states
 
 
 @pytest.mark.parametrize('state_initial, state, expected', [
@@ -36,7 +17,7 @@ def test_expected_states_worker(state_initial, state, expected):
     (PENDING, REJECTED, [RECEIVED, STARTED, REJECTED]),
     (PENDING, REVOKED, [RECEIVED, STARTED, REVOKED]),
     (PENDING, RETRY, [RECEIVED, STARTED, RETRY]),
-    (RECEIVED, PENDING, ValueError),
+    (RECEIVED, PENDING, [STARTED, RETRY, PENDING]),
     (RECEIVED, RECEIVED, []),
     (RECEIVED, STARTED, [STARTED]),
     (RECEIVED, SUCCESS, [STARTED, SUCCESS]),
@@ -44,7 +25,7 @@ def test_expected_states_worker(state_initial, state, expected):
     (RECEIVED, REJECTED, [STARTED, REJECTED]),
     (RECEIVED, REVOKED, [STARTED, REVOKED]),
     (RECEIVED, RETRY, [STARTED, RETRY]),
-    (STARTED, PENDING, ValueError),
+    (STARTED, PENDING, [RETRY, PENDING]),
     (STARTED, RECEIVED, [RETRY, RECEIVED]),
     (STARTED, STARTED, []),
     (STARTED, SUCCESS, [SUCCESS]),
@@ -84,7 +65,7 @@ def test_expected_states_worker(state_initial, state, expected):
     (REVOKED, REJECTED, UserWarning),
     (REVOKED, REVOKED, []),
     (REVOKED, RETRY, UserWarning),
-    (RETRY, PENDING, ValueError),
+    (RETRY, PENDING, [PENDING]),
     (RETRY, RECEIVED, [RECEIVED]),
     (RETRY, STARTED, [RECEIVED, STARTED]),
     (RETRY, SUCCESS, [RECEIVED, STARTED, SUCCESS]),

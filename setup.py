@@ -1,4 +1,3 @@
-# coding=utf-8
 import os
 from distutils.core import setup
 
@@ -27,7 +26,7 @@ def get_readme():
 setup(
     name='clearly',
     version=clearly.__version__,
-    description='Clearly see and debug your celery pool in real time!',
+    description='Clearly see and debug your celery cluster in real time!',
     long_description=get_readme(),
     long_description_content_type='text/markdown',
     url='https://github.com/rsalmei/clearly',
@@ -54,15 +53,15 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    keywords='celery task queue job flower monitoring distributed asynchronous'.split(),
+    keywords='python celery distributed task queue flower monitor monitoring-tool asynchronous '
+             'real-time realtime'.split(),
     packages=find_packages(),
     data_files=[('', ['LICENSE'])],
-    python_requires='>=3.5, <4',
+    python_requires='>=3.6, <4',
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     entry_points={

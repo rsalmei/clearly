@@ -4,22 +4,7 @@ branch = True
 omit =
     clearly/protos/*
     clearly/command_line.py
+    clearly/utils/worker_states.py
 
 [report]
-# Regexes for lines to exclude from consideration
-exclude_lines =
-# Have to re-enable the standard pragma
-    pragma: no cover
-
-# Don't complain about missing repr
-    def __repr__
-
-# Don't complain if tests don't hit defensive assertion code:
-    except KeyboardInterrupt
-    raise AssertionError
-    raise NotImplementedError
-
-# Don't complain if non-runnable code isn't run:
-    if __name__ == '__main__':
-
 ignore_errors = True

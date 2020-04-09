@@ -1,6 +1,6 @@
 import pytest
 
-from clearly.safe_compiler import CallDescriptor, safe_compile_text
+from clearly.utils.safe_compiler import CallDescriptor, safe_compile_text
 
 
 @pytest.mark.parametrize('text, obj', [

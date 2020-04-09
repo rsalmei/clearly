@@ -6,7 +6,8 @@ WORKDIR /usr/src/clearly
 COPY . .
 RUN pip install --no-cache-dir -e .
 
-ENV BROKER_CONNECT_TIMEOUT=5
+ENV BROKER_CONNECT_TIMEOUT 5
+ENV CLI_DISPLAY_MODES ?
 
 EXPOSE 12223
 
@@ -15,4 +16,4 @@ EXPOSE 12223
 # "clearlys" to suggest, like the source dir or the egg-info.
 WORKDIR /
 
-ENTRYPOINT [ "clearly"]
+ENTRYPOINT ["clearly"]

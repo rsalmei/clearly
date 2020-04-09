@@ -23,7 +23,10 @@ all:
 	@grep -E "^\w+:" makefile | cut -d: -f1
 
 install:
-	pip install -r requirements/dev.txt -r requirements/test.txt
+	pip install -e .[test]
+
+dev: install
+	pip install -r requirements/dev.txt
 
 clean: clean-build clean-pyc
 

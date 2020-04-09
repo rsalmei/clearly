@@ -5,36 +5,35 @@ syntax = "proto3";
 */
 
 message TaskMessage {
-    string name = 1;
-    string routing_key = 2;
-    string uuid = 3;
-    int32 retries = 4;
-    string args = 5;
-    string kwargs = 6;
-    string result = 7;
-    string traceback = 8;
-    double timestamp = 9;
-    string state = 10;
-    bool created = 11;
+    double timestamp = 1;
+    string state = 2;
+    string name = 3;
+    string routing_key = 4;
+    string uuid = 5;
+    int32 retries = 6;
+    string args = 7;
+    string kwargs = 8;
+    string result = 9;
+    string traceback = 10;
+    string result_meta = 11;
 }
 
 message WorkerMessage {
-    string hostname = 1;
-    int32 pid = 2;
-    string sw_sys = 3;
-    string sw_ident = 4;
-    string sw_ver = 5;
-    repeated double loadavg = 6;
-    int32 processed = 7;
-    bool alive = 8;
-    float freq = 9;
-    double last_heartbeat = 10;
-    string state = 11;
-    bool created = 12;
+    double timestamp = 1;
+    string state = 2;
+    string hostname = 3;
+    int32 pid = 4;
+    string sw_sys = 5;
+    string sw_ident = 6;
+    string sw_ver = 7;
+    repeated double loadavg = 8;
+    int32 processed = 9;
+    float freq = 10;
+    repeated double heartbeats = 11;
 }
 
-message RealtimeEventMessage {
-    oneof event {
+message RealtimeMessage {
+    oneof message {
         TaskMessage task = 1;
         WorkerMessage worker = 2;
     }
@@ -56,10 +55,9 @@ message StatsMessage {
 */
 
 service ClearlyServer {
-    rpc capture_realtime (CaptureRequest) returns (stream RealtimeEventMessage);
+    rpc capture_realtime (CaptureRequest) returns (stream RealtimeMessage);
     rpc filter_tasks (FilterTasksRequest) returns (stream TaskMessage);
     rpc filter_workers (FilterWorkersRequest) returns (stream WorkerMessage);
-    rpc find_task (FindTaskRequest) returns (TaskMessage);
     rpc seen_tasks (Empty) returns (SeenTasksMessage);
     rpc reset_tasks (Empty) returns (Empty);
     rpc get_stats (Empty) returns (StatsMessage);
@@ -77,17 +75,12 @@ message CaptureRequest {
 
 message FilterTasksRequest {
     PatternFilter tasks_filter = 1;
-    string state_pattern = 2;
-    int32 limit = 3;
-    bool reverse = 4;
+    int32 limit = 2;
+    bool reverse = 3;
 }
 
 message FilterWorkersRequest {
     PatternFilter workers_filter = 1;
-}
-
-message FindTaskRequest {
-    string task_uuid = 1;
 }
 
 message Empty {
