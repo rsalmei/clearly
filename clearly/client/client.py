@@ -11,7 +11,7 @@ from celery.states import FAILURE, PROPAGATE_STATES, REJECTED, RETRY, REVOKED, S
 
 from .code_highlighter import traceback_highlighter_factory, typed_code
 from .display_modes import ModeTask, ModeWorker, find_mode
-from ..protos.clearly_pb2 import CaptureRequest, Empty, FilterTasksRequest, FilterWorkersRequest, \
+from ..protos.clearly_pb2 import CaptureRequest, FilterTasksRequest, FilterWorkersRequest, Null, \
     PatternFilter, TaskMessage, WorkerMessage
 from ..protos.clearly_pb2_grpc import ClearlyServerStub
 from ..utils.colors import Colors
@@ -252,14 +252,14 @@ class ClearlyClient:
     @set_user_friendly_errors
     def seen_tasks(self) -> None:
         """Fetch a list of seen task types."""
-        task_types = self._stub.seen_tasks(Empty()).task_types
+        task_types = self._stub.seen_tasks(Null()).task_types
         for i, task_type in enumerate(task_types, 1):
             print(Colors.DIM(i), Colors.BLUE(task_type))
 
     @set_user_friendly_errors
     def reset(self) -> None:
         """Reset all captured tasks."""
-        self._stub.reset_tasks(Empty())
+        self._stub.reset_tasks(Null())
         print(Colors.BLUE('Ok'))
 
     def _get_display_modes(self, modes: Union[None, int, ModeTask, ModeWorker, Tuple] = None) \

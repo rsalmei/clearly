@@ -58,9 +58,9 @@ service ClearlyServer {
     rpc capture_realtime (CaptureRequest) returns (stream RealtimeMessage);
     rpc filter_tasks (FilterTasksRequest) returns (stream TaskMessage);
     rpc filter_workers (FilterWorkersRequest) returns (stream WorkerMessage);
-    rpc seen_tasks (Empty) returns (SeenTasksMessage);
-    rpc reset_tasks (Empty) returns (Empty);
-    rpc get_stats (Empty) returns (StatsMessage);
+    rpc seen_tasks (Null) returns (SeenTasksMessage);
+    rpc reset_tasks (Null) returns (Null);
+    rpc get_metrics (Null) returns (StatsMessage);
 }
 
 message PatternFilter {
@@ -83,5 +83,5 @@ message FilterWorkersRequest {
     PatternFilter workers_filter = 1;
 }
 
-message Empty {
+message Null {
 }
