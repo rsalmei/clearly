@@ -26,7 +26,7 @@ And `clearly` is _actually_ real time, has multiple simultaneous filters, a beau
 
 It's great to actually see in a totally _real time way_ what's going on in your celery workers! So it's very nice for inspecting, debugging, and even demonstrating your company async-superpowers (put `clearly` on a big screen TV showing all tasks of your production environment 😜)!
 
-`Clearly` is composed of a server, which collects real time events from the celery cluster, generates missing states, and streams filtered data to connected clients; and a client, which you use to send filter commands and display both real time and persisted data. They communicate with each other via gRPC and ProtocolBuffers.
+`Clearly` is composed of a server, which collects real time events from the celery cluster, generates missing states, and streams filtered data to connected clients; and a client, which you use to send filter commands and display both real time and stored data. They communicate with each other via gRPC and ProtocolBuffers.
 
 See what `clearly` looks like:
 ![very cool](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_highlights.png)
@@ -51,10 +51,10 @@ See what `clearly` looks like:
 ## Features
 
 `clearly` enables you to:
-- Be informed of any and all tasks running, failing or just being enqueued, both in real time and persisted;
+- Be informed of any and all tasks running, failing or just being enqueued, both in real time and stored;
     - if you enable `task_send_sent_event` in your code, you can track tasks even before they get into a worker!
 - Be informed of workers availability, knowing immediately if any goes down or up;
-- Filter tasks any way you want by several fields, both in real time and persisted;
+- Filter tasks any way you want by several fields, both in real time and stored;
 - Debug the actual parameters the tasks were called with, and analyze their outcome, such as success results or failure tracebacks and retries;
 - _Clearly_ see all types and representations of these parameters/outcomes with an advanced formatting system and syntax highlighting;
 - Analyze metrics of your system.
@@ -349,8 +349,8 @@ def workers(self, workers: Optional[str] = None,
 def seen_tasks(self) -> None:
     """Fetch a list of seen task types."""
 
-def reset(self) -> None:
-    """Reset all captured tasks."""
+def reset_tasks(self) -> None:
+    """Reset stored tasks."""
 ```
 
 ---
@@ -379,7 +379,7 @@ def reset(self) -> None:
 ---
 
 ## Changelog:
-- 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; worker states reengineered, and heartbeats now get through to the client; unified the streaming and persisted events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
+- 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; worker states reengineered, and heartbeats now get through to the client; unified the streaming and stored events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
 - 0.8.3: extended user friendliness of gRPC errors to all client rpc methods; last version to support Python 3.5
 - 0.8.2: reduce docker image size; user friendlier gRPC errors on client capture (with --debug to raise actual exception); nicer client autocomplete (no clearly package or clearly dir are shown)
 - 0.8.1: keep un-truncate engine from breaking when very distant celery versions are used in publisher and server sides

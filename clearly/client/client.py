@@ -257,8 +257,8 @@ class ClearlyClient:
             print(Colors.DIM(i), Colors.BLUE(task_type))
 
     @set_user_friendly_errors
-    def reset(self) -> None:
-        """Reset all captured tasks."""
+    def reset_tasks(self) -> None:
+        """Reset stored tasks."""
         self._stub.reset_tasks(Null())
         print(Colors.BLUE('Ok'))
 
