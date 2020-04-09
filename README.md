@@ -1,6 +1,6 @@
 [<img align="right" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" width="217px" height="51x">](https://www.buymeacoffee.com/rsalmei)
 
-![Clearly logo](img/clearly_logo_small.png?raw=true)
+![Clearly logo](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_logo_small.png)
 
 ## Clearly see and debug your celery cluster in real time!
 
@@ -29,7 +29,7 @@ It's great to actually see in a totally _real time way_ what's going on in your 
 `Clearly` is composed of a server, which collects real time events from the celery cluster, generates missing states, and streams filtered data to connected clients; and a client, which you use to send filter commands and display both real time and persisted data. They communicate with each other via gRPC and ProtocolBuffers.
 
 See what `clearly` looks like:
-![very cool](img/clearly_highlights.png?raw=true)
+![very cool](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_highlights.png)
 
 
 > ### 📌 New version!
@@ -92,7 +92,7 @@ $ docker run --rm -p <clearly_port>:12223 --name clearly-server \
 
 You should see something like:
 
-![server](img/clearly_server.png?raw=true)
+![server](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_server.png)
 
 
 ### Start the client
@@ -181,7 +181,7 @@ So, you are ready to see tasks popping up in your screen faster than you can see
 clearlycli.capture()
 ```
 
-![capture](img/clearly_capture.png?raw=true)
+![capture](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_capture.png)
 
 This will show all activity in the celery cluster, both tasks and workers events.
 
@@ -198,7 +198,7 @@ clearlycli.display_modes()
 
 Display modes configure the level of detail you want to see. Things like to show parameters or not, to show exceptions with or without parameters, to show tasks results, etc.
 
-![display modes](img/clearly_display_modes.png?raw=true)
+![display modes](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_display_modes.png)
 
 To change a display mode, just call the same method with the enum value or the constant beside it. You can also change both task and worker mode in one call, or configure the default directly in the `docker run` env.
 
