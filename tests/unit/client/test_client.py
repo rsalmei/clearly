@@ -7,7 +7,7 @@ from celery.states import EXCEPTION_STATES, PROPAGATE_STATES, SUCCESS
 
 from clearly.client import ClearlyClient, ModeTask, ModeWorker
 from clearly.client.client import Modes
-from clearly.protos.clearly_pb2 import Empty, PatternFilter, RealtimeMessage, SeenTasksMessage, \
+from clearly.protos.clearly_pb2 import Null, PatternFilter, RealtimeMessage, SeenTasksMessage, \
     StatsMessage, TaskMessage, WorkerMessage
 
 
@@ -45,8 +45,8 @@ def worker_message():
 
 # noinspection PyProtectedMember
 def test_client_reset(mocked_client):
-    mocked_client.reset()
-    mocked_client._stub.reset_tasks.assert_called_once_with(Empty())
+    mocked_client.reset_tasks()
+    mocked_client._stub.reset_tasks.assert_called_once_with(Null())
 
 
 # noinspection PyProtectedMember
@@ -89,11 +89,11 @@ def test_client_capture_worker(worker_message, mode_worker_type, mocked_display)
     ('capture_tasks', 'capture_realtime'),
     ('capture_workers', 'capture_realtime'),
     ('capture', 'capture_realtime'),
-    ('metrics', 'get_stats'),
     ('tasks', 'filter_tasks'),
     ('workers', 'filter_workers'),
     ('seen_tasks', 'seen_tasks'),
-    ('reset', 'reset_tasks'),
+    ('reset_tasks', 'reset_tasks'),
+    ('metrics', 'get_metrics'),
 ])
 def test_client_methods_have_user_friendly_grpc_errors(method, stub, mocked_display, capsys):
     exc = grpc.RpcError()
@@ -114,11 +114,11 @@ def test_client_methods_have_user_friendly_grpc_errors(method, stub, mocked_disp
     ('capture_tasks', 'capture_realtime'),
     ('capture_workers', 'capture_realtime'),
     ('capture', 'capture_realtime'),
-    ('metrics', 'get_stats'),
     ('tasks', 'filter_tasks'),
     ('workers', 'filter_workers'),
     ('seen_tasks', 'seen_tasks'),
-    ('reset', 'reset_tasks'),
+    ('reset_tasks', 'reset_tasks'),
+    ('metrics', 'get_metrics'),
 ])
 def test_client_methods_trigger_grpc_errors_when_debugging(method, stub, mocked_client):
     rpc_error = grpc.RpcError()
@@ -164,7 +164,7 @@ def test_client_capture_workers(mocked_client):
 # noinspection PyProtectedMember
 def test_client_metrics_do_print(mocked_client, capsys):
     data = dict(task_count=1234, event_count=5678, len_tasks=2244, len_workers=333)
-    mocked_client._stub.get_stats.return_value = StatsMessage(**data)
+    mocked_client._stub.get_metrics.return_value = StatsMessage(**data)
     mocked_client.metrics()
     generated = capsys.readouterr().out
     assert all(re.search(str(x), generated) for x in data.values())

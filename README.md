@@ -26,7 +26,7 @@ And `clearly` is _actually_ real time, has multiple simultaneous filters, a beau
 
 It's great to actually see in a totally _real time way_ what's going on in your celery workers! So it's very nice for inspecting, debugging, and even demonstrating your company async-superpowers (put `clearly` on a big screen TV showing all tasks of your production environment 😜)!
 
-`Clearly` is composed of a server, which collects real time events from the celery cluster, generates missing states, and streams filtered data to connected clients; and a client, which you use to send filter commands and display both real time and persisted data. They communicate with each other via gRPC and ProtocolBuffers.
+`Clearly` is composed of a server, which collects real time events from the celery cluster, generates missing states, and streams filtered data to connected clients; and a client, which you use to send filter commands and display both real time and stored data. They communicate with each other via gRPC and ProtocolBuffers.
 
 See what `clearly` looks like:
 ![very cool](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_highlights.png)
@@ -51,10 +51,10 @@ See what `clearly` looks like:
 ## Features
 
 `clearly` enables you to:
-- Be informed of any and all tasks running, failing or just being enqueued, both in real time and persisted;
+- Be informed of any and all tasks running, failing or just being enqueued, both in real time and stored;
     - if you enable `task_send_sent_event` in your code, you can track tasks even before they get into a worker!
 - Be informed of workers availability, knowing immediately if any goes down or up;
-- Filter tasks any way you want by several fields, both in real time and persisted;
+- Filter tasks any way you want by several fields, both in real time and stored;
 - Debug the actual parameters the tasks were called with, and analyze their outcome, such as success results or failure tracebacks and retries;
 - _Clearly_ see all types and representations of these parameters/outcomes with an advanced formatting system and syntax highlighting;
 - Analyze metrics of your system.
@@ -175,17 +175,28 @@ That's it, you're good to go! \o/
 So, you are ready to see tasks popping up in your screen faster than you can see? (Remember to filter them!)
 
 
-### Grab them in real time
+### Grab them
 
+#### In real time ⚡️
 ```python
 clearlycli.capture()
+clearlycli.capture_tasks()
+clearlycli.capture_workers()
 ```
+
+#### Past, stored events 🗄
+```python
+clearlycli.tasks()
+clearlycli.workers()
+```
+
+Example using the `capture()` method, which will show all real time activity in the celery cluster, including both tasks and workers.
 
 ![capture](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_capture.png)
 
-This will show all activity in the celery cluster, both tasks and workers events.
-
-At any moment, you can CTRL+C out of the capturing client, and rest assured the server continues to gather all updates seamlessly.
+The real time method variants block to receive streaming events from the server.
+<br>At any moment, you can CTRL+C out them, and rest assured the server will continue to gather all events seamlessly, it's just this client that will stop _receiving_ them. The `capture_tasks()` and `capture_workers()` methods receive only its respective real time events.
+<br>The `tasks()` and `workers()` methods operates similarly, but retrieving only stored events without blocking.
 
 The client will display those events in a format configured by the corresponding Display Mode.
 
@@ -196,11 +207,38 @@ The client will display those events in a format configured by the corresponding
 clearlycli.display_modes()
 ```
 
-Display modes configure the level of detail you want to see. Things like to show parameters or not, to show exceptions with or without parameters, to show tasks results, etc.
+Display modes specify the level of details you want to see. Things like to show or not arguments being sent, to show exceptions, with or without arguments, to show tasks' results, etc.
 
 ![display modes](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_display_modes.png)
 
-To change a display mode, just call the same method with the enum value or the constant beside it. You can also change both task and worker mode in one call, or configure the default directly in the `docker run` env.
+To change a display mode, just call the same method with the constant number beside it or the enum constant.
+
+```python
+clearlycli.display_modes(ModeTask.RESULT, ModeWorker.STATS)  # the enums are automatically imported
+clearlycli.display_modes(2, 13)  # has the same effect, but easier on the fingers
+```
+
+You can also change only one display mode at a time (just call with one argument).
+
+```python
+clearlycli.display_modes(ModeTask.SUCCESS)  # the same as calling with (5)
+clearlycli.display_modes(12)  # sets the worker display mode to ModeWorker.WORKER
+```
+
+And even configure the default directly in the `docker run` env: just include a `-e CLI_DISPLAY_MODES="..."`, with one or two _constant numbers_ (the enum constants are not accepted here).
+
+
+### Seen tasks, metrics and reset tasks
+
+```python
+clearlycli.seen_tasks()  # prints all seen task types
+clearlycli.metrics()  # prints some metrics about the celery cluster and Clearly itself
+clearlycli.reset_tasks()  # resets stored tasks
+```
+
+This section should be pretty self-explanatory.
+
+![seen metrics](https://raw.githubusercontent.com/rsalmei/clearly/master/img/clearly_seen_metrics.png)
 
 ---
 
@@ -300,18 +338,6 @@ def capture(self, tasks: Optional[str] = None, workers: Optional[str] = None,
 
     """
 
-def metrics(self) -> None:
-    """List some metrics about the capturing system itself, which of course
-    reflects the actual celery cluster being monitored.
-
-    Shows:
-        Tasks processed: number of tasks processed, including retries
-        Events processed: number of events processed, including workers and heartbeats
-        Tasks stored: number of unique tasks processed
-        Workers stored: number of unique workers seen
-
-    """
-
 def tasks(self, tasks: Optional[str] = None, mode: Union[None, int, ModeTask] = None,
           limit: Optional[int] = None, reverse: bool = True) -> None:
     """Fetch current data from past tasks.
@@ -349,8 +375,19 @@ def workers(self, workers: Optional[str] = None,
 def seen_tasks(self) -> None:
     """Fetch a list of seen task types."""
 
-def reset(self) -> None:
-    """Reset all captured tasks."""
+def reset_tasks(self) -> None:
+    """Reset stored tasks."""
+
+def metrics(self) -> None:
+    """List some metrics about the celery cluster and Clearly itself.
+
+    Shows:
+        Tasks processed: actual number of tasks processed, including retries
+        Events processed: total number of events processed
+        Tasks stored: number of currently stored tasks
+        Workers stored: number of workers seen, including offline
+
+    """
 ```
 
 ---
@@ -379,7 +416,8 @@ def reset(self) -> None:
 ---
 
 ## Changelog:
-- 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; worker states reengineered, and heartbeats now get through to the client; unified the streaming and persisted events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
+- 0.9.1: fix reset() breaking protobuf serialization; also rename it to reset_tasks()
+- 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; worker states reengineered, and heartbeats now get through to the client; unified the streaming and stored events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
 - 0.8.3: extended user friendliness of gRPC errors to all client rpc methods; last version to support Python 3.5
 - 0.8.2: reduce docker image size; user friendlier gRPC errors on client capture (with --debug to raise actual exception); nicer client autocomplete (no clearly package or clearly dir are shown)
 - 0.8.1: keep un-truncate engine from breaking when very distant celery versions are used in publisher and server sides

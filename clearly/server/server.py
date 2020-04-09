@@ -13,8 +13,8 @@ from celery.events.state import State
 
 from .event_listener import EventListener
 from .streaming_dispatcher import Role, StreamingDispatcher
-from ..protos.clearly_pb2 import RealtimeMessage, SeenTasksMessage, StatsMessage, TaskMessage, \
-    WorkerMessage
+from ..protos.clearly_pb2 import Null, RealtimeMessage, SeenTasksMessage, StatsMessage, \
+    TaskMessage, WorkerMessage
 from ..protos.clearly_pb2_grpc import ClearlyServerServicer, add_ClearlyServerServicer_to_server
 from ..utils.data import accept_task, accept_worker, obj_to_message
 
@@ -206,6 +206,7 @@ class RPCService(ClearlyServerServicer):
 
         """
         RPCService._log_request(request, context)
+
         result = SeenTasksMessage()
         result.task_types.extend(self.memory.task_types())
         return result
@@ -213,17 +214,19 @@ class RPCService(ClearlyServerServicer):
     def reset_tasks(self, request, context):
         """Resets all captured tasks."""
         RPCService._log_request(request, context)
-        self.memory.clear_tasks()
-        return Empty()
 
-    def get_stats(self, request, context):
-        """Returns the server statistics.
+        self.memory.clear_tasks()
+        return Null()
+
+    def get_metrics(self, request, context):
+        """Returns the server metrics.
 
         Returns:
             clearly_pb2.StatsMessage
 
         """
         RPCService._log_request(request, context)
+
         m = self.memory
         return StatsMessage(
             task_count=m.task_count,

@@ -44,7 +44,7 @@ build-python: clean
 build-docker:
 	docker build -t $(IMAGE_BUILD) -t $(IMAGE_MINOR) -t $(IMAGE_MAJOR) -t $(IMAGE_LATEST) .
 
-release: release-python release-docker
+release: test release-python release-docker
 
 release-python: build-python
 	twine upload dist/*
