@@ -86,7 +86,7 @@ and you're good to go!
 ### Start the server
 
 ```bash
-$ docker run --rm -p <clearly_port>:12223 --name clearly-server \
+$ docker run --rm --name clearly-server -p <clearly_port>:12223 \
       rsalmei/clearly server <broker_url> [--backend backend_url]
 ```
 
@@ -102,7 +102,7 @@ $ docker run --rm -ti --name clearly-client -v ipythonhist:/root/.ipython/profil
       rsalmei/clearly client [clearly_server [clearly_port]]
 ```
 
-> Note: The above volume is not really necessary, but it is very nice to not lose your `clearlycli` command history every time you leave it.
+> Note: The above volume (`-v`) is not really necessary, but it's very nice to not lose your `clearlycli` history every time you leave it. I recommend it 👍.
 
 That's it, you're good to go! \o/
 
@@ -273,7 +273,7 @@ def capture_tasks(self, tasks: Optional[str] = None,
     what you need, and don't worry as the Clearly Server will still seamlessly
     handle all tasks updates.
 
-    Currently you can filter tasks by name, uuid, routing key or state.
+    Currently, you can filter tasks by name, uuid, routing key or state.
     Insert an '!' in the first position to select those that do not match criteria.
 
     This runs in the foreground. Press CTRL+C at any time to stop it.
@@ -299,7 +299,7 @@ def capture_workers(self, workers: Optional[str] = None,
     what you need, and don't worry as the Clearly Server will still seamlessly
     handle all tasks and workers updates.
 
-    Currently you can filter workers by hostname.
+    Currently, you can filter workers by hostname.
     Insert an '!' in the first position to select those that do not match criteria.
 
     This runs in the foreground. Press CTRL+C at any time to stop it.
@@ -343,7 +343,7 @@ def tasks(self, tasks: Optional[str] = None, mode: Union[None, int, ModeTask] = 
     """Fetch current data from past tasks.
 
     Note that the `limit` field is just a hint, it may not be accurate.
-    Even the total number of tasks fetched may be slightly different than
+    Also, the total number of tasks fetched may be slightly different from
     the server `max_tasks` setting.
 
     Args:
@@ -416,6 +416,7 @@ def metrics(self) -> None:
 ---
 
 ## Changelog:
+- 0.9.2: fix a warning on client startup
 - 0.9.1: fix `reset()` breaking protobuf serialization; also rename it to `reset_tasks()`
 - 0.9.0: major code revamp with new internal flow of data, in preparation to the 1.0 milestone! Now there's two StreamingDispatcher instances, each with its own thread, to handle tasks and workers separately (reducing ifs, complexity and latency); include type annotation in all code; several clearlycli improvements: introduced the "!" instead of "negate", introduced display modes instead of "params, success and error", renamed `stats()` to `metrics()`, removed `task()` and improved `tasks()` to also retrieve tasks by uuid, general polish in all commands and error handling; server log filters passwords from both broker and result backend; worker states reengineered, and heartbeats now get through to the client; unified the streaming and stored events filtering; refactor some code with high cyclomatic complexity; include the so important version number in both server and client initializations; adds a new stylish logo; friendlier errors in general; fix a connection leak, where streaming clients were not being disconnected; included an env var to configure default display modes; streamlined the test system, going from ~2600 tests down to less than 700, while keeping the same 100% branch coverage (removed fixtures combinations which didn't make sense); requires Python 3.6+
 - 0.8.3: extended user friendliness of gRPC errors to all client rpc methods; last version to support Python 3.5
