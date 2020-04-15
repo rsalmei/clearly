@@ -86,7 +86,7 @@ and you're good to go!
 ### Start the server
 
 ```bash
-$ docker run --rm -p <clearly_port>:12223 --name clearly-server \
+$ docker run --rm --name clearly-server -p <clearly_port>:12223 \
       rsalmei/clearly server <broker_url> [--backend backend_url]
 ```
 
@@ -102,7 +102,7 @@ $ docker run --rm -ti --name clearly-client -v ipythonhist:/root/.ipython/profil
       rsalmei/clearly client [clearly_server [clearly_port]]
 ```
 
-> Note: The above volume is not really necessary, but it is very nice to not lose your `clearlycli` command history every time you leave it.
+> Note: The above volume (`-v`) is not really necessary, but it's very nice to not lose your `clearlycli` history every time you leave it. I recommend it 👍.
 
 That's it, you're good to go! \o/
 
