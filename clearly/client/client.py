@@ -80,7 +80,7 @@ class ClearlyClient:
         what you need, and don't worry as the Clearly Server will still seamlessly
         handle all tasks updates.
 
-        Currently you can filter tasks by name, uuid, routing key or state.
+        Currently, you can filter tasks by name, uuid, routing key or state.
         Insert an '!' in the first position to select those that do not match criteria.
 
         This runs in the foreground. Press CTRL+C at any time to stop it.
@@ -107,7 +107,7 @@ class ClearlyClient:
         what you need, and don't worry as the Clearly Server will still seamlessly
         handle all tasks and workers updates.
 
-        Currently you can filter workers by hostname.
+        Currently, you can filter workers by hostname.
         Insert an '!' in the first position to select those that do not match criteria.
 
         This runs in the foreground. Press CTRL+C at any time to stop it.
@@ -175,7 +175,7 @@ class ClearlyClient:
         """Fetch current data from past tasks.
 
         Note that the `limit` field is just a hint, it may not be accurate.
-        Even the total number of tasks fetched may be slightly different than
+        Also, the total number of tasks fetched may be slightly different from
         the server `max_tasks` setting.
 
         Args:
