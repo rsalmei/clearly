@@ -1,5 +1,6 @@
 import logging
 import signal
+import ssl
 import threading
 from queue import Queue
 from typing import Any, Iterator, Optional, Tuple, Union
@@ -38,7 +39,7 @@ class EventListener:
     """
 
     def __init__(self, broker: str, queue_tasks: Queue, queue_workers: Queue, memory: State,
-                 backend: str = None):
+                 backend: str = None, use_ssl: Optional[bool] = None):
         """Construct an event listener instance.
 
         Args:
@@ -53,9 +54,24 @@ class EventListener:
         self.queue_tasks, self.queue_workers, self.memory = queue_tasks, queue_workers, memory
         self.use_result_backend = bool(backend)
 
-        self.app = Celery(broker=broker, backend=backend)
-        logger.info('broker : %s', self.app.pool.connection.as_uri())
-        logger.info('backend: %s', self.app.backend.as_uri())
+        if use_ssl:
+            # The redis SSL Config used later
+            redis_ssl_config = {
+                'ssl_keyfile': '/ssl_configs/key.pem',
+                'ssl_certfile': '/ssl_configs/cert.pem',
+                'ssl_ca_certs': '/ssl_configs/redis-private.pem',
+                'ssl_cert_reqs': ssl.CERT_REQUIRED,
+            }
+            self.app = Celery(
+                backend=backend,
+                broker=broker,
+                broker_use_ssl=redis_ssl_config,
+                redis_backend_use_ssl=redis_ssl_config,
+            )
+        else:
+            self.app = Celery(broker=broker, backend=backend)
+        logger.info('broker : %s', self.app.pool.connection)
+        logger.info('backend: %s', self.app.backend)
 
         # fill missing gaps in states.
         self.gen_task_states: ExpectedStateHandler = setup_task_states()

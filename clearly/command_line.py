@@ -43,13 +43,16 @@ def clearly():
 @clearly.command()
 @click.argument('broker')
 @click.option('--backend', '-b',
-              help='Fetches task results from the result backend, like "redis://localhost"')
+              help='Fetches task results from the result backend, like "localhost". This should not contain anything '
+                   'but the host.')
 @click.option('--port', '-p', type=int, help='Listen port for Clearly Server')
 @click.option('--max_tasks', '-t', type=int, help='Maximum number of tasks in memory')
 @click.option('--max_workers', '-w', type=int, help='Maximum number of workers in memory')
+@click.option('--use_ssl', type=bool, help='Enable Redis SSL Support')
+@click.option('--redis-password', type=str, help='Redis AUTH Token')
 @click.option('--debug', help='Enables debug info', is_flag=True)
 def server(broker: str, backend: str, port: int,
-           max_tasks: int, max_workers: int, debug: bool) -> None:
+           max_tasks: int, max_workers: int, use_ssl: bool, redis_password: str, debug: bool) -> None:
     """Start the Clearly Server.
 
     \b
@@ -58,7 +61,7 @@ def server(broker: str, backend: str, port: int,
     _setup_logging(debug)
     logger.info('\n%s\n', logo.render('server'))
     from clearly.server import ClearlyServer
-    clearly_server = ClearlyServer(broker, backend, max_tasks, max_workers)
+    clearly_server = ClearlyServer(broker, backend, max_tasks, max_workers, use_ssl, redis_password)
     clearly_server.start_server(port, blocking=True)
 
 

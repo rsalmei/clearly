@@ -38,7 +38,8 @@ class ClearlyServer:
     """
 
     def __init__(self, broker: str, backend: Optional[str] = None, max_tasks: Optional[int] = None,
-                 max_workers: Optional[int] = None):  # pragma: no cover
+                 max_workers: Optional[int] = None, use_ssl: Optional[bool] = False,
+                 redis_password: Optional[str] = None):  # pragma: no cover
         """Construct a Clearly Server instance.
 
         Args:
@@ -46,8 +47,19 @@ class ClearlyServer:
             backend: the result backend being used by the celery system
             max_tasks: max tasks stored
             max_workers: max workers stored
+            use_ssl: a boolean determining if we should use ssl with redis or not
+            redis_password: the password (AUTH Token) for redis
 
         """
+        if use_ssl and redis_password is not None:
+            broker = f"rediss://:{redis_password}@{broker}:6379//"
+        elif use_ssl and redis_password is None:
+            broker = f"rediss://{broker}:6379//"
+        else:
+            broker = f"redis://{broker}:6379//"
+
+        backend = broker
+
         max_tasks, max_workers = max_tasks or 10000, max_workers or 100
         logger.info('Creating memory: max_tasks=%d; max_workers=%d', max_tasks, max_workers)
         self._memory = State(max_tasks_in_memory=max_tasks, max_workers_in_memory=max_workers)
@@ -55,7 +67,7 @@ class ClearlyServer:
         queue_tasks, queue_workers = Queue(), Queue()  # hands new events to be distributed.
         try:
             self._listener = EventListener(broker, queue_tasks, queue_workers,
-                                           self._memory, backend)
+                                           self._memory, backend, use_ssl)
         except TimeoutError as e:
             logger.critical(e)
             sys.exit(1)
